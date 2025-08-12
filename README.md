@@ -5,9 +5,9 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/tjarkvandemerwe/tidyprompt/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tjarkvandemerwe/tidyprompt/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/KennispuntTwente/tidyprompt/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/KennispuntTwente/tidyprompt/actions/workflows/R-CMD-check.yaml)
 [![](https://www.r-pkg.org/badges/version/tidyprompt)](https://cran.r-project.org/package=tidyprompt)
-[![](https://img.shields.io/badge/devel%20version-0.0.1.9000-blue.svg)](https://github.com/tjarkvandemerwe/tidyprompt)
+[![](https://img.shields.io/badge/devel%20version-0.0.1.9000-blue.svg)](https://github.com/KennispuntTwente/tidyprompt)
 <!-- badges: end -->
 
 ‘tidyprompt’ is an R package to easily construct prompts and associated
@@ -45,7 +45,7 @@ Install the development version from GitHub:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("tjarkvandemerwe/tidyprompt")
+remotes::install_github("KennispuntTwente/tidyprompt")
 ```
 
 Or install from CRAN (0.0.1):
@@ -57,7 +57,7 @@ install.packages("tidyprompt")
 ## Getting started
 
 See the [‘Getting
-started’](https://tjarkvandemerwe.github.io/tidyprompt/articles/getting_started.html)
+started’](https://KennispuntTwente.github.io/tidyprompt/articles/getting_started.html)
 vignette for a detailed introduction to using ‘tidyprompt’.
 
 ## Examples
