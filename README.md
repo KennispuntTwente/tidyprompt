@@ -214,7 +214,11 @@ the APIs of various LLM providers, like R packages ‘ellmer’ and
 framework for constructing prompts and associated logic for interactions
 with LLMs.
 
-We aim to design ‘tidyprompt’ in such a way that it may be compatible
+We aim to design ‘tidyprompt’ in such a way that it can be compatible
 with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface
-to LLM APIs. We are open to feedback on our design and may include
-compatibility with specific features from these packages in the future.
+to LLM APIs.
+
+The `tidyprompt::llm_provider_ellmer()` function can create a LLM
+provider from an `ellmer::chat()` object, allowing users to use any LLM
+provider that can be configured with ‘ellmer’, including the respective
+configuration and features.

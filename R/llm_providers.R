@@ -678,7 +678,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
   )
 }
 
-#' Create a new ellmer LLM provider
+#' Create a new LLM provider from an `ellmer::chat()` object
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -687,20 +687,26 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #' This allows the user to use the various LLM providers which are supported
 #' by the 'ellmer' R package, including respective configuration and features.
 #'
-#' Please note that this function is experimental. This provider may show different behaviour than
+#' Please note that this function is experimental. This provider type may show different behavior than
 #' other LLM providers, and may not function optimally.
 #'
 #' @details
 #' Unlike other LLM provider classes,
 #' LLM provider settings need to be managed in the `ellmer::chat()` object
-#' (and not in the `$parameters` list, for instance).
+#' (and not in the `$parameters` list). `$get_chat()` and `$set_chat()` may be used
+#' to manipulate the chat object.
 #'
-#' @param chat An ellmer chat object (e.g., ellmer::chat_openai()).
+#' @param chat An `ellmer::chat()` object (e.g., `ellmer::chat_openai()`)
 #' @param verbose A logical indicating whether the interaction with the [llm_provider-class]
-#' should be printed to the console. Default is TRUE.
+#' should be printed to the console. Default is TRUE
 #'
-#' @return An [llm_provider-class] with api_type = "ellmer".
+#' @return An [llm_provider-class] with api_type = "ellmer"
+#'
 #' @export
+#'
+#' @example inst/examples/llm_providers.R
+#'
+#' @family llm_provider
 llm_provider_ellmer <- function(
     chat,
     verbose = getOption("tidyprompt.verbose", TRUE)

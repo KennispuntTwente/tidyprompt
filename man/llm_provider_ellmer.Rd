@@ -2,18 +2,18 @@
 % Please edit documentation in R/llm_providers.R
 \name{llm_provider_ellmer}
 \alias{llm_provider_ellmer}
-\title{Create a new ellmer LLM provider}
+\title{Create a new LLM provider from an \code{ellmer::chat()} object}
 \usage{
 llm_provider_ellmer(chat, verbose = getOption("tidyprompt.verbose", TRUE))
 }
 \arguments{
-\item{chat}{An ellmer chat object (e.g., ellmer::chat_openai()).}
+\item{chat}{An \code{ellmer::chat()} object (e.g., \code{ellmer::chat_openai()})}
 
 \item{verbose}{A logical indicating whether the interaction with the \linkS4class{llm_provider}
-should be printed to the console. Default is TRUE.}
+should be printed to the console. Default is TRUE}
 }
 \value{
-An \linkS4class{llm_provider} with api_type = "ellmer".
+An \linkS4class{llm_provider} with api_type = "ellmer"
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
@@ -22,11 +22,79 @@ This function creates a \linkS4class{llm_provider} from an \code{ellmer::chat()}
 This allows the user to use the various LLM providers which are supported
 by the 'ellmer' R package, including respective configuration and features.
 
-Please note that this function is experimental. This provider may show different behaviour than
+Please note that this function is experimental. This provider type may show different behavior than
 other LLM providers, and may not function optimally.
 }
 \details{
 Unlike other LLM provider classes,
 LLM provider settings need to be managed in the \code{ellmer::chat()} object
-(and not in the \verb{$parameters} list, for instance).
+(and not in the \verb{$parameters} list). \verb{$get_chat()} and \verb{$set_chat()} may be used
+to manipulate the chat object.
 }
+\examples{
+# Various providers:
+ollama <- llm_provider_ollama()
+openai <- llm_provider_openai()
+openrouter <- llm_provider_openrouter()
+mistral <- llm_provider_mistral()
+groq <- llm_provider_groq()
+xai <- llm_provider_xai()
+gemini <- llm_provider_google_gemini()
+
+# From an `ellmer::chat()` (e.g., `ellmer::chat_openai()`, ...):
+\dontrun{
+ellmer <- llm_provider_ellmer(ellmer::chat_openai())
+}
+
+# Initialize with settings:
+ollama <- llm_provider_ollama(
+  parameters = list(
+    model = "llama3.2:3b",
+    stream = TRUE
+  ),
+  verbose = TRUE,
+  url = "http://localhost:11434/api/chat"
+)
+
+# Change settings:
+ollama$verbose <- FALSE
+ollama$parameters$stream <- FALSE
+ollama$parameters$model <- "llama3.1:8b"
+
+\dontrun{
+# Try a simple chat message with '$complete_chat()':
+response <- ollama$complete_chat("Hi!")
+response
+# $role
+# [1] "assistant"
+#
+# $content
+# [1] "How's it going? Is there something I can help you with or would you like
+# to chat?"
+#
+# $http
+# Response [http://localhost:11434/api/chat]
+# Date: 2024-11-18 14:21
+# Status: 200
+# Content-Type: application/json; charset=utf-8
+# Size: 375 B
+
+# Use with send_prompt():
+"Hi" |>
+  send_prompt(ollama)
+# [1] "How's your day going so far? Is there something I can help you with or
+# would you like to chat?"
+}
+}
+\seealso{
+Other llm_provider: 
+\code{\link{llm_provider-class}},
+\code{\link{llm_provider_google_gemini}()},
+\code{\link{llm_provider_groq}()},
+\code{\link{llm_provider_mistral}()},
+\code{\link{llm_provider_ollama}()},
+\code{\link{llm_provider_openai}()},
+\code{\link{llm_provider_openrouter}()},
+\code{\link{llm_provider_xai}()}
+}
+\concept{llm_provider}

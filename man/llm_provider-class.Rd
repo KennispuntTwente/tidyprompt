@@ -70,6 +70,7 @@ llm_provider <- llm_provider_openai()
 }
 \seealso{
 Other llm_provider: 
+\code{\link{llm_provider_ellmer}()},
 \code{\link{llm_provider_google_gemini}()},
 \code{\link{llm_provider_groq}()},
 \code{\link{llm_provider_mistral}()},
