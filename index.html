@@ -187,7 +187,8 @@
 <h4 id="tidyprompt-versus-ellmer--tidyllm">‘tidyprompt’ versus ‘ellmer’ &amp; ‘tidyllm’<a class="anchor" aria-label="anchor" href="#tidyprompt-versus-ellmer--tidyllm"></a>
 </h4>
 <p>In line with the above, ‘tidyprompt’ is less focused on interfacing with the APIs of various LLM providers, like R packages ‘ellmer’ and ‘tidyllm’ do. Instead, ‘tidyprompt’ is primarily focused on offering a framework for constructing prompts and associated logic for interactions with LLMs.</p>
-<p>We aim to design ‘tidyprompt’ in such a way that it may be compatible with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface to LLM APIs. We are open to feedback on our design and may include compatibility with specific features from these packages in the future.</p>
+<p>We aim to design ‘tidyprompt’ in such a way that it can be compatible with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface to LLM APIs.</p>
+<p>The <code><a href="reference/llm_provider_ellmer.html">tidyprompt::llm_provider_ellmer()</a></code> function can create a LLM provider from an <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object, allowing users to use any LLM provider that can be configured with ‘ellmer’, including the respective configuration and features.</p>
 </div>
 </div>
 </div>
