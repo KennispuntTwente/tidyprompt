@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyprompt</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,7 @@
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/tjarkvandemerwe/tidyprompt/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/KennispuntTwente/tidyprompt/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -35,16 +35,29 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/tjarkvandemerwe/tidyprompt/blob/0.0.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/KennispuntTwente/tidyprompt/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="tidyprompt-development-version">tidyprompt (development version)<a class="anchor" aria-label="anchor" href="#tidyprompt-development-version"></a></h2>
+<ul><li>Added new prompt wraps: <code><a href="../reference/answer_as_category.html">answer_as_category()</a></code> &amp; <code><a href="../reference/answer_as_multi_category.html">answer_as_multi_category()</a></code>
+</li>
+<li>Added <code><a href="../reference/llm_break_soft.html">llm_break_soft()</a></code>, which can be used to interrupt prompt evaluation without causing an error</li>
+<li>Safer handling of chat history objects (‘NA’ rows could cause errors in specific cases)</li>
+<li>Fixed default Google Gemini LLM provider</li>
+<li>More flexible lenient extraction for final answer extraction in chain-of-thought</li>
+<li>Use <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> instead of <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code> for printing LLM responses</li>
+<li>Added ‘num_ctx’ parameter for Ollama LLM provider to more easily control the context window size</li>
+<li>Added <code>set_option()</code> &amp; `<code>set_options()</code> to Ollama LLM provider to more easily set options</li>
+<li>Added a more detailed error message in case a LLM provider cannot be reached</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.1" id="tidyprompt-001">tidyprompt 0.0.1<a class="anchor" aria-label="anchor" href="#tidyprompt-001"></a></h2><p class="text-muted">CRAN release: 2025-01-08</p>
-<ul><li>Initial CRAN submission</li>
+<ul><li>Initial CRAN release</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.0.9000" id="tidyprompt-0009000">tidyprompt 0.0.0.9000<a class="anchor" aria-label="anchor" href="#tidyprompt-0009000"></a></h2>
-<ul><li>Development version available on GitHub</li>
+<ul><li>Initial development version available on GitHub</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
