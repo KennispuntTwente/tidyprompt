@@ -85,6 +85,7 @@ should be printed to the console</p></dd>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other llm_provider:
 <code><a href="llm_provider-class.html">llm_provider-class</a></code>,
+<code><a href="llm_provider_ellmer.html">llm_provider_ellmer</a>()</code>,
 <code><a href="llm_provider_google_gemini.html">llm_provider_google_gemini</a>()</code>,
 <code><a href="llm_provider_mistral.html">llm_provider_mistral</a>()</code>,
 <code><a href="llm_provider_ollama.html">llm_provider_ollama</a>()</code>,
@@ -103,6 +104,11 @@ should be printed to the console</p></dd>
 <span class="r-in"><span><span class="va">groq</span> <span class="op">&lt;-</span> <span class="fu">llm_provider_groq</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">xai</span> <span class="op">&lt;-</span> <span class="fu"><a href="llm_provider_xai.html">llm_provider_xai</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">gemini</span> <span class="op">&lt;-</span> <span class="fu"><a href="llm_provider_google_gemini.html">llm_provider_google_gemini</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># From an `ellmer::chat()` (e.g., `ellmer::chat_openai()`, ...):</span></span></span>
+<span class="r-in"><span><span class="va">ellmer</span> <span class="op">&lt;-</span> <span class="fu"><a href="llm_provider_ellmer.html">llm_provider_ellmer</a></span><span class="op">(</span><span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/chat_openai.html" class="external-link">chat_openai</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Using <span style="color: #00BB00;">model</span> = <span style="color: #0000BB;">"gpt-4.1"</span>.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in openai_key():</span> Can't find env var `OPENAI_API_KEY`.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Initialize with settings:</span></span></span>
 <span class="r-in"><span><span class="va">ollama</span> <span class="op">&lt;-</span> <span class="fu"><a href="llm_provider_ollama.html">llm_provider_ollama</a></span><span class="op">(</span></span></span>
