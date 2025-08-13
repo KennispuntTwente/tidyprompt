@@ -41,7 +41,8 @@ Suggests:
     skimr,
     jsonvalidate,
     tidyjson,
-    DBI
+    DBI,
+    ellmer
 VignetteBuilder: knitr
 Imports: 
     dplyr,

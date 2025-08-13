@@ -1,6 +1,6 @@
 # Suppress warning about undefined variables which are passed between environments
 #   and are not actually undefined
-utils::globalVariables(c("self", "schema_instruction", ".data"))
+utils::globalVariables(c("self", "schema_instruction", ".data", "private"))
 
 # Print welcome message
 cli::cli_h3(

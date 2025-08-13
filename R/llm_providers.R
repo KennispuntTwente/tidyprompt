@@ -677,3 +677,136 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
     api_type = "fake"
   )
 }
+
+#' Create a new ellmer LLM provider
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function creates a [llm_provider-class] from an `ellmer::chat()` object.
+#' This allows the user to use the various LLM providers which are supported
+#' by the 'ellmer' R package, including respective configuration and features.
+#'
+#' Please note that this function is experimental. This provider may show different behaviour than
+#' other LLM providers, and may not function optimally.
+#'
+#' @details
+#' Unlike other LLM provider classes,
+#' LLM provider settings need to be managed in the `ellmer::chat()` object
+#' (and not in the `$parameters` list, for instance).
+#'
+#' @param chat An ellmer chat object (e.g., ellmer::chat_openai()).
+#' @param verbose A logical indicating whether the interaction with the [llm_provider-class]
+#' should be printed to the console. Default is TRUE.
+#'
+#' @return An [llm_provider-class] with api_type = "ellmer".
+#' @export
+llm_provider_ellmer <- function(
+    chat,
+    verbose = getOption("tidyprompt.verbose", TRUE)
+) {
+  if (missing(chat) || is.null(chat)) {
+    stop("`chat` must be an ellmer chat object (e.g., ellmer::chat_openai()).")
+  }
+  if (!is.environment(chat) || !is.function(chat$chat)) {
+    stop("`chat` doesn't look like an ellmer chat object (no `$chat()` method).")
+  }
+
+  complete_chat <- function(chat_history) {
+    private$sync_model()
+    ch <- self$ellmer_chat
+    ch <- ch$clone()
+
+    if (!all(c("role", "content") %in% names(chat_history))) {
+      stop("`chat_history` must have columns `role` and `content`.")
+    }
+
+    # All but last message become seeded turns
+    hist <- if (nrow(chat_history) > 1) {
+      chat_history[seq_len(nrow(chat_history) - 1), , drop = FALSE]
+    } else {
+      chat_history[0, , drop = FALSE]
+    }
+
+    to_turn <- function(role, text) {
+      ellmer::Turn(
+        role = role,
+        contents = list(ellmer::ContentText(text))
+      )
+    }
+    turns <- if (nrow(hist)) {
+      lapply(seq_len(nrow(hist)), function(i) to_turn(hist$role[i], hist$content[i]))
+    } else {
+      NULL
+    }
+
+    ch <- ch$set_turns(turns)
+
+    # Last message is always the prompt
+    prompt <- chat_history$content[nrow(chat_history)]
+    reply <- ch$chat(prompt)
+
+    completed <- dplyr::bind_rows(
+      chat_history,
+      data.frame(
+        role = "assistant",
+        content = as.character(reply),
+        stringsAsFactors = FALSE
+      )
+    )
+
+    list(
+      completed = completed,
+      http = list(request = NULL, response = NULL),
+      ellmer = list(
+        chat = ch,
+        turns = tryCatch(ch$get_turns(), error = function(e) NULL)
+      )
+    )
+  }
+
+  klass <- R6::R6Class(
+    "llm_provider_ellmer-class",
+    inherit = `llm_provider-class`,
+    public = list(
+      ellmer_chat = NULL,
+
+      get_chat = function() self$ellmer_chat,
+
+      # Replace the underlying ellmer chat object and re-sync `parameters$model`
+      set_chat = function(new_chat) {
+        stopifnot(is.environment(new_chat), is.function(new_chat$chat))
+        self$ellmer_chat <- new_chat
+        private$sync_model()
+        invisible(self)
+      }
+    ),
+    private = list(
+      complete_chat_function = NULL,
+
+      # Keep self$parameters$model in sync with ellmer_chat$get_model()
+      sync_model = function() {
+        m <- tryCatch({
+          gm <- self$ellmer_chat$get_model
+          if (is.function(gm)) self$ellmer_chat$get_model() else NULL
+        }, error = function(e) NULL)
+        if (!is.null(m)) self$parameters$model <- as.character(m)
+        invisible(NULL)
+      }
+    )
+  )
+
+  provider <- klass$new(
+    complete_chat_function = complete_chat,
+    parameters = list(),
+    verbose = verbose,
+    api_type = "ellmer"
+  )
+
+  provider$ellmer_chat <- chat
+  # Initial sync so $parameters$model reflects the chat's current model
+  provider$.__enclos_env__$private$sync_model()
+
+  provider
+}
+
