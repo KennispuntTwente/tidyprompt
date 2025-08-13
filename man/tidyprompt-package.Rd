@@ -10,9 +10,9 @@ Easily construct prompts and associated logic for interacting with large languag
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/tjarkvandemerwe/tidyprompt}
-  \item \url{https://tjarkvandemerwe.github.io/tidyprompt/}
-  \item Report bugs at \url{https://github.com/tjarkvandemerwe/tidyprompt/issues}
+  \item \url{https://github.com/KennispuntTwente/tidyprompt}
+  \item \url{https://KennispuntTwente.github.io/tidyprompt/}
+  \item Report bugs at \url{https://github.com/KennispuntTwente/tidyprompt/issues}
 }
 
 }
