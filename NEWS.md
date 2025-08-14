@@ -1,4 +1,4 @@
-# tidyprompt (development version)
+# tidyprompt 0.1.0
 
 * New prompt wraps `answer_as_category()` and `answer_as_multi_category()`
 * New `llm_break_soft()` interrupts prompt evaluation without error
