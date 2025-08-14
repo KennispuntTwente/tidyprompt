@@ -12,6 +12,7 @@ to configure options
 in specific cases
 * Final-answer extraction in chain-of-thought prompts is more flexible
 * Printed LLM responses now use `message()` instead of `cat()`
+* Moved repository to https://github.com/KennispuntTwente/tidyprompt
 
 # tidyprompt 0.0.1
 
