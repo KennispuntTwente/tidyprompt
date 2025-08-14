@@ -40,17 +40,18 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="tidyprompt-development-version">tidyprompt (development version)<a class="anchor" aria-label="anchor" href="#tidyprompt-development-version"></a></h2>
-<ul><li>Added new prompt wraps: <code><a href="../reference/answer_as_category.html">answer_as_category()</a></code> &amp; <code><a href="../reference/answer_as_multi_category.html">answer_as_multi_category()</a></code>
+<ul><li>New prompt wraps <code><a href="../reference/answer_as_category.html">answer_as_category()</a></code> and <code><a href="../reference/answer_as_multi_category.html">answer_as_multi_category()</a></code>
 </li>
-<li>Added <code><a href="../reference/llm_break_soft.html">llm_break_soft()</a></code>, which can be used to interrupt prompt evaluation without causing an error</li>
-<li>Added LLM provider which can be created from an ‘ellmer’ chat object: <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code> (experimental)</li>
-<li>Added ‘num_ctx’ parameter for Ollama LLM provider to more easily control the context window size</li>
-<li>Added <code>set_option()</code> &amp; `<code>set_options()</code> to Ollama LLM provider to more easily set options</li>
-<li>Added a more detailed error message in case a LLM provider cannot be reached</li>
-<li>Fixed errors in Google Gemini LLM provider</li>
-<li>Adjusted handling of chat history objects to be safer (‘NA’ rows could cause errors in specific cases)</li>
-<li>Adjusted lenient extraction for final answer extraction in chain-of-thought to be more flexible</li>
-<li>Adjusted the printing of LLM respones to use <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> instead of <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code>
+<li>New <code><a href="../reference/llm_break_soft.html">llm_break_soft()</a></code> interrupts prompt evaluation without error</li>
+<li>New experimental provider <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code> for <code>ellmer</code> chat objects</li>
+<li>Ollama provider gains <code>num_ctx</code> parameter to control context window size</li>
+<li>
+<code>set_option()</code> and <code>set_options()</code> are now available for the Ollama provider to configure options</li>
+<li>Error messages are more informative when an LLM provider cannot be reached.</li>
+<li>Google Gemini provider now works without errors in affected cases</li>
+<li>Chat history handling is safer; rows with <code>NA</code> values no longer cause errors in specific cases</li>
+<li>Final-answer extraction in chain-of-thought prompts is more flexible</li>
+<li>Printed LLM responses now use <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> instead of <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code>
 </li>
 </ul></div>
     <div class="section level2">
