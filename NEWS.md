@@ -1,17 +1,17 @@
 # tidyprompt (development version)
 
-* Added new prompt wraps: `answer_as_category()` & `answer_as_multi_category()`
-* Added `llm_break_soft()`, which can be used to interrupt prompt evaluation
-without causing an error
-* Safer handling of chat history objects ('NA' rows could cause errors in specific cases)
-* Fixed default Google Gemini LLM provider
-* More flexible lenient extraction for final answer extraction in chain-of-thought
-* Use `message()` instead of `cat()` for printing LLM responses
-* Added 'num_ctx' parameter for Ollama LLM provider to more easily control
-the context window size
-* Added `set_option()` & ``set_options()` to Ollama LLM provider to 
-more easily set options
-* Added a more detailed error message in case a LLM provider cannot be reached
+* New prompt wraps `answer_as_category()` and `answer_as_multi_category()`
+* New `llm_break_soft()` interrupts prompt evaluation without error
+* New experimental provider `llm_provider_ellmer()` for `ellmer` chat objects
+* Ollama provider gains `num_ctx` parameter to control context window size
+* `set_option()` and `set_options()` are now available for the Ollama provider
+to configure options
+* Error messages are more informative when an LLM provider cannot be reached.
+* Google Gemini provider now works without errors in affected cases
+* Chat history handling is safer; rows with `NA` values no longer cause errors 
+in specific cases
+* Final-answer extraction in chain-of-thought prompts is more flexible
+* Printed LLM responses now use `message()` instead of `cat()`
 
 # tidyprompt 0.0.1
 
