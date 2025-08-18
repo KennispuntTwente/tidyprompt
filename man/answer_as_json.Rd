@@ -45,9 +45,10 @@ from the LLM response and, when a schema is provided, it will be validated
 against the schema with \code{\link[jsonvalidate:json_validate]{jsonvalidate::json_validate()}}. Feedback is sent to the
 LLM when the response is not valid. This option always works, but may in some
 cases may be less powerful than the other native JSON options
-\item "auto": Automatically determine the type based on 'llm_provider$api_type'.
-This does not consider model compatibility and could lead to errors; set 'type'
-manually if errors occur; use 'text-based' if unsure
+\item "auto": Automatically determine the type based on 'llm_provider$api_type'
+or 'llm_provider$json_type' (if set; 'json_type' overrides 'api_type' determination).
+This may not consider model compatibility and could lead to errors;
+set 'type' manually if errors occur; use 'text-based' if unsure
 \item "openai" and "ollama": The response format will be set via the relevant API parameters,
 making the API enforce a valid JSON response. If a schema is provided,
 it will also be included in the API parameters and also be enforced by the API.

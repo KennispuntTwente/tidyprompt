@@ -94,9 +94,16 @@ printed to the console}
 
 \item{\code{api_key}}{The API key to use for authentication with the LLM provider API}
 
-\item{\code{api_type}}{The type of API to use (e.g., "openai", "ollama").
+\item{\code{api_type}}{The type of API to use (e.g., "openai", "ollama", "ellmer").
 This is used to determine certain specific behaviors for different APIs,
 for instance, as is done in the \code{\link[=answer_as_json]{answer_as_json()}} function}
+
+\item{\code{json_type}}{The type of JSON mode to use (e.g., 'auto', 'openai', 'ollama', or 'text-based').
+Using 'auto' or having this field not set, the api_type field will be used to
+determine the JSON mode during the \code{\link[=answer_as_json]{answer_as_json()}} function. If this field
+is set, this will override the api_type field for JSON mode determination.
+(Note: this determination only happens when the 'type' argument in
+\code{\link[=answer_as_json]{answer_as_json()}} is also set to 'auto'.)}
 
 \item{\code{handler_fns}}{A list of functions that will be called after the completion of a chat.
 See \verb{$add_handler_fn()}}

@@ -40,9 +40,10 @@
 #' against the schema with [jsonvalidate::json_validate()]. Feedback is sent to the
 #' LLM when the response is not valid. This option always works, but may in some
 #' cases may be less powerful than the other native JSON options
-#' \item "auto": Automatically determine the type based on 'llm_provider$api_type'.
-#' This does not consider model compatibility and could lead to errors; set 'type'
-#' manually if errors occur; use 'text-based' if unsure
+#' \item "auto": Automatically determine the type based on 'llm_provider$api_type'
+#' or 'llm_provider$json_type' (if set; 'json_type' overrides 'api_type' determination).
+#' This may not consider model compatibility and could lead to errors;
+#' set 'type' manually if errors occur; use 'text-based' if unsure
 #' \item "openai" and "ollama": The response format will be set via the relevant API parameters,
 #' making the API enforce a valid JSON response. If a schema is provided,
 #' it will also be included in the API parameters and also be enforced by the API.
@@ -97,23 +98,42 @@ answer_as_json <- function(
       "The 'schema' argument must be a non-empty list (R object) representing a JSON schema"
     )
 
-  if (type == "auto" & getOption("tidyprompt.warn.auto.json", TRUE)) {
+  if (
+    type == "auto" &
+      getOption("tidyprompt.warn.auto.json", TRUE)
+  ) {
     cli::cli_alert_warning(
       paste0(
         "{.strong `answer_as_json()`}:\n",
-        "* Automatically determining type based on 'llm_provider$api_type';\n",
-        "this does not consider model compatability\n",
-        "* Manually set argument 'type' if errors occur ",
+        "* Automatically determining type based on 'llm_provider$api_type'",
+        " (or 'llm_provider$json_type' if set);\n",
+        "this may not consider model compatability\n",
+        "* Manually set argument 'type' or 'llm_provider$json_type' if errors occur ",
         "(\"text-based\" always works)\n",
         "* Use `options(tidyprompt.warn.auto.json = FALSE)` to suppress this warning"
       )
     )
   }
-
   determine_type <- function(llm_provider = NULL) {
     if (type != "auto") return(type)
-    if (isTRUE(llm_provider$api_type == "openai")) return("openai")
-    if (isTRUE(llm_provider$api_type == "ollama")) return("ollama")
+    valid_types <- c("text-based", "openai", "ollama", "openai_oo", "ollama_oo")
+
+    # 1) Prefer explicit llm_provider$json_type if provided and not "auto"
+    provider_json_type <- llm_provider[["json_type"]]
+    if (
+      !is.null(provider_json_type) &&
+        !identical(provider_json_type, "auto") &&
+        provider_json_type %in% valid_types
+    ) {
+      return(provider_json_type)
+    }
+
+    # 2) Otherwise infer from llm_provider$api_type
+    provider_api_type <- llm_provider[["api_type"]]
+    if (isTRUE(provider_api_type == "openai")) return("openai")
+    if (isTRUE(provider_api_type == "ollama")) return("ollama")
+
+    # 3) Fallback
     return("text-based")
   }
 
