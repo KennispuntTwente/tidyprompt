@@ -109,6 +109,7 @@ llm_provider_ollama <- function(
 #' Create a new OpenAI LLM provider
 #'
 #' This function creates a new [llm_provider-class] object that interacts with the Open AI API.
+#' Supports both the Chat Completions API (/v1/chat/completions) and the Responses API (/v1/responses).
 #'
 #' @param parameters A named list of parameters. Currently the following parameters are required:
 #'    - model: The name of the model to use
@@ -123,7 +124,9 @@ llm_provider_ollama <- function(
 #' @param verbose A logical indicating whether the interaction with the LLM provider
 #' should be printed to the console. Default is TRUE.
 #' @param url The URL to the OpenAI API endpoint for chat completion
-#' (typically: "https://api.openai.com/v1/chat/completions")
+#' (typically: "https://api.openai.com/v1/chat/completions"
+#' or "https://api.openai.com/v1/responses"; both the Chat Completions API and
+#' the Responses API are supported; the Responses API is more modern)
 #' @param api_key The API key to use for authentication with the OpenAI API
 #'
 #' @return A new [llm_provider-class] object for use of the OpenAI API
@@ -138,7 +141,7 @@ llm_provider_openai <- function(
     stream = getOption("tidyprompt.stream", TRUE)
   ),
   verbose = getOption("tidyprompt.verbose", TRUE),
-  url = "https://api.openai.com/v1/chat/completions",
+  url = "https://api.openai.com/v1/responses",
   api_key = Sys.getenv("OPENAI_API_KEY")
 ) {
   complete_chat <- function(chat_history) {
@@ -708,14 +711,16 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #'
 #' @family llm_provider
 llm_provider_ellmer <- function(
-    chat,
-    verbose = getOption("tidyprompt.verbose", TRUE)
+  chat,
+  verbose = getOption("tidyprompt.verbose", TRUE)
 ) {
   if (missing(chat) || is.null(chat)) {
     stop("`chat` must be an ellmer chat object (e.g., ellmer::chat_openai()).")
   }
   if (!is.environment(chat) || !is.function(chat$chat)) {
-    stop("`chat` doesn't look like an ellmer chat object (no `$chat()` method).")
+    stop(
+      "`chat` doesn't look like an ellmer chat object (no `$chat()` method)."
+    )
   }
 
   complete_chat <- function(chat_history) {
@@ -741,7 +746,10 @@ llm_provider_ellmer <- function(
       )
     }
     turns <- if (nrow(hist)) {
-      lapply(seq_len(nrow(hist)), function(i) to_turn(hist$role[i], hist$content[i]))
+      lapply(
+        seq_len(nrow(hist)),
+        function(i) to_turn(hist$role[i], hist$content[i])
+      )
     } else {
       NULL
     }
@@ -792,10 +800,13 @@ llm_provider_ellmer <- function(
 
       # Keep self$parameters$model in sync with ellmer_chat$get_model()
       sync_model = function() {
-        m <- tryCatch({
-          gm <- self$ellmer_chat$get_model
-          if (is.function(gm)) self$ellmer_chat$get_model() else NULL
-        }, error = function(e) NULL)
+        m <- tryCatch(
+          {
+            gm <- self$ellmer_chat$get_model
+            if (is.function(gm)) self$ellmer_chat$get_model() else NULL
+          },
+          error = function(e) NULL
+        )
         if (!is.null(m)) self$parameters$model <- as.character(m)
         invisible(NULL)
       }
@@ -815,4 +826,3 @@ llm_provider_ellmer <- function(
 
   provider
 }
-

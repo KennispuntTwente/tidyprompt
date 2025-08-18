@@ -57,6 +57,8 @@ test_that("text-based function calling works with custom function", {
 test_that("native ollama function calling works", {
   skip_test_if_no_ollama()
 
+  devtools::load_all()
+
   prompt <- "What files are in my current directory?" |>
     answer_using_tools(dir, type = "ollama")
 
@@ -69,11 +71,17 @@ test_that("native ollama function calling works", {
 test_that("native openai function calling works", {
   skip_test_if_no_openai()
 
+  devtools::load_all()
+
   prompt <- "What files are in my current directory?" |>
     answer_using_tools(dir, type = "openai")
 
   result <- prompt |>
-    send_prompt(llm_provider_openai())
+    send_prompt(llm_provider_openai(
+      url = "https://api.openai.com/v1/chat/completions"
+    ))
+
+  print(result)
 
   expect_true(!is.null(result))
 })

@@ -29,6 +29,7 @@ request_llm_provider <- function(
   api_type = c("openai", "ollama")
 ) {
   api_type <- match.arg(api_type)
+  request <- normalize_openai_request(request, api_type)
 
   if (!is.null(stream) && stream) {
     req_result <- req_llm_stream(request, api_type, verbose)
@@ -64,7 +65,10 @@ req_llm_handle_error <- function(e) {
       body <- e$resp |>
         httr2::resp_body_string() |>
         jsonlite::fromJSON()
-      paste0("\nResponse body: ", jsonlite::toJSON(body, pretty = TRUE, auto_unbox = TRUE))
+      paste0(
+        "\nResponse body: ",
+        jsonlite::toJSON(body, pretty = TRUE, auto_unbox = TRUE)
+      )
     },
     error = function(e) "\n(Could not parse JSON body from response)"
   )
@@ -78,81 +82,114 @@ req_llm_handle_error <- function(e) {
   stop(msg, call. = FALSE)
 }
 
-
 req_llm_stream <- function(req, api_type, verbose) {
   role <- NULL
   message_accumulator <- ""
   tool_calls <- list()
 
-  callback_func <- function(chunk) {
-    if (api_type == "ollama") {
-      parsed_data <- parse_ollama_stream_chunk(chunk)
+  using_responses <- (api_type == "openai") && is_openai_responses_endpoint(req)
 
-      for (data in parsed_data) {
-        if (is.null(role)) role <<- data$message$role
-        message_accumulator <<- paste0(
-          message_accumulator,
-          data$message$content
-        )
-        if (verbose) cat(data$message$content)
-      }
-    }
-
-    if (api_type == "openai") {
-      parsed_data <- parse_openai_stream_chunk(chunk)
-
-      for (data in parsed_data) {
-        # Set role if not yet set
-        if (is.null(role) && !is.null(data$choices$delta$role)) {
-          role <<- data$choices$delta$role
-        }
-
-        # Handle tool calls
-        if (
-          !is.null(data$choices$delta$tool_calls) &&
-            length(data$choices$delta$tool_calls) > 0
-        ) {
-          tool_calls <<- append_or_update_tool_calls(
-            tool_calls,
-            data$choices$delta$tool_calls,
-            verbose
-          )
-          # If a tool call is found, no direct message content is appended this chunk
-          next
-        }
-
-        # Handle regular content
-        addition <- data$choices$delta$content
-        if (!is.null(addition)) {
-          message_accumulator <<- paste0(message_accumulator, addition)
-          if (verbose) cat(addition)
-        }
-      }
-    }
-
-    return(TRUE)
-  }
-
-  response <- tryCatch(
-    httr2::req_perform_stream(
-      req,
-      buffer_kb = 0.001,
-      round = "line",
-      callback = callback_func
-    ),
+  # No low-level HTTP verbosity; we'll print only tokens ourselves
+  resp <- tryCatch(
+    httr2::req_perform_connection(req, verbosity = 0),
     error = function(e) req_llm_handle_error(e)
   )
 
-  if (!is.list(response$body)) response$body <- list()
-  response$body$tool_calls <- tool_calls
+  if (api_type == "ollama") {
+    while (!httr2::resp_stream_is_complete(resp)) {
+      lines <- httr2::resp_stream_lines(resp, lines = 1, warn = FALSE)
+      if (length(lines) == 0) next
+      for (line in lines) {
+        if (!nzchar(line)) next
+        data <- tryCatch(jsonlite::fromJSON(line), error = function(e) NULL)
+        if (is.null(data)) next
 
-  if (verbose) cat("\n")
+        if (is.null(role) && !is.null(data$message$role))
+          role <- data$message$role
+        if (!is.null(data$message$content)) {
+          message_accumulator <- paste0(
+            message_accumulator,
+            data$message$content
+          )
+          if (isTRUE(verbose)) cat(data$message$content)
+        }
+      }
+    }
+  } else if (!using_responses) {
+    # OpenAI Chat Completions (SSE) — use resp_stream_sse for robust parsing
+    if (is.null(role)) role <- "assistant"
 
-  return(
-    list(
-      new = data.frame(role = role, content = message_accumulator),
-      httr2_response = response
-    )
+    repeat {
+      ev <- httr2::resp_stream_sse(resp)
+      if (!nzchar(ev$data)) next # keepalive / empty
+      if (identical(ev$data, "[DONE]")) break # sentinel
+
+      payload <- tryCatch(jsonlite::fromJSON(ev$data), error = function(e) NULL)
+      if (is.null(payload)) next
+
+      # tool calls (function calling) support
+      tc <- payload$choices[1, ]$delta$tool_calls
+      if (length(tc) > 0) {
+        tool_calls <- append_or_update_tool_calls(
+          tool_calls,
+          tc,
+          verbose
+        )
+        next
+      }
+
+      d <- tryCatch(
+        payload$choices[1, ]$delta,
+        error = function(e) NULL
+      )
+      if (is.null(d)) next
+
+      if (!is.null(d$role) && is.null(role)) role <- d$role
+
+      # text tokens
+      if (!is.null(d$content)) {
+        add <- d$content
+        if (length(add) > 0 && !is.na(add)) {
+          message_accumulator <- paste0(message_accumulator, add)
+          if (isTRUE(verbose)) cat(add)
+        }
+      }
+    }
+  } else {
+    # OpenAI Responses API (SSE)
+    if (is.null(role)) role <- "assistant"
+    repeat {
+      ev <- httr2::resp_stream_sse(resp)
+      if (is.null(ev)) break
+      if (!nzchar(ev$data) || identical(ev$data, "[DONE]")) next
+
+      payload <- tryCatch(jsonlite::fromJSON(ev$data), error = function(e) NULL)
+      if (is.null(payload)) next
+
+      # Only handle text deltas, ignore response.created/in_progress/etc.
+      if (
+        !is.null(payload$type) &&
+          grepl("response\\.(output_)?text\\.delta$", payload$type) &&
+          !is.null(payload$delta)
+      ) {
+        message_accumulator <- paste0(message_accumulator, payload$delta)
+        if (isTRUE(verbose)) cat(payload$delta)
+      }
+    }
+  }
+
+  if (isTRUE(verbose)) cat("\n")
+
+  if (!is.list(resp$body)) resp$body <- list()
+  resp$body$tool_calls <- tool_calls
+
+  list(
+    new = data.frame(
+      role = if (is.null(role)) "assistant" else role,
+      content = message_accumulator,
+      stringsAsFactors = FALSE
+    ),
+    httr2_response = resp
   )
 }
 
@@ -163,32 +200,49 @@ req_llm_non_stream <- function(req, api_type, verbose) {
   )
 
   content <- httr2::resp_body_json(response)
+  using_responses <- (api_type == "openai") && is_openai_responses_endpoint(req)
 
   if (api_type == "ollama") {
     new <- tryCatch(
       data.frame(
         role = content$message$role,
-        content = content$message$content
+        content = content$message$content,
+        stringsAsFactors = FALSE
       ),
       error = function(e) data.frame()
     )
+  } else if (using_responses) {
+    # Prefer convenience field if present
+    txt <- NULL
+    if (!is.null(content$output_text)) {
+      txt <- content$output_text
+    } else if (!is.null(content$output) && length(content$output) > 0) {
+      # Fallback: stitch message items' text
+      bits <- unlist(lapply(content$output, function(it) {
+        if (!is.null(it$content)) {
+          unlist(lapply(it$content, function(c) c$text %||% NULL))
+        }
+      }))
+      txt <- paste(bits, collapse = "")
+    }
+    new <- data.frame(
+      role = "assistant",
+      content = txt %||% "",
+      stringsAsFactors = FALSE
+    )
   } else {
-    # OpenAI type API
+    # OpenAI Chat Completions
     new <- tryCatch(
       data.frame(
         role = content$choices[[1]]$message$role,
-        content = content$choices[[1]]$message$content
+        content = content$choices[[1]]$message$content,
+        stringsAsFactors = FALSE
       ),
       error = function(e) data.frame()
     )
   }
 
-  return(
-    list(
-      new = new,
-      httr2_response = response
-    )
-  )
+  list(new = new, httr2_response = response)
 }
 
 parse_ollama_stream_chunk <- function(chunk) {
@@ -217,6 +271,20 @@ parse_openai_stream_chunk <- function(chunk) {
   })
 
   Filter(Negate(is.null), parsed_data)
+}
+
+parse_openai_responses_stream_chunk <- function(chunk) {
+  # SSE frames typically arrive as lines prefixed with "data: ..."
+  char <- rawToChar(chunk)
+  parts <- strsplit(char, split = "\n")[[1]]
+  # Keep only JSON-bearing "data:" lines
+  json_lines <- gsub("^data:\\s*", "", parts[grepl("^data:", parts)])
+  parsed <- lapply(json_lines, function(x) {
+    # Some providers send sentinel like [DONE] — skip non-JSON
+    if (identical(x, "[DONE]") || x == "") return(NULL)
+    tryCatch(jsonlite::fromJSON(x), error = function(e) NULL)
+  })
+  Filter(Negate(is.null), parsed)
 }
 
 append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
@@ -266,4 +334,97 @@ append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
   }
 
   tool_calls
+}
+
+is_openai_responses_endpoint <- function(req) {
+  url_str <- tryCatch(
+    httr2::url_build(req$url),
+    error = function(e) as.character(req$url)
+  )
+  grepl("/responses(\\b|/|\\?)", url_str)
+}
+
+normalize_openai_request <- function(req, api_type) {
+  if (api_type != "openai") return(req)
+  if (!is_openai_responses_endpoint(req)) return(req)
+
+  body_obj <- tryCatch(req$body$data, error = function(e) NULL)
+  if (!is.list(body_obj)) return(req)
+
+  # Chat Completions -> Responses rename
+  if (!is.null(body_obj$messages) && is.null(body_obj$input)) {
+    body_obj$input <- body_obj$messages
+    body_obj$messages <- NULL
+  }
+
+  # response_format -> text.format  (Responses API)
+  if (!is.null(body_obj$response_format) && is.null(body_obj$text$format)) {
+    rf <- body_obj$response_format
+
+    # allow legacy "json_object" string
+    if (is.character(rf)) rf <- list(type = rf)
+
+    fmt <- NULL
+
+    if (identical(rf$type, "json_object")) {
+      fmt <- list(type = "json_object")
+    } else if (identical(rf$type, "json_schema")) {
+      # accept either wrapped { json_schema = ... } or a raw schema
+      js <- rf$json_schema %||% rf$schema %||% rf
+
+      # pull name from common places (Draft-04 'title' is fine)
+      name <- js$name %||% js$title %||% "Schema"
+      schema <- js$schema %||% js
+      strict <- isTRUE(rf$strict %||% js$strict)
+
+      fmt <- list(
+        type = "json_schema",
+        name = as.character(name),
+        schema = schema
+      )
+      if (strict) fmt$strict <- TRUE
+    }
+
+    if (!is.null(fmt)) {
+      body_obj$text <- body_obj$text %||% list()
+      body_obj$text$format <- fmt
+      body_obj$response_format <- NULL
+    }
+  }
+
+  # --- Tools normalization for Responses API -------------------------------
+  # Some providers/endpoints require top-level `name` (and sometimes `parameters`)
+  # instead of nesting under `function`. Keep the nested `function` too for
+  # compatibility; we're just ensuring required fields exist at top-level.
+  if (!is.null(body_obj$tools) && is.list(body_obj$tools)) {
+    body_obj$tools <- lapply(body_obj$tools, function(t) {
+      # Ensure type if omitted but a function spec exists
+      if (is.null(t$type) && !is.null(t$`function`)) t$type <- "function"
+
+      # Hoist nested fields to top-level when missing there
+      if (is.null(t$name) && !is.null(t$`function`$name)) {
+        t$name <- t$`function`$name
+      }
+      if (is.null(t$description) && !is.null(t$`function`$description)) {
+        t$description <- t$`function`$description
+      }
+      # Some Responses implementations expect top-level `parameters`
+      if (is.null(t$parameters) && !is.null(t$`function`$parameters)) {
+        t$parameters <- t$`function`$parameters
+      }
+      t
+    })
+  }
+
+  # Normalize tool_choice shape (if using CC-style {"type":"function","function":{"name":...}})
+  if (!is.null(body_obj$tool_choice) && is.list(body_obj$tool_choice)) {
+    if (
+      !is.null(body_obj$tool_choice$`function`$name) &&
+        is.null(body_obj$tool_choice$name)
+    ) {
+      body_obj$tool_choice$name <- body_obj$tool_choice$`function`$name
+    }
+  }
+
+  httr2::req_body_json(req, body_obj, auto_unbox = TRUE)
 }

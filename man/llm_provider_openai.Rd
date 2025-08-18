@@ -7,7 +7,7 @@
 llm_provider_openai(
   parameters = list(model = "gpt-4o-mini", stream = getOption("tidyprompt.stream", TRUE)),
   verbose = getOption("tidyprompt.verbose", TRUE),
-  url = "https://api.openai.com/v1/chat/completions",
+  url = "https://api.openai.com/v1/responses",
   api_key = Sys.getenv("OPENAI_API_KEY")
 )
 }
@@ -29,7 +29,9 @@ documentation for more information: https://platform.openai.com/docs/api-referen
 should be printed to the console. Default is TRUE.}
 
 \item{url}{The URL to the OpenAI API endpoint for chat completion
-(typically: "https://api.openai.com/v1/chat/completions")}
+(typically: "https://api.openai.com/v1/chat/completions"
+or "https://api.openai.com/v1/responses"; both the Chat Completions API and
+the Responses API are supported; the Responses API is more modern)}
 
 \item{api_key}{The API key to use for authentication with the OpenAI API}
 }
@@ -38,6 +40,7 @@ A new \linkS4class{llm_provider} object for use of the OpenAI API
 }
 \description{
 This function creates a new \linkS4class{llm_provider} object that interacts with the Open AI API.
+Supports both the Chat Completions API (/v1/chat/completions) and the Responses API (/v1/responses).
 }
 \examples{
 # Various providers:
