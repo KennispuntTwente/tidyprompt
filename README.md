@@ -7,7 +7,7 @@
 
 [![R-CMD-check](https://github.com/KennispuntTwente/tidyprompt/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/KennispuntTwente/tidyprompt/actions/workflows/R-CMD-check.yaml)
 [![](https://www.r-pkg.org/badges/version/tidyprompt)](https://cran.r-project.org/package=tidyprompt)
-[![](https://img.shields.io/badge/devel%20version-0.0.1.9000-blue.svg)](https://github.com/KennispuntTwente/tidyprompt)
+[![](https://img.shields.io/badge/devel%20version-0.1.0.9000-blue.svg)](https://github.com/KennispuntTwente/tidyprompt)
 <!-- badges: end -->
 
 ‘tidyprompt’ is an R package to easily construct prompts and associated
