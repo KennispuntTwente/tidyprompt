@@ -49,6 +49,14 @@ features to your prompts and define how they are evaluated by LLMs. For example:
   functions (‘tools’). With this, the LLM can retrieve information or
   take other actions. 'tidyprompt' also supports R code generation and
   evaluation, allowing LLMs to run R code.
+  
+With its features, 'tidyprompt' extends the functionality of LLMs beyond
+what is natively offered by LLM APIs, and you can elegantly design
+complex, robust interactions with LLMs.
+
+*To make it even easier to use 'tidyprompt', 
+we are designing this package to be compatible with the ['ellmer'](https://ellmer.tidyverse.org/index.html) R package, which 
+has gained popularity for interfacing with LLM APIs (see [more information below](#tidyprompt-versus-ellmer--tidyllm)).*
 
 ## Installation
 
