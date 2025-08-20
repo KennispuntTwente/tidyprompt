@@ -250,9 +250,18 @@ history field. The returned object will be the chat history
 with the system prompt as the first message with role 'system' and the
 the base prompt as the last message with role 'user'.</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">tidyprompt</span><span class="op">-</span><span class="va">class</span><span class="op">$</span><span class="fu">get_chat_history</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">tidyprompt</span><span class="op">-</span><span class="va">class</span><span class="op">$</span><span class="fu">get_chat_history</span><span class="op">(</span>llm_provider <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+<div class="section">
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>llm_provider</code></dt>
+<dd><p>An optional <a href="llm_provider-class.html">llm_provider</a> object.
+This may sometimes affect the prompt text construction</p></dd>
+
+
+</dl><p></p></div>
+</div>
 <div class="section">
 <h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>A dataframe containing the chat history</p>
@@ -266,7 +275,7 @@ the base prompt as the last message with role 'user'.</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

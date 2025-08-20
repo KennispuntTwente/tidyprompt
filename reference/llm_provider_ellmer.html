@@ -86,6 +86,11 @@ should be printed to the console. Default is TRUE</p></dd>
 LLM provider settings need to be managed in the <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object
 (and not in the <code>$parameters</code> list). <code>$get_chat()</code> and <code>$set_chat()</code> may be used
 to manipulate the chat object.</p>
+<p>A special parameter <code>$.ellmer_structured_type</code> may be set in the <code>$parameters</code> list;
+this parameter is used to specify a structured output format. This should be a 'ellmer'
+structured type (e.g., <code><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">ellmer::type_object</a></code>; see https://ellmer.tidyverse.org/articles/structured-data.html).
+<code><a href="answer_as_json.html">answer_as_json()</a></code> sets this parameter to obtain structured output
+(it is not recommended to set this parameter manually, but it is possible).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
