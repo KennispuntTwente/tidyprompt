@@ -118,7 +118,7 @@ send_prompt <- function(
 
   ## 2 Chat history, send_chat, handler_fns
 
-  chat_history <- prompt$get_chat_history()
+  chat_history <- prompt$get_chat_history(llm_provider)
 
   # Internal function to send chat messages
   send_chat <- function(

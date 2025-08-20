@@ -343,8 +343,11 @@ NULL
     #' with the system prompt as the first message with role 'system' and the
     #' the base prompt as the last message with role 'user'.
     #'
+    #' @param llm_provider An optional [llm_provider-class] object.
+    #' This may sometimes affect the prompt text construction
+    #'
     #' @return A dataframe containing the chat history
-    get_chat_history = function() {
+    get_chat_history = function(llm_provider = NULL) {
       chat_history_construction <- c(
         role = "system",
         content = self$system_prompt
@@ -355,7 +358,7 @@ NULL
         dplyr::bind_rows(
           c(
             role = "user",
-            content = self$construct_prompt_text()
+            content = self$construct_prompt_text(llm_provider)
           )
         )
 
