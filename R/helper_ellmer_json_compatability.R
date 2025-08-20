@@ -1,7 +1,11 @@
-# R/ellmer-compat.R
+# R/helper_ellmer_json_compatability.R
 
 ellmer_available <- function() {
   requireNamespace("ellmer", quietly = TRUE)
+}
+
+if (!ellmer_available()) {
+  install.packages("ellmer", repos = "https://cran.rstudio.com")
 }
 
 # --- Detectors --------------------------------------------------------------
@@ -49,7 +53,6 @@ is_ellmer_type <- function(x) {
 
 # --- JSON Schema -> ellmer::type_* -----------------------------------------
 
-# Recursively build an ellmer type from a JSON Schema (list)
 json_schema_to_ellmer_type <- function(
   schema,
   required = TRUE,
@@ -77,32 +80,32 @@ json_schema_to_ellmer_type <- function(
 
   if (identical(t, "string")) {
     return(ellmer::type_string(
-      schema$description %||% NULL,
+      description = schema$description %||% NULL,
       required = required
     ))
   }
   if (identical(t, "number")) {
     return(ellmer::type_number(
-      schema$description %||% NULL,
+      description = schema$description %||% NULL,
       required = required
     ))
   }
   if (identical(t, "integer")) {
     return(ellmer::type_integer(
-      schema$description %||% NULL,
+      description = schema$description %||% NULL,
       required = required
     ))
   }
   if (identical(t, "boolean")) {
     return(ellmer::type_boolean(
-      schema$description %||% NULL,
+      description = schema$description %||% NULL,
       required = required
     ))
   }
   if (identical(t, "array")) {
     item_schema <- schema$items %||% list(type = "string")
     return(ellmer::type_array(
-      item = json_schema_to_ellmer_type(
+      items = json_schema_to_ellmer_type(
         item_schema,
         required = TRUE,
         strict = strict
@@ -115,7 +118,6 @@ json_schema_to_ellmer_type <- function(
     props <- schema$properties %||% list()
     req <- schema$required %||% character()
 
-    # Build named args: each property becomes name = type_*(..., required=...)
     ellmer_fields <- lapply(names(props), function(p) {
       json_schema_to_ellmer_type(
         props[[p]],
@@ -125,28 +127,29 @@ json_schema_to_ellmer_type <- function(
     })
     names(ellmer_fields) <- names(props)
 
-    # Additional properties (unknown keys)
     addl <- schema$additionalProperties
     addl_flag <- if (is.null(addl)) !isTRUE(strict) else isTRUE(addl)
 
-    return(do.call(
-      ellmer::type_object,
-      c(
-        ellmer_fields,
-        list(
-          description = schema$description %||% NULL,
-          .additional_properties = addl_flag,
-          required = required
-        )
+    args <- c(
+      ellmer_fields,
+      list(
+        .description = schema$description %||% NULL,
+        .additional_properties = addl_flag,
+        .required = required
       )
-    ))
+    )
+
+    # Drop NULLs so nothing bogus leaks into `...`
+    args <- args[!vapply(args, is.null, logical(1))]
+
+    return(do.call(ellmer::type_object, args))
   }
 
-  # Fallback: a permissive "anything" object if we can't infer
+  # Fallback: permissive object
   ellmer::type_object(
-    description = schema$description %||% NULL,
+    .description = schema$description %||% NULL,
     .additional_properties = TRUE,
-    required = required
+    .required = required
   )
 }
 
@@ -158,84 +161,90 @@ ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
   }
 
   sig <- .ELLMER_CLASS_SIGNATURES
+  desc <- description %||% attr(x, "description", exact = TRUE)
 
-  # Scalars
-  if (has_all_classes(x, sig$string)) {
-    return(compact_list(list(type = "string", description = description)))
-  }
-  if (has_all_classes(x, sig$number)) {
-    return(compact_list(list(type = "number", description = description)))
-  }
-  if (has_all_classes(x, sig$integer)) {
-    return(compact_list(list(type = "integer", description = description)))
-  }
-  if (has_all_classes(x, sig$boolean)) {
-    return(compact_list(list(type = "boolean", description = description)))
-  }
-  if (has_all_classes(x, sig$enum)) {
-    # Try to read choices off the object; if not, use placeholder
-    vals <- attr(x, "values", exact = TRUE)
-    if (is.null(vals)) vals <- attr(x, "levels", exact = TRUE)
-    return(compact_list(list(
-      enum = vals %||% character(),
-      description = description
-    )))
+  # --- Basic scalars: prefer S7 'type' property over class signatures ----
+  basic_type <- attr(x, "type", exact = TRUE)
+  if (
+    is.character(basic_type) &&
+      length(basic_type) == 1 &&
+      basic_type %in% c("string", "number", "integer", "boolean")
+  ) {
+    return(compact_list(list(type = basic_type, description = desc)))
   }
 
-  # Array
+  # --- Enum: prefer attribute-based detection for robustness --------------
+  enum_vals <- attr(x, "values", exact = TRUE) %||%
+    attr(x, "levels", exact = TRUE)
+  if (!is.null(enum_vals) || has_all_classes(x, sig$enum)) {
+    if (is.null(enum_vals)) enum_vals <- character()
+    return(compact_list(list(enum = enum_vals, description = desc)))
+  }
+
+  # --- Array ---------------------------------------------------------------
   if (has_all_classes(x, sig$array)) {
-    item <- attr(x, "item", exact = TRUE)
+    items <- attr(x, "items", exact = TRUE) %||% attr(x, "item", exact = TRUE)
     return(compact_list(list(
       type = "array",
-      items = ellmer_type_to_json_schema(item, strict = strict),
-      description = description
+      description = desc, # <-- move before items
+      items = if (!is.null(items))
+        ellmer_type_to_json_schema(items, strict = strict) else NULL
     )))
   }
 
-  # Object
+  # --- Object --------------------------------------------------------------
   if (has_all_classes(x, sig$object)) {
-    # ellmer::type_object stores fields as attributes; we duck-type by scanning
-    # for ellmer-typed attributes (not perfect, but works in practice).
-    at <- attributes(x) %||% list()
-    # pull out additional properties flag if present
-    addl <- at$.additional_properties %||% !isTRUE(strict)
+    addl_attr <- attr(x, ".additional_properties", exact = TRUE)
+    if (is.null(addl_attr))
+      addl_attr <- attr(x, "additional_properties", exact = TRUE)
+    addl <- if (is.null(addl_attr)) !isTRUE(strict) else isTRUE(addl_attr)
 
-    # properties = every attribute that itself looks like an ellmer type
-    prop_names <- names(at)
-    prop_names <- setdiff(
-      prop_names,
-      c(".additional_properties", "class", "description", "required")
-    )
+    props <- attr(x, "properties", exact = TRUE)
+    if (is.null(props)) {
+      at <- attributes(x) %||% list()
+      reserved <- c(
+        ".additional_properties",
+        "additional_properties",
+        "class",
+        "description",
+        "required",
+        "properties"
+      )
+      prop_names <- setdiff(names(at), reserved)
+      props <- lapply(prop_names, function(nm) at[[nm]])
+      names(props) <- prop_names
+    }
 
     properties <- list()
     required <- character()
-    for (nm in prop_names) {
-      val <- at[[nm]]
-      if (is_ellmer_type(val)) {
-        properties[[nm]] <- ellmer_type_to_json_schema(val, strict = strict)
-        # Try to detect optionality (ellmer scalars/fields accept required=FALSE)
-        req_flag <- attr(val, "required", exact = TRUE)
-        if (!identical(req_flag, FALSE)) required <- c(required, nm)
+    if (length(props)) {
+      for (nm in names(props)) {
+        val <- props[[nm]]
+        if (is_ellmer_type(val)) {
+          properties[[nm]] <- ellmer_type_to_json_schema(val, strict = strict)
+          req_flag <- attr(val, "required", exact = TRUE)
+          if (!identical(req_flag, FALSE)) required <- c(required, nm)
+        }
       }
     }
 
-    out <- compact_list(list(
+    return(compact_list(list(
       type = "object",
+      description = desc,
       properties = properties,
       required = if (length(required)) unique(required) else NULL,
-      additionalProperties = isTRUE(addl),
-      description = description %||% attr(x, "description", exact = TRUE)
-    ))
-    return(out)
+      additionalProperties = isTRUE(addl)
+    )))
   }
 
-  # Fallback permissive
+  # --- Fallback permissive -------------------------------------------------
   compact_list(list(
     type = "object",
     additionalProperties = TRUE,
-    description = description
+    description = desc
   ))
 }
+
 
 compact_list <- function(x) {
   x[!vapply(x, is.null, logical(1))]
