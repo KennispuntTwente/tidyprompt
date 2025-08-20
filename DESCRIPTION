@@ -54,5 +54,6 @@ Imports:
     stringr,
     utils,
     cli,
-    R6
+    R6,
+    rlang
 Config/testthat/edition: 3
