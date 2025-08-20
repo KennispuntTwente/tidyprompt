@@ -221,4 +221,9 @@ to LLM APIs.
 The `tidyprompt::llm_provider_ellmer()` function can create a LLM
 provider from an `ellmer::chat()` object, allowing users to use any LLM
 provider that can be configured with ‘ellmer’, including the respective
-configuration and features.
+configuration and features. Furthermore, `answer_as_json()` supports
+specifying a schema as ‘ellmer’ structured data types (e.g.,
+`ellmer::type_object()`). When using an ‘ellmer’ LLM provider,
+`answer_as_json()` also calls the native ‘ellmer’ chat function for
+obtaining structed output. (We will soon give `answer_using_tools()`
+similar support for defining tools with `ellmer::tool()`.)

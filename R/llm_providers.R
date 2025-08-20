@@ -699,6 +699,12 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #' (and not in the `$parameters` list). `$get_chat()` and `$set_chat()` may be used
 #' to manipulate the chat object.
 #'
+#' A special parameter `$.ellmer_structured_type` may be set in the `$parameters` list;
+#' this parameter is used to specify a structured output format. This should be a 'ellmer'
+#' structured type (e.g., `ellmer::type_object`; see https://ellmer.tidyverse.org/articles/structured-data.html).
+#' `answer_as_json()` sets this parameter to obtain structured output
+#' (it is not recommended to set this parameter manually, but it is possible).
+#'
 #' @param chat An `ellmer::chat()` object (e.g., `ellmer::chat_openai()`)
 #' @param verbose A logical indicating whether the interaction with the [llm_provider-class]
 #' should be printed to the console. Default is TRUE
@@ -725,14 +731,14 @@ llm_provider_ellmer <- function(
 
   complete_chat <- function(chat_history) {
     private$sync_model()
-    ch <- self$ellmer_chat
-    ch <- ch$clone()
+    ch <- self$ellmer_chat$clone()
+    params <- self$parameters
 
     if (!all(c("role", "content") %in% names(chat_history))) {
       stop("`chat_history` must have columns `role` and `content`.")
     }
 
-    # All but last message become seeded turns
+    # Seed prior turns
     hist <- if (nrow(chat_history) > 1) {
       chat_history[seq_len(nrow(chat_history) - 1), , drop = FALSE]
     } else {
@@ -740,31 +746,41 @@ llm_provider_ellmer <- function(
     }
 
     to_turn <- function(role, text) {
-      ellmer::Turn(
-        role = role,
-        contents = list(ellmer::ContentText(text))
-      )
+      ellmer::Turn(role = role, contents = list(ellmer::ContentText(text)))
     }
-    turns <- if (nrow(hist)) {
-      lapply(
-        seq_len(nrow(hist)),
-        function(i) to_turn(hist$role[i], hist$content[i])
-      )
-    } else {
-      NULL
+    if (nrow(hist)) {
+      ch <- ch$set_turns(lapply(seq_len(nrow(hist)), function(i) {
+        to_turn(hist$role[i], hist$content[i])
+      }))
     }
 
-    ch <- ch$set_turns(turns)
-
-    # Last message is always the prompt
+    # Prompt = last message
     prompt <- chat_history$content[nrow(chat_history)]
-    reply <- ch$chat(prompt)
+
+    structured_type <- params$.ellmer_structured_type %||% NULL
+    use_structured <- !is.null(structured_type) &&
+      is.function(ch$chat_structured)
+
+    if (use_structured) {
+      reply_struct <- ch$chat_structured(prompt, type = structured_type)
+
+      # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
+      assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
+        as.character()
+
+      structured_payload <- reply_struct
+    } else {
+      # Regular chat
+      reply_any <- ch$chat(prompt)
+      assistant_text <- as.character(reply_any)
+      structured_payload <- NULL
+    }
 
     completed <- dplyr::bind_rows(
       chat_history,
       data.frame(
         role = "assistant",
-        content = as.character(reply),
+        content = assistant_text,
         stringsAsFactors = FALSE
       )
     )
@@ -774,7 +790,8 @@ llm_provider_ellmer <- function(
       http = list(request = NULL, response = NULL),
       ellmer = list(
         chat = ch,
-        turns = tryCatch(ch$get_turns(), error = function(e) NULL)
+        turns = tryCatch(ch$get_turns(), error = function(e) NULL),
+        structured = structured_payload # <-- NEW: raw structured result for fast-path extractors
       )
     )
   }

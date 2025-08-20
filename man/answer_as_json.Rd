@@ -9,17 +9,17 @@ answer_as_json(
   schema = NULL,
   schema_strict = FALSE,
   schema_in_prompt_as = c("example", "schema"),
-  type = c("text-based", "auto", "openai", "ollama", "openai_oo", "ollama_oo")
+  type = c("auto", "text-based", "openai", "ollama", "openai_oo", "ollama_oo", "ellmer")
 )
 }
 \arguments{
 \item{prompt}{A single string or a \code{\link[=tidyprompt]{tidyprompt()}} object}
 
-\item{schema}{A list which represents
-a JSON schema that the response should match.See example and your API's
-documentation for more information on defining JSON schemas. Note that the schema should be a
-list (R object) representing a JSON schema, not a JSON string
-(use \code{\link[jsonlite:fromJSON]{jsonlite::fromJSON()}} and \code{\link[jsonlite:fromJSON]{jsonlite::toJSON()}} to convert between the two)}
+\item{schema}{Either a JSON Schema (R list) or an \verb{ellmer::type_*} object.
+When an ellmer type is provided and the selected \code{type} supports JSON
+schemas (e.g. "openai", "ollama", "text-based"), it will be converted
+to JSON Schema via \code{ellmer_type_to_json_schema()}. When \code{type = "ellmer"},
+the ellmer type is used directly for structured calls.}
 
 \item{schema_strict}{If TRUE, the provided schema will be strictly enforced.
 This option is passed as part of the schema when using type  type
@@ -38,6 +38,10 @@ from the schema
 
 \item{type}{The way that JSON response should be enforced:
 \itemize{
+#' \item "auto": Automatically determine the type based on 'llm_provider$api_type'
+or 'llm_provider$json_type' (if set; 'json_type' overrides 'api_type' determination).
+This may not always consider model compatibility and could lead to errors;
+set 'type' manually if errors occur; use 'text-based' if unsure
 \item "text-based": Instruction will be added to the prompt
 asking for JSON; when a schema is provided, this will also be included
 in the prompt (see argument 'schema_in_prompt_as'). JSON will be parsed
@@ -45,10 +49,6 @@ from the LLM response and, when a schema is provided, it will be validated
 against the schema with \code{\link[jsonvalidate:json_validate]{jsonvalidate::json_validate()}}. Feedback is sent to the
 LLM when the response is not valid. This option always works, but may in some
 cases may be less powerful than the other native JSON options
-\item "auto": Automatically determine the type based on 'llm_provider$api_type'
-or 'llm_provider$json_type' (if set; 'json_type' overrides 'api_type' determination).
-This may not consider model compatibility and could lead to errors;
-set 'type' manually if errors occur; use 'text-based' if unsure
 \item "openai" and "ollama": The response format will be set via the relevant API parameters,
 making the API enforce a valid JSON response. If a schema is provided,
 it will also be included in the API parameters and also be enforced by the API.
@@ -60,8 +60,17 @@ If you are unsure or encounter errors, use "text-based"
 schema is provided it is not included in the API parameters. Schema validation
 will be done in R with \code{\link[jsonvalidate:json_validate]{jsonvalidate::json_validate()}}. This can be useful if
 you want to use the API's JSON support, but their schema support is limited
+\item "ellmer": A parameter will be added to the LLM provider, indicating
+that the response should be structured according to the provided schema.
+This is only useful when using an \code{llm_provider_ellmer()} object,
+and will lead to errors for other LLM provider types. Typically,
+when type is set to 'auto' and the \code{llm_provider} is an 'ellmer' LLM provider,
+this will be automatically selected (so it should not be necessary to set
+this option manually)
 }
-Note that the "openai" and "ollama" types may also work for other APIs with a similar structure}
+Note that the "openai" and "ollama" types may also work for other APIs with a similar structure.
+Note furthermore that the "ellmer" type is still experimental and conversion
+between 'ellmer' schemas and R list schemas may contain bugs.}
 }
 \value{
 A \code{\link[=tidyprompt]{tidyprompt()}} with an added \code{\link[=prompt_wrap]{prompt_wrap()}} which will ensure
@@ -69,13 +78,20 @@ that the LLM response is a valid JSON object
 }
 \description{
 This functions wraps a prompt with settings that ensure the LLM response
-is a valid JSON object, optionally matching a given JSON schema.
+is a valid JSON object, optionally matching a given JSON schema. Users
+may provide either an 'ellmer' type (e.g. \code{ellmer:type_object()};
+see https://ellmer.tidyverse.org/articles/structured-data.html) or
+a JSON Schema (as R list object) to define the expected structure of the response.
 
 The function can work with all models and providers through text-based
-handling, but also supports native settings for the OpenAI and Ollama
-API types. (See argument 'type'.) This means that it is possible to easily
+handling, but also supports native settings for the OpenAI, Ollama,
+and various 'ellmer' types. (See argument 'type'.) This means that it is possible to easily
 switch between providers with different levels of JSON support,
 while ensuring the results will be in the correct format.
+
+Wrap a prompt so the LLM returns a valid JSON object,
+optionally constrained by a schema. The \code{schema} can be either
+a JSON Schema (R list) or an \verb{ellmer::type_*} object.
 }
 \examples{
 base_prompt <- "How can I solve 8x + 7 = -23?"

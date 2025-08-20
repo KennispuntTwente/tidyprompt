@@ -30,6 +30,12 @@ Unlike other LLM provider classes,
 LLM provider settings need to be managed in the \code{ellmer::chat()} object
 (and not in the \verb{$parameters} list). \verb{$get_chat()} and \verb{$set_chat()} may be used
 to manipulate the chat object.
+
+A special parameter \verb{$.ellmer_structured_type} may be set in the \verb{$parameters} list;
+this parameter is used to specify a structured output format. This should be a 'ellmer'
+structured type (e.g., \code{ellmer::type_object}; see https://ellmer.tidyverse.org/articles/structured-data.html).
+\code{answer_as_json()} sets this parameter to obtain structured output
+(it is not recommended to set this parameter manually, but it is possible).
 }
 \examples{
 # Various providers:

@@ -274,9 +274,17 @@ history field. The returned object will be the chat history
 with the system prompt as the first message with role 'system' and the
 the base prompt as the last message with role 'user'.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{tidyprompt-class$get_chat_history()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{tidyprompt-class$get_chat_history(llm_provider = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{llm_provider}}{An optional \linkS4class{llm_provider} object.
+This may sometimes affect the prompt text construction}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 A dataframe containing the chat history
 }
