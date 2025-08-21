@@ -6,7 +6,7 @@ accompanying extraction function to call the functions (handled by
 send_prompt()). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
-(see ellmer::create_tool_def(); https://ellmer.tidyverse.org/articles/tool-calling.html).
+(see ellmer::tool(); https://ellmer.tidyverse.org/articles/tool-calling.html).
 Model Context Protocol (MCP) tools from MCP servers, as returned from mcptools::mcp_tools(), may also
 be used."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
 Users can specify a list of functions that the LLM can call, and the
@@ -15,7 +15,7 @@ accompanying extraction function to call the functions (handled by
 send_prompt()). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
-(see ellmer::create_tool_def(); https://ellmer.tidyverse.org/articles/tool-calling.html).
+(see ellmer::tool(); https://ellmer.tidyverse.org/articles/tool-calling.html).
 Model Context Protocol (MCP) tools from MCP servers, as returned from mcptools::mcp_tools(), may also
 be used."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -65,7 +65,7 @@ accompanying extraction function to call the functions (handled by
 <code><a href="send_prompt.html">send_prompt()</a></code>). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 <code><a href="tools_add_docs.html">tools_add_docs()</a></code>. Users can also provide an 'ellmer' tool definition
-(see <code><a href="https://ellmer.tidyverse.org/reference/create_tool_def.html" class="external-link">ellmer::create_tool_def()</a></code>; https://ellmer.tidyverse.org/articles/tool-calling.html).
+(see <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>; https://ellmer.tidyverse.org/articles/tool-calling.html).
 Model Context Protocol (MCP) tools from MCP servers, as returned from <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>, may also
 be used.</p>
     </div>
@@ -88,11 +88,11 @@ be used.</p>
 
 
 <dt id="arg-tools">tools<a class="anchor" aria-label="anchor" href="#arg-tools"></a></dt>
-<dd><p>An R function, an 'ellmer' tool definition (from <code><a href="https://ellmer.tidyverse.org/reference/create_tool_def.html" class="external-link">ellmer::create_tool_def()</a></code>),
+<dd><p>An R function, an 'ellmer' tool definition (from <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>),
 or a list of either, which the LLM will be able to call. If an R function is passed
 which has been documented in a help file (e.g., because it is part of a package),
 the documentation will be parsed from the help file. If it is a custom function,
-documentation should be added with <code><a href="tools_add_docs.html">tools_add_docs()</a></code> or with <code><a href="https://ellmer.tidyverse.org/reference/create_tool_def.html" class="external-link">ellmer::create_tool_def()</a></code>.
+documentation should be added with <code><a href="tools_add_docs.html">tools_add_docs()</a></code> or with <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>.
 Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
 <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code></p></dd>
 
@@ -152,22 +152,46 @@ will allow the LLM to call R functions</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span>  <span class="co"># When using functions from base R or R packages,</span></span></span>
-<span class="r-in"><span>  <span class="co">#   documentation is automatically extracted from help files:</span></span></span>
-<span class="r-in"><span>  <span class="st">"What are the files in my current directory?"</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">dir</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="co"># 'dir' function is from base R</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># When using functions from base R or R packages,</span></span></span>
+<span class="r-in"><span><span class="co">#   documentation is automatically extracted from help files:</span></span></span>
+<span class="r-in"><span><span class="va">prompt_with_dir_function</span> <span class="op">&lt;-</span> <span class="st">"What are the files in my current directory?"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">dir</span><span class="op">)</span> <span class="co"># The 'dir' function is from base R</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> <span style="font-weight: bold;">`answer_using_tools()`</span>:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Automatically determining type based on 'llm_provider$api_type';</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> this does not consider model compatability</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Manually set argument 'type' if errors occur ("text-based" always works)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Use `options(tidyprompt.warn.auto.tools = FALSE)` to suppress this warning</span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">prompt_with_dir_function</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># --- Sending request to LLM provider (llama3.1:8b): ---</span></span></span>
+<span class="r-in"><span>  <span class="co">#   What are the files in my current directory?</span></span></span>
+<span class="r-in"><span>  <span class="co">#   --- Receiving response from LLM provider: ---</span></span></span>
+<span class="r-in"><span>  <span class="co">#   Calling function 'nm' with arguments:</span></span></span>
+<span class="r-in"><span>  <span class="co">#   {</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "all.files": true,</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "full.names": false,</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "ignore.case": false,</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "include.dirs": false,</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "no..": false,</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "path": "./",</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "pattern": "*",</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "recursive": false</span></span></span>
+<span class="r-in"><span>  <span class="co">#   }</span></span></span>
+<span class="r-in"><span>  <span class="co"># Result:</span></span></span>
+<span class="r-in"><span>  <span class="co">#   .git, .github, .gitignore, .Rbuildignore, .Rhistory, ...</span></span></span>
+<span class="r-in"><span>  <span class="co"># The files in your current directory are:</span></span></span>
+<span class="r-in"><span>  <span class="co">#   .git, .github, .gitignore, .Rbuildignore, .Rhistory, ...</span></span></span>
+<span class="r-in"><span>  <span class="co"># [1] "The files in your current directory are:\n\n .git, .github, ..."</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Custom functions may also be provided;</span></span></span>
-<span class="r-in"><span><span class="co">#   in this case, some documentation is extracted from the function's formals;</span></span></span>
-<span class="r-in"><span><span class="co">#   descriptions may be added manually. See below</span></span></span>
+<span class="r-in"><span><span class="co"># Users may provide custom functions in two ways:</span></span></span>
+<span class="r-in"><span><span class="co">#   1) as a function object, optionally documented with `tools_get_docs()`, or</span></span></span>
+<span class="r-in"><span><span class="co">#   2) as an 'ellmer' tool definition, using `ellmer::tool()`</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example fake weather function to add to the prompt:</span></span></span>
+<span class="r-in"><span><span class="co"># Take this fake weather function as an example:</span></span></span>
 <span class="r-in"><span><span class="va">temperature_in_location</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="va">location</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Amsterdam"</span>, <span class="st">"Utrecht"</span>, <span class="st">"Enschede"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    <span class="va">unit</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Celcius"</span>, <span class="st">"Fahrenheit"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">location</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Amsterdam"</span>, <span class="st">"Utrecht"</span>, <span class="st">"Enschede"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="va">unit</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Celcius"</span>, <span class="st">"Fahrenheit"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">location</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg</a></span><span class="op">(</span><span class="va">location</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">unit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg</a></span><span class="op">(</span><span class="va">unit</span><span class="op">)</span></span></span>
@@ -186,8 +210,10 @@ will allow the LLM to call R functions</p>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Generate documentation for a function</span></span></span>
-<span class="r-in"><span><span class="co">#   (based on formals, &amp; help file if available)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 1: `tools_add_docs()` --------------------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Generate documentation for a function, based on formals &amp; help file</span></span></span>
 <span class="r-in"><span><span class="va">docs</span> <span class="op">&lt;-</span> <span class="fu"><a href="tools_get_docs.html">tools_get_docs</a></span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The types get inferred from the function's formals</span></span></span>
@@ -202,12 +228,81 @@ will allow the LLM to call R functions</p>
 <span class="r-in"><span><span class="co"># When we are satisfied with the documentation, we can add it to the function:</span></span></span>
 <span class="r-in"><span><span class="va">temperature_in_location</span> <span class="op">&lt;-</span> <span class="fu"><a href="tools_add_docs.html">tools_add_docs</a></span><span class="op">(</span><span class="va">temperature_in_location</span>, <span class="va">docs</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">prompt_with_weather_function</span> <span class="op">&lt;-</span></span></span>
+<span class="r-in"><span>  <span class="st">"What is the weather in Enschede? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> <span style="font-weight: bold;">`answer_using_tools()`</span>:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Automatically determining type based on 'llm_provider$api_type';</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> this does not consider model compatability</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Manually set argument 'type' if errors occur ("text-based" always works)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Use `options(tidyprompt.warn.auto.tools = FALSE)` to suppress this warning</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span>  <span class="co"># Now the LLM can use the function:</span></span></span>
-<span class="r-in"><span>  <span class="st">"Hi, what is the weather in Enschede? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">prompt_with_weather_function</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># --- Sending request to LLM provider (llama3.1:8b): ---</span></span></span>
+<span class="r-in"><span>  <span class="co">#   What is the weather in Enschede? Give me Celcius degrees</span></span></span>
+<span class="r-in"><span>  <span class="co">#   --- Receiving response from LLM provider: ---</span></span></span>
+<span class="r-in"><span>  <span class="co">#   Calling function 'temperature_in_location' with arguments:</span></span></span>
+<span class="r-in"><span>  <span class="co">#   {</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "location": "Enschede",</span></span></span>
+<span class="r-in"><span>  <span class="co">#     "unit": "Celcius"</span></span></span>
+<span class="r-in"><span>  <span class="co">#   }</span></span></span>
+<span class="r-in"><span>  <span class="co"># Result:</span></span></span>
+<span class="r-in"><span>  <span class="co">#   22.7</span></span></span>
+<span class="r-in"><span>  <span class="co"># The temperature in Enschede is 22.7 Celcius degrees.</span></span></span>
+<span class="r-in"><span>  <span class="co"># [1] "The temperature in Enschede is 22.7 Celcius degrees."</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 2: `ellmer::tool()` -----------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Alternatively, we can define the function as an 'ellmer' tool</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">temperature_in_location_ellmer</span> <span class="op">&lt;-</span> <span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">tool</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">temperature_in_location</span>,</span></span>
+<span class="r-in"><span>  name <span class="op">=</span> <span class="st">"get_temperature"</span>,</span></span>
+<span class="r-in"><span>  description <span class="op">=</span> <span class="st">"Get the temperature in a location"</span>,</span></span>
+<span class="r-in"><span>  arguments <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    location <span class="op">=</span> <span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">type_string</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="st">"Location for which to return the temperature"</span>, required <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    unit <span class="op">=</span> <span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">type_string</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="st">"Unit in which to return the temperature"</span>, required <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">prompt_with_weather_function_ellmer</span> <span class="op">&lt;-</span></span></span>
+<span class="r-in"><span>  <span class="st">"What is the weather in Utrecht? Give me Fahrenheit degrees"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location_ellmer</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> <span style="font-weight: bold;">`answer_using_tools()`</span>:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Automatically determining type based on 'llm_provider$api_type';</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> this does not consider model compatability</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Manually set argument 'type' if errors occur ("text-based" always works)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Use `options(tidyprompt.warn.auto.tools = FALSE)` to suppress this warning</span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">prompt_with_weather_function_ellmer</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># ...</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Because `mcptools::mcp_tools()` returns a list of `ellmer:tool()` tools,</span></span></span>
+<span class="r-in"><span><span class="co">#   you can also use Model Context Protocol (MCP) server tools with</span></span></span>
+<span class="r-in"><span><span class="co">#   `answer_using_tools()`:</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span>  <span class="va">mcp_tools</span> <span class="op">&lt;-</span> <span class="fu">mcptools</span><span class="fu">::</span><span class="fu"><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcp_tools</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="st">"Push my latest commit to GitHub"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">mcp_tools</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># `answer_using_tools()` will automatically attempt to use the most appropriate</span></span></span>
+<span class="r-in"><span><span class="co">#   way of sending the tool to the LLM</span></span></span>
+<span class="r-in"><span><span class="co"># If you use a LLM provider of type 'ollama' or 'openai',</span></span></span>
+<span class="r-in"><span><span class="co">#   it will automatically convert the tool definition to parameters</span></span></span>
+<span class="r-in"><span><span class="co">#   appropriate for those APIs</span></span></span>
+<span class="r-in"><span><span class="co"># If you use a LLM provider of type 'ellmer', it will call the appropriate</span></span></span>
+<span class="r-in"><span><span class="co">#   ellmer function directly which will handle the tool call for various</span></span></span>
+<span class="r-in"><span><span class="co">#   providers</span></span></span>
+<span class="r-in"><span><span class="co"># Note that both tool definitions from `tools_add_docs()` and `ellmer::tool()`</span></span></span>
+<span class="r-in"><span><span class="co">#   will work with any LLM provider; `answer_using_tools()` can convert</span></span></span>
+<span class="r-in"><span><span class="co">#   the two types of tool definitions to each other when needed</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
