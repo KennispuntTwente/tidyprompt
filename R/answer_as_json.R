@@ -2,7 +2,7 @@
 #'
 #' @description This functions wraps a prompt with settings that ensure the LLM response
 #' is a valid JSON object, optionally matching a given JSON schema. Users
-#' may provide either an 'ellmer' type (e.g. [ellmer:type_object()];
+#' may provide either an 'ellmer' type (e.g. [ellmer::type_object()];
 #' see https://ellmer.tidyverse.org/articles/structured-data.html) or
 #' a JSON Schema (as R list object) to define the expected structure of the response.
 #'
