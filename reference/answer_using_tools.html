@@ -294,6 +294,7 @@ will allow the LLM to call R functions</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># `answer_using_tools()` will automatically attempt to use the most appropriate</span></span></span>
 <span class="r-in"><span><span class="co">#   way of sending the tool to the LLM</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># If you use a LLM provider of type 'ollama' or 'openai',</span></span></span>
 <span class="r-in"><span><span class="co">#   it will automatically convert the tool definition to parameters</span></span></span>
 <span class="r-in"><span><span class="co">#   appropriate for those APIs</span></span></span>
@@ -303,6 +304,36 @@ will allow the LLM to call R functions</p>
 <span class="r-in"><span><span class="co"># Note that both tool definitions from `tools_add_docs()` and `ellmer::tool()`</span></span></span>
 <span class="r-in"><span><span class="co">#   will work with any LLM provider; `answer_using_tools()` can convert</span></span></span>
 <span class="r-in"><span><span class="co">#   the two types of tool definitions to each other when needed</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span>  <span class="va">ollama</span> <span class="op">&lt;-</span> <span class="fu"><a href="llm_provider_ollama.html">llm_provider_ollama</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Ollama LLM provider:</span></span></span>
+<span class="r-in"><span>  <span class="st">"What is the weather in Amsterdam? Give me Fahrenheit degrees"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">ollama</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Ollama LLM provider also works with `ellmer::tool()` definitions:</span></span></span>
+<span class="r-in"><span>  <span class="st">"What is the weather in Amsterdam? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location_ellmer</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">ollama</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Similar for OpenAI API:</span></span></span>
+<span class="r-in"><span>  <span class="va">openai</span> <span class="op">&lt;-</span> <span class="fu"><a href="llm_provider_openai.html">llm_provider_openai</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="st">"What is the weather in Amsterdam? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">openai</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># ...</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Ellmer LLM provider:</span></span></span>
+<span class="r-in"><span>  <span class="va">ellmer</span> <span class="op">&lt;-</span> <span class="fu"><a href="llm_provider_ellmer.html">llm_provider_ellmer</a></span><span class="op">(</span><span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/chat_openai.html" class="external-link">chat_openai</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="st">"What is the weather in Amsterdam? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location_ellmer</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">ellmer</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Also works with `tools_add_docs()` definition:</span></span></span>
+<span class="r-in"><span>  <span class="st">"What is the weather in Amsterdam? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">answer_using_tools</span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">ellmer</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
