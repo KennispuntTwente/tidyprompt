@@ -1007,6 +1007,24 @@ tools_docs_to_r_json_schema <- function(
     prop <- list()
     r_type <- arg$type
 
+    normalize_r_type <- function(x) {
+      if (is.list(x) || is.null(x)) return(x)
+      x <- tolower(trimws(as.character(x)))
+      switch(
+        x,
+        "character" = "string",
+        "str"       = "string",
+        "bool"      = "logical",
+        "boolean"   = "logical",
+        "double"    = "numeric",
+        "float"     = "numeric",
+        "int"       = "integer",
+        x
+      )
+    }
+    r_type <- normalize_r_type(arg$type)
+
+
     if (is.list(r_type)) {
       # Handle named lists (objects)
       prop$type <- "object"
@@ -1022,7 +1040,7 @@ tools_docs_to_r_json_schema <- function(
       }
     } else if (is.null(r_type) || r_type == "unknown") {
       prop$type <- "string"
-    } else if (r_type == "character") {
+    } else if (r_type == "string") {
       prop$type <- "string"
     } else if (r_type == "integer") {
       prop$type <- "integer"
@@ -1106,7 +1124,8 @@ tools_docs_to_r_json_schema <- function(
       cli::cli_alert_warning(
         paste0(
           "{.strong `answer_using_tools()`, `tools_docs_to_r_json_schema()`}:\n",
-          "* Unknown argument type; defaulting to 'string'"
+          "* Unknown argument type ('", r_type, "'); ",
+          "defaulting to 'string'"
         )
       )
       prop$type <- "string"
