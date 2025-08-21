@@ -86,7 +86,7 @@ answer_using_tools <- function(
   # Normalize to a named list while trying to keep stable names
   if (is_toolish(tools)) {
     nm <- sanitize_name(deparse(substitute(tools)))
-    tools <- list(nm = tools)
+    tools <- rlang::set_names(list(tools), nm)
   } else {
     stopifnot(
       is.list(tools),
@@ -203,31 +203,70 @@ answer_using_tools <- function(
     if (t == "ellmer") return(response)
     if (!t %in% c("openai", "ollama")) return(response)
 
+    # Attempt to find tool calls in the response body;
+    #   it's a bit of a mess at the moment, as we attempt to parse
+    #   from Ollama response structure, OpenAI chat completions response structure,
+    #   and OpenAI responses API response structure
+    #   TODO: clean this up by breaking it into smaller functions, clarify flow
     while (TRUE) {
       body <- response$http$response$body
 
       if ("tool_calls" %in% names(body)) {
+        # In some cases body has already been converted; see if we can find
+        #   tool in potentially converted body
+        # TODO: find out if this is stil necesarry
         tool_calls <- body$tool_calls
       } else {
+        # Now converting raw bytes body to JSON
         body <- tryCatch(
           body |> rawToChar() |> jsonlite::fromJSON(),
           error = function(e) NULL
         )
+        # If NULL, no body present & we won't find tool calls
         if (is.null(body)) break
 
+        # If not NULL, setup list in which we will store normalized tool calls
         tool_calls <- list()
 
+        # Check OpenAI
         if (t == "openai") {
-          if (length(body$choices$message$tool_calls) == 0) break
-          for (tool_call in body$choices$message$tool_calls) {
-            tool_calls[[length(tool_calls) + 1]] <- list(
-              id = tool_call$id,
-              type = tool_call$type,
-              "function" = as.list(tool_call[["function"]])
-            )
+          if (length(body$choices$message$tool_calls) > 0) {
+            # Check for tool calls from chat completions API response
+            for (tool_call in body$choices$message$tool_calls) {
+              tool_calls[[length(tool_calls) + 1]] <- list(
+                id = tool_call$id,
+                type = tool_call$type,
+                "function" = as.list(tool_call[["function"]])
+              )
+            }
+          } else if (
+            # Check for tool calls from responses API response
+            isTRUE(nrow(body$output) > 0) &&
+              isTRUE(any(body$output$type == "function_call"))
+          ) {
+            function_calls <- body$output |>
+              dplyr::filter(
+                type == "function_call"
+              )
+            # Every tool call is a row
+            for (i in seq_len(nrow(function_calls))) {
+              tool_call <- function_calls[i, ]
+              tool_calls[[length(tool_calls) + 1]] <- list(
+                id = tool_call$id,
+                type = tool_call$type,
+                "function" = list(
+                  name = tool_call$name,
+                  arguments = tool_call$arguments
+                )
+              )
+            }
+          } else {
+            # No function call detected
+            break
           }
         }
 
+        # Check Ollama
         if (t == "ollama") {
           if (length(body$message$tool_calls) == 0) break
           for (i in seq_along(body$message$tool_calls)) {
@@ -239,8 +278,11 @@ answer_using_tools <- function(
         }
       }
 
+      # If no tool calls found, we quit
       if (length(tool_calls) == 0) break
 
+      # If we have found tool calls, we'll add them to the messages
+      #   object that we will send back to the LLM for the next request
       chat_history <- response$completed
       messages <- lapply(seq_len(nrow(chat_history)), function(i) {
         list(role = chat_history$role[i], content = chat_history$content[i])
@@ -256,29 +298,65 @@ answer_using_tools <- function(
           tool_calls = body$message$tool_calls
         )
 
+      # Now we'll iterate over the tool calls and call the functions
       for (tool_call in tool_calls) {
         tool_name <- tool_call[["function"]]$name
         tool <- tp_tools[[tool_name]]
 
+        # First parse arguments; a bit of a mess as they come in different forms,
+        #   still. TODO: normalize better in previous step?
+        arguments <- NULL
         if (t == "ollama") {
           arguments <- tool_call[["function"]]$arguments |> as.list()
         } else {
-          arguments <- tool_call[["function"]]$arguments |> jsonlite::fromJSON()
+          try(
+            {
+              arguments <- tool_call[["function"]]$arguments |>
+                jsonlite::fromJSON()
+            },
+            silent = TRUE
+          )
+
+          if (is.null(arguments)) {
+            try(
+              {
+                arguments <- tool_call[["function"]]$args |>
+                  jsonlite::fromJSON()
+              },
+              silent = TRUE
+            )
+          }
         }
 
+        # Now that we know function call + its arguments, add that to the chat
+        #   history. It's not necesarry for API call, but just to keep history for the user
         chat_history <- chat_history |>
           dplyr::bind_rows(
             data.frame(
               role = "assistant",
               content = paste0(
-                "Calling function '",
+                "~>> Calling function '",
                 tool_name,
                 "' with arguments:\n",
-                jsonlite::toJSON(arguments, auto_unbox = TRUE, pretty = TRUE)
-              )
+                jsonlite::toJSON(arguments, auto_unbox = FALSE, pretty = TRUE)
+              ),
+              tool_call = TRUE,
+              tool_call_id = ifelse(is.null(tool_call$id), NA, tool_call$id),
+              tool_result = FALSE
             )
           )
 
+        # If verbose or streaming, print the tool call
+        if (
+          isTRUE(llm_provider$parameters$stream) | isTRUE(llm_provider$verbose)
+        ) {
+          message(
+            chat_history |> dplyr::slice_tail(n = 1) |> dplyr::pull(content)
+          )
+          message("")
+        }
+
+        # Do the function call to get the result
         result <- tryCatch(
           {
             do.call(tool, arguments)
@@ -288,27 +366,43 @@ answer_using_tools <- function(
           }
         )
 
+        # Format the result
         if (length(result) > 0) result <- paste(result, collapse = ", ")
+        if (length(result) == 0) result <- ""
         result <- as.character(result)
 
+        # Add the result to the messages list for the request to LLM
         message_addition <- list(role = "tool", content = result)
         if (t == "openai") message_addition$tool_call_id <- tool_call$id
         messages[[length(messages) + 1]] <- message_addition
 
+        # And add the result to the chat history
         chat_history <- chat_history |>
           dplyr::bind_rows(
             data.frame(
               role = "tool",
-              content = paste0("Result:\n", result),
+              content = paste0(
+                "~>> Result:\n",
+                result
+              ),
+              tool_call = FALSE,
               tool_call_id = ifelse(is.null(tool_call$id), NA, tool_call$id),
               tool_result = TRUE
             )
           )
 
-        if (isTRUE(llm_provider$parameters$stream))
-          cat(paste0("Result:\n", result, "\n"))
+        # When streaming or verbose, print the result to console
+        if (
+          isTRUE(llm_provider$parameters$stream) | isTRUE(llm_provider$verbose)
+        ) {
+          message(paste0("~>> Result:\n", result))
+          message("")
+        }
       }
 
+      # Finally, setup the new request; messages now contains
+      #   the tool call + the result, so we can continue by sending a request
+      #   to the LLM again
       new_request <- response$http$request
       new_request$body$data$messages <- messages
       response <- request_llm_provider(
@@ -391,6 +485,7 @@ answer_using_tools <- function(
         )
 
         if (length(result) > 0) result <- paste(result, collapse = ", ")
+        if (length(result) == 0) result <- ""
 
         string_of_named_arguments <-
           paste(names(arguments), arguments, sep = " = ") |>
@@ -1184,7 +1279,7 @@ tools_docs_to_r_json_schema <- function(
   list(
     type = "object",
     properties = properties,
-    required = required_args,
+    required = I(required_args),
     additionalProperties = additional_properties
   )
 }

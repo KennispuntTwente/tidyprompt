@@ -13,3 +13,4 @@ vignettes/cache/*
 vignettes/Rplots.pdf
 tidyprompt.Rproj
 /revdep
+tests/testthat/Rplots.pdf

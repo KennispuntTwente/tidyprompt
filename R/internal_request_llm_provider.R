@@ -111,7 +111,7 @@ req_llm_stream <- function(req, api_type, verbose) {
             message_accumulator,
             data$message$content
           )
-          if (isTRUE(verbose)) cat(data$message$content)
+          if (isTRUE(verbose)) message(data$message$content)
         }
       }
     }
@@ -158,30 +158,79 @@ req_llm_stream <- function(req, api_type, verbose) {
   } else {
     # OpenAI Responses API (SSE)
     if (is.null(role)) role <- "assistant"
+
+    response_id <- NULL
+    tool_calls <- list()
+    args_buf <- new.env(parent = emptyenv()) # per-tool_call_id argument accumulator
+
     repeat {
       ev <- httr2::resp_stream_sse(resp)
       if (is.null(ev)) break
       if (!nzchar(ev$data) || identical(ev$data, "[DONE]")) next
 
-      payload <- tryCatch(jsonlite::fromJSON(ev$data), error = function(e) NULL)
+      payload <- tryCatch(
+        jsonlite::fromJSON(ev$data, simplifyVector = FALSE),
+        error = function(e) NULL
+      )
       if (is.null(payload)) next
 
-      # Only handle text deltas, ignore response.created/in_progress/etc.
+      tp <- payload$type %||% ""
+
+      # capture id once
+      if (is.null(response_id) && !is.null(payload$id))
+        response_id <- payload$id
+
+      # 1) normal text deltas
       if (
-        !is.null(payload$type) &&
-          grepl("response\\.(output_)?text\\.delta$", payload$type) &&
+        grepl("response\\.(output_)?text\\.delta$", tp) &&
           !is.null(payload$delta)
       ) {
-        message_accumulator <- paste0(message_accumulator, payload$delta)
+        message_accumulator <- paste0(
+          message_accumulator,
+          as.character(payload$delta)
+        )
         if (isTRUE(verbose)) cat(payload$delta)
+        next
+      }
+
+      # 2) listen for tool calls
+      if (identical(tp, "response.output_item.done")) {
+        if (
+          !is.null(payload$item) &&
+            is.list(payload$item) &&
+            identical(payload$item$type, "function_call")
+        ) {
+          tool_calls <- append_or_update_tool_calls(
+            tool_calls,
+            list(
+              list(
+                id = payload$item$id,
+                type = "function",
+                `function` = list(
+                  name = payload$item$name,
+                  arguments = payload$item$arguments |>
+                    jsonlite::fromJSON() |>
+                    jsonlite::toJSON(auto_unbox = TRUE, pretty = TRUE) |>
+                    as.character()
+                )
+              )
+            ),
+            verbose
+          )
+
+          break
+        }
+        next
       }
     }
   }
 
-  if (isTRUE(verbose)) cat("\n")
-
+  # attach tool_calls and response_id so the caller can act
   if (!is.list(resp$body)) resp$body <- list()
   resp$body$tool_calls <- tool_calls
+  if (exists("response_id")) {
+    resp$body$response_id <- response_id
+  }
 
   list(
     new = data.frame(
@@ -245,48 +294,6 @@ req_llm_non_stream <- function(req, api_type, verbose) {
   list(new = new, httr2_response = response)
 }
 
-parse_ollama_stream_chunk <- function(chunk) {
-  # Each chunk is separated by newline
-  lines <- rawToChar(chunk) |> strsplit("\n") |> unlist()
-
-  parsed <- lapply(lines, function(x) {
-    content <- tryCatch(jsonlite::fromJSON(x), error = function(e) NULL)
-    # if (!is.null(content$message$content)) {
-    #   list(role = content$message$role, content = content$message$content)
-    # } else {
-    #   NULL
-    # }
-  })
-
-  Filter(Negate(is.null), parsed)
-}
-
-parse_openai_stream_chunk <- function(chunk) {
-  # Each chunk may contain multiple lines of streaming data
-  char <- rawToChar(chunk) |> strsplit(split = "\ndata: ") |> unlist()
-
-  parsed_data <- lapply(char, function(x) {
-    json_text <- sub("^data:\\s*", "", x)
-    tryCatch(jsonlite::fromJSON(json_text), error = function(e) NULL)
-  })
-
-  Filter(Negate(is.null), parsed_data)
-}
-
-parse_openai_responses_stream_chunk <- function(chunk) {
-  # SSE frames typically arrive as lines prefixed with "data: ..."
-  char <- rawToChar(chunk)
-  parts <- strsplit(char, split = "\n")[[1]]
-  # Keep only JSON-bearing "data:" lines
-  json_lines <- gsub("^data:\\s*", "", parts[grepl("^data:", parts)])
-  parsed <- lapply(json_lines, function(x) {
-    # Some providers send sentinel like [DONE] — skip non-JSON
-    if (identical(x, "[DONE]") || x == "") return(NULL)
-    tryCatch(jsonlite::fromJSON(x), error = function(e) NULL)
-  })
-  Filter(Negate(is.null), parsed)
-}
-
 append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
   tool_call <- new_tool_calls[[1]]
   id <- tool_call$id
@@ -295,7 +302,6 @@ append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
     tool_calls[[length(tool_calls)]]$id else NULL
 
   if (!is.null(id) & (is.null(last_id) || (id != last_id))) {
-    if (verbose & !is.null(last_id)) cat("\n\n")
     tool_calls <- append(
       tool_calls,
       list(
@@ -309,17 +315,6 @@ append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
         )
       )
     )
-
-    if (verbose) {
-      cat(
-        glue::glue(
-          "Calling tool '{tool_call$`function`$name}', with arguments:"
-        )
-      )
-      cat("\n")
-      if (verbose & length(tool_call$`function`$arguments) > 0)
-        cat(tool_call$`function`$arguments)
-    }
   } else {
     # Update arguments of the last call
     arguments_current <- tool_calls[[length(tool_calls)]]$`function`$arguments
@@ -329,7 +324,6 @@ append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
         arguments_current,
         arguments_new
       )
-      if (verbose) cat(arguments_new)
     }
   }
 
@@ -352,31 +346,72 @@ normalize_openai_request <- function(req, api_type) {
   if (!is.list(body_obj)) return(req)
 
   # Chat Completions -> Responses rename
-  if (!is.null(body_obj$messages) && is.null(body_obj$input)) {
-    body_obj$input <- body_obj$messages
+  if (!is.null(body_obj$messages)) {
+    msgs <- body_obj$messages
+
+    msgs <- lapply(msgs, function(m) {
+      m$tool_calls <- NULL
+      m$function_call <- NULL
+      m$name <- NULL
+      if (is.null(m$content)) m$content <- ""
+
+      # Convert CC tool-role messages to typed items for Responses
+      if (identical(m$role, "tool") && !is.null(m$tool_call_id)) {
+        return(list(
+          type = "function_call_output",
+          call_id = m$tool_call_id,
+          output = as.character(m$content %||% "")
+        ))
+      }
+      m
+    })
+
+    needs_fc <- function(item) {
+      is.list(item) &&
+        isTRUE(identical(item$type, "function_call_output")) &&
+        !is.null(item$call_id)
+    }
+    has_fc_for <- function(call_id, items) {
+      any(vapply(
+        items,
+        function(x)
+          is.list(x) &&
+            identical(x$type, "function_call") &&
+            identical(x$call_id, call_id),
+        logical(1)
+      ))
+    }
+
+    input <- list()
+    for (m in msgs) {
+      if (needs_fc(m) && !has_fc_for(m$call_id, input)) {
+        input[[length(input) + 1]] <- list(
+          type = "function_call",
+          call_id = m$call_id,
+          name = "-",
+          arguments = "-"
+        )
+      }
+      input[[length(input) + 1]] <- m
+    }
+
+    body_obj$input <- input
     body_obj$messages <- NULL
   }
 
   # response_format -> text.format  (Responses API)
   if (!is.null(body_obj$response_format) && is.null(body_obj$text$format)) {
     rf <- body_obj$response_format
-
-    # allow legacy "json_object" string
     if (is.character(rf)) rf <- list(type = rf)
 
     fmt <- NULL
-
     if (identical(rf$type, "json_object")) {
       fmt <- list(type = "json_object")
     } else if (identical(rf$type, "json_schema")) {
-      # accept either wrapped { json_schema = ... } or a raw schema
       js <- rf$json_schema %||% rf$schema %||% rf
-
-      # pull name from common places (Draft-04 'title' is fine)
       name <- js$name %||% js$title %||% "Schema"
       schema <- js$schema %||% js
       strict <- isTRUE(rf$strict %||% js$strict)
-
       fmt <- list(
         type = "json_schema",
         name = as.character(name),
@@ -384,7 +419,6 @@ normalize_openai_request <- function(req, api_type) {
       )
       if (strict) fmt$strict <- TRUE
     }
-
     if (!is.null(fmt)) {
       body_obj$text <- body_obj$text %||% list()
       body_obj$text$format <- fmt
@@ -392,31 +426,45 @@ normalize_openai_request <- function(req, api_type) {
     }
   }
 
-  # --- Tools normalization for Responses API -------------------------------
-  # Some providers/endpoints require top-level `name` (and sometimes `parameters`)
-  # instead of nesting under `function`. Keep the nested `function` too for
-  # compatibility; we're just ensuring required fields exist at top-level.
+  # SAFETY GUARD: Only touch list-like items with a role
+  if (is.list(body_obj$input)) {
+    for (i in seq_along(body_obj$input)) {
+      item <- body_obj$input[[i]]
+
+      # skip non-lists (e.g., atomic strings) or items without a role
+      if (!(is.list(item) && !is.null(item$role))) next
+
+      # If any lingering tool-role items slipped through, degrade to "system"
+      # (You already convert tool messages above; this is just a fallback.)
+      if (identical(item$role, "tool")) {
+        if (!is.null(item$tool_call_id) && !is.null(item$content)) {
+          body_obj$input[[i]] <- list(
+            type = "function_call_output",
+            call_id = item$tool_call_id,
+            output = as.character(item$content %||% "")
+          )
+        } else {
+          body_obj$input[[i]]$role <- "system"
+        }
+      }
+    }
+  }
+
+  # Tools normalization for Responses API
   if (!is.null(body_obj$tools) && is.list(body_obj$tools)) {
     body_obj$tools <- lapply(body_obj$tools, function(t) {
-      # Ensure type if omitted but a function spec exists
       if (is.null(t$type) && !is.null(t$`function`)) t$type <- "function"
-
-      # Hoist nested fields to top-level when missing there
-      if (is.null(t$name) && !is.null(t$`function`$name)) {
+      if (is.null(t$name) && !is.null(t$`function`$name))
         t$name <- t$`function`$name
-      }
-      if (is.null(t$description) && !is.null(t$`function`$description)) {
+      if (is.null(t$description) && !is.null(t$`function`$description))
         t$description <- t$`function`$description
-      }
-      # Some Responses implementations expect top-level `parameters`
-      if (is.null(t$parameters) && !is.null(t$`function`$parameters)) {
+      if (is.null(t$parameters) && !is.null(t$`function`$parameters))
         t$parameters <- t$`function`$parameters
-      }
       t
     })
   }
 
-  # Normalize tool_choice shape (if using CC-style {"type":"function","function":{"name":...}})
+  # Normalize tool_choice shape
   if (!is.null(body_obj$tool_choice) && is.list(body_obj$tool_choice)) {
     if (
       !is.null(body_obj$tool_choice$`function`$name) &&

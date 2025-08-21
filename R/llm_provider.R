@@ -242,8 +242,25 @@ NULL
           (nrow(chat_history) + 1):nrow(response$completed),
         ]
 
-        for (i in seq_len(nrow(chat_history_new))) {
-          message(chat_history_new$content[i])
+        # Filter out rows with 'tool_result' == TRUE
+        # That's already being printed in the handler function of
+        #   `answer_using_tools()`
+        if (
+          "tool_result" %in%
+            names(chat_history_new) &
+            "tool_call" %in% names(chat_history_new)
+        ) {
+          chat_history_new_print <- chat_history_new |>
+            dplyr::filter(
+              (is.na(tool_result) | tool_result == FALSE),
+              (is.na(tool_call) | tool_call == FALSE)
+            )
+        } else {
+          chat_history_new_print <- chat_history_new
+        }
+
+        for (i in seq_len(nrow(chat_history_new_print))) {
+          message(chat_history_new_print$content[i])
         }
       }
 
