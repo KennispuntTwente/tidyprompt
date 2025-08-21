@@ -86,7 +86,7 @@ answer_using_tools <- function(
   # Normalize to a named list while trying to keep stable names
   if (is_toolish(tools)) {
     nm <- sanitize_name(deparse(substitute(tools)))
-    tools <- setNames(list(tools), nm)
+    tools <- list(nm = tools)
   } else {
     stopifnot(is.list(tools), length(tools) > 0, all(vapply(tools, is_toolish, logical(1))))
     if (is.null(names(tools)) || any(!nzchar(names(tools)))) {
