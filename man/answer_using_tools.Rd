@@ -17,7 +17,9 @@ answer_using_tools(
 or a list of either, which the LLM will be able to call. If an R function is passed
 which has been documented in a help file (e.g., because it is part of a package),
 the documentation will be parsed from the help file. If it is a custom function,
-documentation should be added with \code{\link[=tools_add_docs]{tools_add_docs()}} or with \code{\link[ellmer:create_tool_def]{ellmer::create_tool_def()}}}
+documentation should be added with \code{\link[=tools_add_docs]{tools_add_docs()}} or with \code{\link[ellmer:create_tool_def]{ellmer::create_tool_def()}}.
+Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
+\code{\link[mcptools:client]{mcptools::mcp_tools()}}}
 
 \item{type}{(optional) The way that tool calling should be enabled.
 'auto' will automatically determine the type based on 'llm_provider$api_type'
@@ -49,6 +51,8 @@ accompanying extraction function to call the functions (handled by
 the help file (if available), or from documentation added by
 \code{\link[=tools_add_docs]{tools_add_docs()}}. Users can also provide an 'ellmer' tool definition
 (see \code{\link[ellmer:create_tool_def]{ellmer::create_tool_def()}}; https://ellmer.tidyverse.org/articles/tool-calling.html).
+Model Context Protocol (MCP) tools from MCP servers, as returned from \code{\link[mcptools:client]{mcptools::mcp_tools()}}, may also
+be used.
 }
 \examples{
 \dontrun{

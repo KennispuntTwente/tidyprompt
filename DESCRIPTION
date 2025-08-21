@@ -44,7 +44,8 @@ Suggests:
     jsonvalidate,
     tidyjson,
     DBI,
-    ellmer
+    ellmer,
+    mcptools
 VignetteBuilder: knitr
 Imports: 
     dplyr,

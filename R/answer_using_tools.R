@@ -10,6 +10,8 @@
 #' the help file (if available), or from documentation added by
 #' [tools_add_docs()]. Users can also provide an 'ellmer' tool definition
 #' (see [ellmer::create_tool_def()]; https://ellmer.tidyverse.org/articles/tool-calling.html).
+#' Model Context Protocol (MCP) tools from MCP servers, as returned from [mcptools::mcp_tools()], may also
+#' be used.
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
@@ -17,7 +19,9 @@
 #' or a list of either, which the LLM will be able to call. If an R function is passed
 #' which has been documented in a help file (e.g., because it is part of a package),
 #' the documentation will be parsed from the help file. If it is a custom function,
-#' documentation should be added with [tools_add_docs()] or with [ellmer::create_tool_def()]
+#' documentation should be added with [tools_add_docs()] or with [ellmer::create_tool_def()].
+#' Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
+#' [mcptools::mcp_tools()]
 #'
 #' @param type (optional) The way that tool calling should be enabled.
 #' 'auto' will automatically determine the type based on 'llm_provider$api_type'
