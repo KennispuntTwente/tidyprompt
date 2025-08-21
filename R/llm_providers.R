@@ -757,6 +757,12 @@ llm_provider_ellmer <- function(
     # Prompt = last message
     prompt <- chat_history$content[nrow(chat_history)]
 
+    # Register tools
+    if (!is.null(params$.ellmer_tools)) {
+      for (td in params$.ellmer_tools) ch$register_tool(td)
+    }
+
+    # Check if we are doing structured output
     structured_type <- params$.ellmer_structured_type %||% NULL
     use_structured <- !is.null(structured_type) &&
       is.function(ch$chat_structured)

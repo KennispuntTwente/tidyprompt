@@ -7,29 +7,33 @@
 answer_using_tools(
   prompt,
   tools = list(),
-  type = c("text-based", "auto", "openai", "ollama")
+  type = c("auto", "openai", "ollama", "ellmer", "text-based")
 )
 }
 \arguments{
 \item{prompt}{A single string or a \code{\link[=tidyprompt]{tidyprompt()}} object}
 
-\item{tools}{An R function or a list of R functions that the LLM can call.
-If the function has been documented in a help file (e.g., because it is part of a
-package), the documentation will be parsed from the help file. If it is a custom
-function, documentation should be added with \code{\link[=tools_add_docs]{tools_add_docs()}}}
+\item{tools}{An R function, an 'ellmer' tool definition (from \code{\link[ellmer:create_tool_def]{ellmer::create_tool_def()}}),
+or a list of either, which the LLM will be able to call. If an R function is passed
+which has been documented in a help file (e.g., because it is part of a package),
+the documentation will be parsed from the help file. If it is a custom function,
+documentation should be added with \code{\link[=tools_add_docs]{tools_add_docs()}} or with \code{\link[ellmer:create_tool_def]{ellmer::create_tool_def()}}}
 
 \item{type}{(optional) The way that tool calling should be enabled.
 'auto' will automatically determine the type based on 'llm_provider$api_type'
-(note that this does not consider model compatibility, and could lead to errors;
+(note that this may not consider model compatibility, and could lead to errors;
 set 'type' manually if errors occur). 'openai' and 'ollama' will set the
-relevant API parameters. 'text-based' will provide function definitions
+relevant API parameters. 'ellmer' will register the tool in the 'ellmer' chat
+object of the LLM provider; note that this will only work for an \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}}
+('auto' should always set this type if you are using an 'ellmer' LLM provider).
+'text-based' will provide function definitions
 in the prompt, extract function calls from the LLM response, and call the
 functions, providing the results back via \code{\link[=llm_feedback]{llm_feedback()}}. 'text-based'
 always works, but may be inefficient for APIs that support tool calling
 natively. However, 'text-based' may be more reliable and flexible, especially
-when combining with other prompt wraps. 'openai' and 'ollama' may not allow
+when combining with other prompt wraps. 'openai','ollama', and 'ellmer' may not allow
 for retries if the function call did not provide the expected result. Note that
-when using 'openai' or 'ollama', tool calls are not counted as interactions and
+when using 'openai', 'ollama', or 'ellmer', tool calls are not counted as interactions and
 may continue indefinitely (use with caution)}
 }
 \value{
@@ -43,15 +47,8 @@ prompt will be modified to include information, as well as an
 accompanying extraction function to call the functions (handled by
 \code{\link[=send_prompt]{send_prompt()}}). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
-\code{\link[=tools_add_docs]{tools_add_docs()}}
-}
-\details{
-Note that this method of function calling is purely text-based.
-This makes it suitable for any LLM and any LLM provider. However,
-'native' function calling (where the LLM model provider restricts the
-model to special tokens that can be used to call functions) may perform
-better in terms of accuracy and efficiency. 'tidyprompt' may support
-'native' function calling in the future
+\code{\link[=tools_add_docs]{tools_add_docs()}}. Users can also provide an 'ellmer' tool definition
+(see \code{\link[ellmer:create_tool_def]{ellmer::create_tool_def()}}; https://ellmer.tidyverse.org/articles/tool-calling.html).
 }
 \examples{
 \dontrun{

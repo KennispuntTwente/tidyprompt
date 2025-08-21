@@ -1,39 +1,39 @@
+#' @title
 #' Enable LLM to call R functions
 #'
+#' @description
 #' This function adds the ability for the a LLM to call R functions.
 #' Users can specify a list of functions that the LLM can call, and the
 #' prompt will be modified to include information, as well as an
 #' accompanying extraction function to call the functions (handled by
 #' [send_prompt()]). Documentation for the functions is extracted from
 #' the help file (if available), or from documentation added by
-#' [tools_add_docs()]
-#'
-#' @details Note that this method of function calling is purely text-based.
-#' This makes it suitable for any LLM and any LLM provider. However,
-#' 'native' function calling (where the LLM model provider restricts the
-#' model to special tokens that can be used to call functions) may perform
-#' better in terms of accuracy and efficiency. 'tidyprompt' may support
-#' 'native' function calling in the future
+#' [tools_add_docs()]. Users can also provide an 'ellmer' tool definition
+#' (see [ellmer::create_tool_def()]; https://ellmer.tidyverse.org/articles/tool-calling.html).
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
-#' @param tools An R function or a list of R functions that the LLM can call.
-#' If the function has been documented in a help file (e.g., because it is part of a
-#' package), the documentation will be parsed from the help file. If it is a custom
-#' function, documentation should be added with [tools_add_docs()]
+#' @param tools An R function, an 'ellmer' tool definition (from [ellmer::create_tool_def()]),
+#' or a list of either, which the LLM will be able to call. If an R function is passed
+#' which has been documented in a help file (e.g., because it is part of a package),
+#' the documentation will be parsed from the help file. If it is a custom function,
+#' documentation should be added with [tools_add_docs()] or with [ellmer::create_tool_def()]
 #'
 #' @param type (optional) The way that tool calling should be enabled.
 #' 'auto' will automatically determine the type based on 'llm_provider$api_type'
-#' (note that this does not consider model compatibility, and could lead to errors;
+#' (note that this may not consider model compatibility, and could lead to errors;
 #' set 'type' manually if errors occur). 'openai' and 'ollama' will set the
-#' relevant API parameters. 'text-based' will provide function definitions
+#' relevant API parameters. 'ellmer' will register the tool in the 'ellmer' chat
+#' object of the LLM provider; note that this will only work for an [llm_provider_ellmer()]
+#' ('auto' should always set this type if you are using an 'ellmer' LLM provider).
+#''text-based' will provide function definitions
 #' in the prompt, extract function calls from the LLM response, and call the
 #' functions, providing the results back via [llm_feedback()]. 'text-based'
 #' always works, but may be inefficient for APIs that support tool calling
 #' natively. However, 'text-based' may be more reliable and flexible, especially
-#' when combining with other prompt wraps. 'openai' and 'ollama' may not allow
+#' when combining with other prompt wraps. 'openai','ollama', and 'ellmer' may not allow
 #' for retries if the function call did not provide the expected result. Note that
-#' when using 'openai' or 'ollama', tool calls are not counted as interactions and
+#' when using 'openai', 'ollama', or 'ellmer', tool calls are not counted as interactions and
 #' may continue indefinitely (use with caution)
 #'
 #' @return A [tidyprompt()] with an added [prompt_wrap()] which
@@ -49,9 +49,9 @@
 #' @family answer_using_prompt_wraps
 #' @family tools
 answer_using_tools <- function(
-  prompt,
-  tools = list(),
-  type = c("text-based", "auto", "openai", "ollama")
+    prompt,
+    tools = list(),
+    type = c("auto", "openai", "ollama", "ellmer", "text-based")
 ) {
   prompt <- tidyprompt(prompt)
   type <- match.arg(type)
@@ -69,58 +69,80 @@ answer_using_tools <- function(
     )
   }
 
-  # Check if tools is single function, if so, convert to list
-  if (length(tools) == 1 && is.function(tools)) {
-    name <- deparse(substitute(tools))
-    tools <- list(tools)
-    names(tools) <- name
+  # -- Accept function, ellmer ToolDef, or list of either/mixed ---------------
+  is_toolish <- function(x) is.function(x) || is_ellmer_tool(x)
+
+  sanitize_name <- function(x) {
+    x <- as.character(x)
+    x <- gsub("[^A-Za-z0-9_]", "_", x)
+    if (!nzchar(x)) x <- "tool"
+    x
+  }
+
+  # Normalize to a named list while trying to keep stable names
+  if (is_toolish(tools)) {
+    nm <- sanitize_name(deparse(substitute(tools)))
+    tools <- setNames(list(tools), nm)
   } else {
-    stopifnot(
-      is.list(tools),
-      length(tools) > 0,
-      all(sapply(tools, is.function))
-    )
-    # Convert tools to named list
-    tool_names <- sapply(substitute(tools)[-1], deparse)
-    # Ensure the names of tools match the captured names
-    names(tools) <- tool_names
+    stopifnot(is.list(tools), length(tools) > 0, all(vapply(tools, is_toolish, logical(1))))
+    if (is.null(names(tools)) || any(!nzchar(names(tools)))) {
+      # Try to derive names from the call; else fallback
+      call_elems <- tryCatch(as.list(substitute(tools))[-1], error = function(e) NULL)
+      if (!is.null(call_elems) && length(call_elems) == length(tools)) {
+        names(tools) <- vapply(call_elems, function(e) sanitize_name(deparse(e)), character(1))
+      } else {
+        names(tools) <- paste0("tool", seq_along(tools))
+      }
+    } else {
+      names(tools) <- sanitize_name(names(tools))
+    }
+  }
+
+  # -- Build dual representations ---------------------------------------------
+  # For each supplied tool, we want:
+  # - a tidyprompt-style function (with docs) for text-based/OpenAI/Ollama paths
+  # - an ellmer ToolDef for native ellmer path
+  tp_tools <- list()
+  ellmer_tools <- list()
+  for (nm in names(tools)) {
+    dual <- normalize_tool_dual(tools[[nm]])
+    if (!is.null(dual$tidyprompt_tool)) tp_tools[[nm]] <- dual$tidyprompt_tool
+    if (!is.null(dual$ellmer_tool))    ellmer_tools[[nm]] <- dual$ellmer_tool
   }
 
   determine_type <- function(llm_provider = NULL) {
     if (type != "auto") return(type)
     if (isTRUE(llm_provider$api_type == "openai")) return("openai")
     if (isTRUE(llm_provider$api_type == "ollama")) return("ollama")
-    return("text-based")
+    if (isTRUE(llm_provider$api_type == "ellmer")) return("ellmer")
+    "text-based"
   }
 
   parameter_fn <- function(llm_provider) {
-    type <- determine_type(llm_provider)
+    t <- determine_type(llm_provider)
     parameters <- list()
 
-    if (type %in% c("openai", "ollama")) {
+    if (t %in% c("openai", "ollama")) {
       tools_openai <- list()
-
-      for (tool_name in names(tools)) {
-        tool_openai <- list()
-        tool <- tools[[tool_name]]
+      for (tool_name in names(tp_tools)) {
+        tool <- tp_tools[[tool_name]]
         docs <- tools_get_docs(tool, tool_name)
 
+        tool_openai <- list()
         tool_openai$type <- "function"
         tool_openai[["function"]]$name <- tool_name
         if (!is.null(docs$description)) {
           tool_openai[["function"]]$description <- docs$description
         }
-        tool_openai[["function"]]$parameters <-
-          tools_docs_to_r_json_schema(docs)
+        tool_openai[["function"]]$parameters <- tools_docs_to_r_json_schema(docs)
         tool_openai[["function"]]$strict <- TRUE
 
         tools_openai[[length(tools_openai) + 1]] <- tool_openai
       }
-
       parameters$tools <- tools_openai
     }
 
-    if (type == "ollama" & isTRUE(llm_provider$parameters$stream)) {
+    if (t == "ollama" & isTRUE(llm_provider$parameters$stream)) {
       cli::cli_alert_warning(
         paste0(
           "{.strong `answer_using_tools()`}:\n",
@@ -131,37 +153,55 @@ answer_using_tools <- function(
       parameters$stream <- FALSE
     }
 
-    return(parameters)
+    if (t == "ellmer") {
+      # Ensure we have ToolDefs for every tool; convert if needed
+      missing_defs <- setdiff(names(tp_tools), names(ellmer_tools))
+      if (length(missing_defs)) {
+        for (nm in missing_defs) {
+          # convert tidyprompt tool -> ellmer ToolDef
+          ell_tool <- tryCatch(
+            tidyprompt_tool_to_ellmer(tp_tools[[nm]]),
+            error = function(e) NULL
+          )
+          if (!is.null(ell_tool)) ellmer_tools[[nm]] <- ell_tool
+        }
+      }
+
+      # Pass ToolDefs for provider to register natively.
+      # NOTE for provider wrapper:
+      #   if (!is.null(params$.ellmer_tools)) {
+      #     for (td in params$.ellmer_tools) chat$register_tool(td)
+      #   }
+      if (length(ellmer_tools)) {
+        parameters$.ellmer_tools <- unname(ellmer_tools)
+      }
+    }
+
+    parameters
   }
 
   handler_fn <- function(response, llm_provider) {
-    type <- determine_type(llm_provider)
-    if (!type %in% c("openai", "ollama")) return(response)
+    t <- determine_type(llm_provider)
+    # Native tool handling is done by the provider/model itself
+    if (t == "ellmer") return(response)
+    if (!t %in% c("openai", "ollama")) return(response)
 
     while (TRUE) {
-      # For as long as there are tool calls
       body <- response$http$response$body
 
       if ("tool_calls" %in% names(body)) {
-        # For streaming
-        # As handled by [append_or_update_tool_calls()]
         tool_calls <- body$tool_calls
       } else {
-        # Non-streaming; check body for tool calls
         body <- tryCatch(
           body |> rawToChar() |> jsonlite::fromJSON(),
-          error = function(e) {
-            NULL
-          }
+          error = function(e) NULL
         )
-
         if (is.null(body)) break
 
         tool_calls <- list()
 
-        if (type == "openai") {
+        if (t == "openai") {
           if (length(body$choices$message$tool_calls) == 0) break
-
           for (tool_call in body$choices$message$tool_calls) {
             tool_calls[[length(tool_calls) + 1]] <- list(
               id = tool_call$id,
@@ -171,9 +211,8 @@ answer_using_tools <- function(
           }
         }
 
-        if (type == "ollama") {
+        if (t == "ollama") {
           if (length(body$message$tool_calls) == 0) break
-
           for (i in seq_along(body$message$tool_calls)) {
             tool_call <- body$message$tool_calls[i]
             tool_calls[[length(tool_calls) + 1]] <- list(
@@ -185,34 +224,31 @@ answer_using_tools <- function(
 
       if (length(tool_calls) == 0) break
 
-      # Add tool calls to messages (to be sent back to API)
       chat_history <- response$completed
-      messages = lapply(seq_len(nrow(chat_history)), function(i) {
+      messages <- lapply(seq_len(nrow(chat_history)), function(i) {
         list(role = chat_history$role[i], content = chat_history$content[i])
       })
-      if (type == "openai")
+      if (t == "openai")
         messages[[length(messages) + 1]] <- list(
           role = "assistant",
           tool_calls = tool_calls
         )
-      if (type == "ollama")
+      if (t == "ollama")
         messages[[length(messages) + 1]] <- list(
           role = "assistant",
           tool_calls = body$message$tool_calls
         )
 
-      # For every tool call, call the function and add the result to the messages
       for (tool_call in tool_calls) {
         tool_name <- tool_call[["function"]]$name
-        tool <- tools[[tool_name]]
+        tool <- tp_tools[[tool_name]]
 
-        if (type == "ollama") {
+        if (t == "ollama") {
           arguments <- tool_call[["function"]]$arguments |> as.list()
         } else {
           arguments <- tool_call[["function"]]$arguments |> jsonlite::fromJSON()
         }
 
-        # Also add the tool call to the chat history
         chat_history <- chat_history |>
           dplyr::bind_rows(
             data.frame(
@@ -226,7 +262,6 @@ answer_using_tools <- function(
             )
           )
 
-        # Execute tool function
         result <- tryCatch(
           {
             do.call(tool, arguments)
@@ -236,16 +271,13 @@ answer_using_tools <- function(
           }
         )
 
-        # Ensure result is proper string
         if (length(result) > 0) result <- paste(result, collapse = ", ")
         result <- as.character(result)
 
-        # Add tool result to messages
         message_addition <- list(role = "tool", content = result)
-        if (type == "openai") message_addition$tool_call_id <- tool_call$id
+        if (t == "openai") message_addition$tool_call_id <- tool_call$id
         messages[[length(messages) + 1]] <- message_addition
 
-        # Also add tool result to chat history
         chat_history <- chat_history |>
           dplyr::bind_rows(
             data.frame(
@@ -256,13 +288,10 @@ answer_using_tools <- function(
             )
           )
 
-        # Print directly if streaming
-        #   (if verbose & no stream, it will be printed in llm_provider$complete_chat())
         if (isTRUE(llm_provider$parameters$stream))
           cat(paste0("Result:\n", result, "\n"))
       }
 
-      # Finally new request with tool results
       new_request <- response$http$request
       new_request$body$data$messages <- messages
       response <- request_llm_provider(
@@ -274,12 +303,12 @@ answer_using_tools <- function(
       )
     }
 
-    return(response)
+    response
   }
 
   modify_fn <- function(original_prompt_text, llm_provider) {
-    type <- determine_type(llm_provider)
-    if (type %in% c("openai", "ollama")) return(original_prompt_text)
+    t <- determine_type(llm_provider)
+    if (t %in% c("openai", "ollama", "ellmer")) return(original_prompt_text)
 
     new_prompt <- glue::glue(
       "{original_prompt_text}\n\n",
@@ -304,19 +333,12 @@ answer_using_tools <- function(
       "The following functions are available:"
     )
 
-    for (tool_name in names(tools)) {
-      tool <- tools[[tool_name]]
+    for (tool_name in names(tp_tools)) {
+      tool <- tp_tools[[tool_name]]
       docs <- tools_get_docs(tool, tool_name)
 
-      with_arguments <- TRUE
-      if (type == "openai") with_arguments <- FALSE
-
-      tool_llm_text <- tools_docs_to_text(docs, with_arguments)
-
-      new_prompt <- glue::glue(
-        "{new_prompt}\n\n{tool_llm_text}",
-        .trim = FALSE
-      )
+      tool_llm_text <- tools_docs_to_text(docs, with_arguments = TRUE)
+      new_prompt <- glue::glue("{new_prompt}\n\n{tool_llm_text}", .trim = FALSE)
     }
 
     new_prompt <- glue::glue(
@@ -326,20 +348,20 @@ answer_using_tools <- function(
       .trim = FALSE
     )
 
-    return(new_prompt)
+    new_prompt
   }
 
   extraction_fn <- function(llm_response, llm_provider) {
-    type <- determine_type(llm_provider)
-    if (type %in% c("openai", "ollama")) return(llm_response)
+    t <- determine_type(llm_provider)
+    if (t %in% c("openai", "ollama", "ellmer")) return(llm_response)
 
     jsons <- extraction_fn_json(llm_response)
 
     fn_results <- lapply(jsons, function(json) {
       if (is.null(json[["function"]])) return(NULL)
 
-      if (json[["function"]] %in% names(tools)) {
-        tool_function <- tools[[json[["function"]]]]
+      if (json[["function"]] %in% names(tp_tools)) {
+        tool_function <- tp_tools[[json[["function"]]]]
         arguments <- json[["arguments"]]
 
         result <- tryCatch(
@@ -353,39 +375,29 @@ answer_using_tools <- function(
 
         if (length(result) > 0) result <- paste(result, collapse = ", ")
 
-        # Create some context around the result
         string_of_named_arguments <-
           paste(names(arguments), arguments, sep = " = ") |>
-            paste(collapse = ", ")
+          paste(collapse = ", ")
 
-        result_string <- glue::glue(
-          "function called: {json[[\"function\"]]}
-          arguments used: {string_of_named_arguments}
-          result: {result}"
+        glue::glue(
+          "function called: {json[[\"function\"]]}\n",
+          "arguments used: {string_of_named_arguments}\n",
+          "result: {result}"
         )
-
-        return(result_string)
       } else {
-        return(
-          glue::glue("Error: Function '{json[[\"function\"]]}' not found.")
-        )
+        glue::glue("Error: Function '{json[[\"function\"]]}' not found.")
       }
     })
-    fn_results <- fn_results[!sapply(fn_results, is.null)]
+    fn_results <- fn_results[!vapply(fn_results, is.null, logical(1))]
 
     if (length(fn_results) == 0) return(llm_response)
 
-    return(
-      llm_feedback(
-        paste(fn_results, collapse = "\n\n"),
-        tool_result = TRUE
-      )
-    )
+    llm_feedback(paste(fn_results, collapse = "\n\n"), tool_result = TRUE)
   }
 
-  # Add environment with tool functions as an attribute to the extraction function
+  # Attach the (tidyprompt) tool functions for text-based/OpenAI/Ollama paths
   environment_with_tools <- new.env()
-  environment_with_tools$tools <- tools
+  environment_with_tools$tools <- tp_tools
   attr(extraction_fn, "environment") <- environment_with_tools
   attr(handler_fn, "environment") <- environment_with_tools
 
