@@ -48,15 +48,17 @@ features to your prompts and define how they are evaluated by LLMs. For example:
 - **function calling**: Give a LLM the ability to autonomously call R
   functions (‘tools’). With this, the LLM can retrieve information or
   take other actions. 'tidyprompt' also supports R code generation and
-  evaluation, allowing LLMs to run R code.
+  evaluation, allowing LLMs to run R code. Tools from Model Context Protocol
+  (MCP) servers are also supported
   
 With its features, 'tidyprompt' extends the functionality of LLMs beyond
 what is natively offered by LLM APIs, and you can elegantly design
 complex, robust interactions with LLMs.
 
-*To make it even easier to use 'tidyprompt', 
-we are designing this package to be compatible with the ['ellmer'](https://ellmer.tidyverse.org/index.html) R package, which 
-has gained popularity for interfacing with LLM APIs (see [more information below](#tidyprompt-versus-ellmer--tidyllm)).*
+*'tidyprompt' is compatible with the ['ellmer'](https://ellmer.tidyverse.org/index.html) R package, which 
+has gained popularity for interfacing with LLM APIs. 'tidyprompt' supports connecting to LLM providers from 
+'ellmer' chat objects, and 'ellmer' definitions for structured output and tools
+(see [more information below](#tidyprompt-versus-ellmer--tidyllm)).*
 
 ## Installation
 
@@ -233,7 +235,7 @@ prompt wraps. This way, ‘tidyprompt’ can be a powerful tool for a wide
 range of use cases, without focusing on maintaining provider-specific
 features.
 
-#### ‘tidyprompt’ versus ‘ellmer’ & ‘tidyllm’
+#### How does 'tidyprompt' relate to 'ellmer'?
 
 In line with the above, ‘tidyprompt’ is less focused on
 interfacing with the APIs of various LLM providers, like R packages
@@ -245,12 +247,16 @@ We aim to design ‘tidyprompt’ in such a way that it can be compatible
 with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface to
 LLM APIs.
 
-The `tidyprompt::llm_provider_ellmer()` function can create a LLM provider 
-from an `ellmer::chat()` object, allowing users to use any LLM provider
-that can be configured with 'ellmer', including the respective configuration
-and features. Furthermore, `answer_as_json()` supports specifying a schema
-as 'ellmer' structured data types (e.g., `ellmer::type_object()`).
-When using an 'ellmer' LLM provider, `answer_as_json()` also calls
-the native 'ellmer' chat function for obtaining structed output. 
-(We will soon give `answer_using_tools()` similar support for defining tools with
-`ellmer::tool()`.)
+'ellmer' specifically has surfaced as the most popular R package for interfacing
+with LLM APIs. Therefore, we have introduced a LLM provider 
+which can be built from an 'ellmer' chat object (see: `tidyprompt::llm_provider_ellmer()`).
+This allows users to use any LLM provider that can be configured with 'ellmer', including
+the respective configuration and features from the 'ellmer' package.
+
+Furthermore, `answer_as_json()` and `answer_using_tools()` support
+'ellmer' defintions for structured output and tools. When using an 'ellmer' LLM provider,
+these functions will also call the native 'ellmer' functions to obtain structured output
+and register tools. (And because `mcptools::mcp_tools()` returns 'ellmer' tool definitions, `answer_using_tools()` 
+also supports tools from MCP servers.) 
+
+This means that 'tidyprompt' extends what is possible with 'ellmer' (and vice versa).
