@@ -9,17 +9,17 @@
 #' [send_prompt()]). Documentation for the functions is extracted from
 #' the help file (if available), or from documentation added by
 #' [tools_add_docs()]. Users can also provide an 'ellmer' tool definition
-#' (see [ellmer::create_tool_def()]; https://ellmer.tidyverse.org/articles/tool-calling.html).
+#' (see [ellmer::tool()]; https://ellmer.tidyverse.org/articles/tool-calling.html).
 #' Model Context Protocol (MCP) tools from MCP servers, as returned from [mcptools::mcp_tools()], may also
 #' be used.
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
-#' @param tools An R function, an 'ellmer' tool definition (from [ellmer::create_tool_def()]),
+#' @param tools An R function, an 'ellmer' tool definition (from [ellmer::tool()]),
 #' or a list of either, which the LLM will be able to call. If an R function is passed
 #' which has been documented in a help file (e.g., because it is part of a package),
 #' the documentation will be parsed from the help file. If it is a custom function,
-#' documentation should be added with [tools_add_docs()] or with [ellmer::create_tool_def()].
+#' documentation should be added with [tools_add_docs()] or with [ellmer::tool()].
 #' Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
 #' [mcptools::mcp_tools()]
 #'
@@ -53,9 +53,9 @@
 #' @family answer_using_prompt_wraps
 #' @family tools
 answer_using_tools <- function(
-    prompt,
-    tools = list(),
-    type = c("auto", "openai", "ollama", "ellmer", "text-based")
+  prompt,
+  tools = list(),
+  type = c("auto", "openai", "ollama", "ellmer", "text-based")
 ) {
   prompt <- tidyprompt(prompt)
   type <- match.arg(type)
@@ -88,12 +88,23 @@ answer_using_tools <- function(
     nm <- sanitize_name(deparse(substitute(tools)))
     tools <- list(nm = tools)
   } else {
-    stopifnot(is.list(tools), length(tools) > 0, all(vapply(tools, is_toolish, logical(1))))
+    stopifnot(
+      is.list(tools),
+      length(tools) > 0,
+      all(vapply(tools, is_toolish, logical(1)))
+    )
     if (is.null(names(tools)) || any(!nzchar(names(tools)))) {
       # Try to derive names from the call; else fallback
-      call_elems <- tryCatch(as.list(substitute(tools))[-1], error = function(e) NULL)
+      call_elems <- tryCatch(
+        as.list(substitute(tools))[-1],
+        error = function(e) NULL
+      )
       if (!is.null(call_elems) && length(call_elems) == length(tools)) {
-        names(tools) <- vapply(call_elems, function(e) sanitize_name(deparse(e)), character(1))
+        names(tools) <- vapply(
+          call_elems,
+          function(e) sanitize_name(deparse(e)),
+          character(1)
+        )
       } else {
         names(tools) <- paste0("tool", seq_along(tools))
       }
@@ -111,7 +122,7 @@ answer_using_tools <- function(
   for (nm in names(tools)) {
     dual <- normalize_tool_dual(tools[[nm]])
     if (!is.null(dual$tidyprompt_tool)) tp_tools[[nm]] <- dual$tidyprompt_tool
-    if (!is.null(dual$ellmer_tool))    ellmer_tools[[nm]] <- dual$ellmer_tool
+    if (!is.null(dual$ellmer_tool)) ellmer_tools[[nm]] <- dual$ellmer_tool
   }
 
   determine_type <- function(llm_provider = NULL) {
@@ -138,7 +149,9 @@ answer_using_tools <- function(
         if (!is.null(docs$description)) {
           tool_openai[["function"]]$description <- docs$description
         }
-        tool_openai[["function"]]$parameters <- tools_docs_to_r_json_schema(docs)
+        tool_openai[["function"]]$parameters <- tools_docs_to_r_json_schema(
+          docs
+        )
         tool_openai[["function"]]$strict <- TRUE
 
         tools_openai[[length(tools_openai) + 1]] <- tool_openai
@@ -547,10 +560,8 @@ tools_get_docs <- function(func, name = NULL) {
       is.list(docs$arguments),
       !is.null(names(docs$arguments)),
       is.null(docs$return$description) ||
-        (
-          is.character(docs$return$description) &
-            length(docs$return$description) == 1
-        )
+        (is.character(docs$return$description) &
+          length(docs$return$description) == 1)
     )
   } else {
     docs <- tools_generate_docs(name, func)
@@ -1029,17 +1040,16 @@ tools_docs_to_r_json_schema <- function(
       switch(
         x,
         "character" = "string",
-        "str"       = "string",
-        "bool"      = "logical",
-        "boolean"   = "logical",
-        "double"    = "numeric",
-        "float"     = "numeric",
-        "int"       = "integer",
+        "str" = "string",
+        "bool" = "logical",
+        "boolean" = "logical",
+        "double" = "numeric",
+        "float" = "numeric",
+        "int" = "integer",
         x
       )
     }
     r_type <- normalize_r_type(arg$type)
-
 
     if (is.list(r_type)) {
       # Handle named lists (objects)
@@ -1140,7 +1150,9 @@ tools_docs_to_r_json_schema <- function(
       cli::cli_alert_warning(
         paste0(
           "{.strong `answer_using_tools()`, `tools_docs_to_r_json_schema()`}:\n",
-          "* Unknown argument type ('", r_type, "'); ",
+          "* Unknown argument type ('",
+          r_type,
+          "'); ",
           "defaulting to 'string'"
         )
       )
