@@ -6,14 +6,18 @@ accompanying extraction function to call the functions (handled by
 send_prompt()). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
-(see ellmer::create_tool_def(); https://ellmer.tidyverse.org/articles/tool-calling.html)."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
+(see ellmer::create_tool_def(); https://ellmer.tidyverse.org/articles/tool-calling.html).
+Model Context Protocol (MCP) tools from MCP servers, as returned from mcptools::mcp_tools(), may also
+be used."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
 Users can specify a list of functions that the LLM can call, and the
 prompt will be modified to include information, as well as an
 accompanying extraction function to call the functions (handled by
 send_prompt()). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
-(see ellmer::create_tool_def(); https://ellmer.tidyverse.org/articles/tool-calling.html)."></head><body>
+(see ellmer::create_tool_def(); https://ellmer.tidyverse.org/articles/tool-calling.html).
+Model Context Protocol (MCP) tools from MCP servers, as returned from mcptools::mcp_tools(), may also
+be used."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -61,7 +65,9 @@ accompanying extraction function to call the functions (handled by
 <code><a href="send_prompt.html">send_prompt()</a></code>). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 <code><a href="tools_add_docs.html">tools_add_docs()</a></code>. Users can also provide an 'ellmer' tool definition
-(see <code><a href="https://ellmer.tidyverse.org/reference/create_tool_def.html" class="external-link">ellmer::create_tool_def()</a></code>; https://ellmer.tidyverse.org/articles/tool-calling.html).</p>
+(see <code><a href="https://ellmer.tidyverse.org/reference/create_tool_def.html" class="external-link">ellmer::create_tool_def()</a></code>; https://ellmer.tidyverse.org/articles/tool-calling.html).
+Model Context Protocol (MCP) tools from MCP servers, as returned from <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>, may also
+be used.</p>
     </div>
 
     <div class="section level2">
@@ -86,7 +92,9 @@ the help file (if available), or from documentation added by
 or a list of either, which the LLM will be able to call. If an R function is passed
 which has been documented in a help file (e.g., because it is part of a package),
 the documentation will be parsed from the help file. If it is a custom function,
-documentation should be added with <code><a href="tools_add_docs.html">tools_add_docs()</a></code> or with <code><a href="https://ellmer.tidyverse.org/reference/create_tool_def.html" class="external-link">ellmer::create_tool_def()</a></code></p></dd>
+documentation should be added with <code><a href="tools_add_docs.html">tools_add_docs()</a></code> or with <code><a href="https://ellmer.tidyverse.org/reference/create_tool_def.html" class="external-link">ellmer::create_tool_def()</a></code>.
+Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
+<code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code></p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
