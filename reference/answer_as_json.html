@@ -8,10 +8,7 @@ The function can work with all models and providers through text-based
 handling, but also supports native settings for the OpenAI, Ollama,
 and various 'ellmer' types. (See argument 'type'.) This means that it is possible to easily
 switch between providers with different levels of JSON support,
-while ensuring the results will be in the correct format.
-Wrap a prompt so the LLM returns a valid JSON object,
-optionally constrained by a schema. The schema can be either
-a JSON Schema (R list) or an ellmer::type_* object."><meta property="og:description" content="This functions wraps a prompt with settings that ensure the LLM response
+while ensuring the results will be in the correct format."><meta property="og:description" content="This functions wraps a prompt with settings that ensure the LLM response
 is a valid JSON object, optionally matching a given JSON schema. Users
 may provide either an 'ellmer' type (e.g. ellmer:type_object();
 see https://ellmer.tidyverse.org/articles/structured-data.html) or
@@ -20,10 +17,7 @@ The function can work with all models and providers through text-based
 handling, but also supports native settings for the OpenAI, Ollama,
 and various 'ellmer' types. (See argument 'type'.) This means that it is possible to easily
 switch between providers with different levels of JSON support,
-while ensuring the results will be in the correct format.
-Wrap a prompt so the LLM returns a valid JSON object,
-optionally constrained by a schema. The schema can be either
-a JSON Schema (R list) or an ellmer::type_* object."></head><body>
+while ensuring the results will be in the correct format."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -74,9 +68,6 @@ handling, but also supports native settings for the OpenAI, Ollama,
 and various 'ellmer' types. (See argument 'type'.) This means that it is possible to easily
 switch between providers with different levels of JSON support,
 while ensuring the results will be in the correct format.</p>
-<p>Wrap a prompt so the LLM returns a valid JSON object,
-optionally constrained by a schema. The <code>schema</code> can be either
-a JSON Schema (R list) or an <code>ellmer::type_*</code> object.</p>
     </div>
 
     <div class="section level2">
@@ -99,16 +90,17 @@ a JSON Schema (R list) or an <code>ellmer::type_*</code> object.</p>
 
 
 <dt id="arg-schema">schema<a class="anchor" aria-label="anchor" href="#arg-schema"></a></dt>
-<dd><p>Either a JSON Schema (R list) or an <code>ellmer::type_*</code> object.
-When an ellmer type is provided and the selected <code>type</code> supports JSON
-schemas (e.g. "openai", "ollama", "text-based"), it will be converted
-to JSON Schema via <code>ellmer_type_to_json_schema()</code>. When <code>type = "ellmer"</code>,
-the ellmer type is used directly for structured calls.</p></dd>
+<dd><p>Either a list which represents
+a JSON schema that the response should match, or an 'ellmer' definition of
+structured data (e.g., <code><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">ellmer::type_object()</a></code>; see https://ellmer.tidyverse.org/articles/structured-data.html).
+See also examples and your LLM provider API documentation about defining JSON schemas.
+Note that the schema should be a list (R object) representing a JSON schema, not a JSON string
+(use <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">jsonlite::fromJSON()</a></code> and <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">jsonlite::toJSON()</a></code> to convert between the two)</p></dd>
 
 
 <dt id="arg-schema-strict">schema_strict<a class="anchor" aria-label="anchor" href="#arg-schema-strict"></a></dt>
 <dd><p>If TRUE, the provided schema will be strictly enforced.
-This option is passed as part of the schema when using type  type
+This option is passed as part of the schema when using type
 "openai" or "ollama", and when using the other types it is passed to
 <code><a href="https://docs.ropensci.org/jsonvalidate/reference/json_validate.html" class="external-link">jsonvalidate::json_validate()</a></code></p></dd>
 
