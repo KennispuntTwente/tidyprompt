@@ -15,14 +15,15 @@ answer_as_json(
 \arguments{
 \item{prompt}{A single string or a \code{\link[=tidyprompt]{tidyprompt()}} object}
 
-\item{schema}{Either a JSON Schema (R list) or an \verb{ellmer::type_*} object.
-When an ellmer type is provided and the selected \code{type} supports JSON
-schemas (e.g. "openai", "ollama", "text-based"), it will be converted
-to JSON Schema via \code{ellmer_type_to_json_schema()}. When \code{type = "ellmer"},
-the ellmer type is used directly for structured calls.}
+\item{schema}{Either a list which represents
+a JSON schema that the response should match, or an 'ellmer' definition of
+structured data (e.g., \code{\link[ellmer:type_boolean]{ellmer::type_object()}}; see https://ellmer.tidyverse.org/articles/structured-data.html).
+See also examples and your LLM provider API documentation about defining JSON schemas.
+Note that the schema should be a list (R object) representing a JSON schema, not a JSON string
+(use \code{\link[jsonlite:fromJSON]{jsonlite::fromJSON()}} and \code{\link[jsonlite:fromJSON]{jsonlite::toJSON()}} to convert between the two)}
 
 \item{schema_strict}{If TRUE, the provided schema will be strictly enforced.
-This option is passed as part of the schema when using type  type
+This option is passed as part of the schema when using type
 "openai" or "ollama", and when using the other types it is passed to
 \code{\link[jsonvalidate:json_validate]{jsonvalidate::json_validate()}}}
 
@@ -79,7 +80,7 @@ that the LLM response is a valid JSON object
 \description{
 This functions wraps a prompt with settings that ensure the LLM response
 is a valid JSON object, optionally matching a given JSON schema. Users
-may provide either an 'ellmer' type (e.g. \code{ellmer:type_object()};
+may provide either an 'ellmer' type (e.g. \code{\link[=ellmer:type_object]{ellmer:type_object()}};
 see https://ellmer.tidyverse.org/articles/structured-data.html) or
 a JSON Schema (as R list object) to define the expected structure of the response.
 
@@ -88,10 +89,6 @@ handling, but also supports native settings for the OpenAI, Ollama,
 and various 'ellmer' types. (See argument 'type'.) This means that it is possible to easily
 switch between providers with different levels of JSON support,
 while ensuring the results will be in the correct format.
-
-Wrap a prompt so the LLM returns a valid JSON object,
-optionally constrained by a schema. The \code{schema} can be either
-a JSON Schema (R list) or an \verb{ellmer::type_*} object.
 }
 \examples{
 base_prompt <- "How can I solve 8x + 7 = -23?"

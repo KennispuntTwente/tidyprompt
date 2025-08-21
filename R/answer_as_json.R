@@ -2,7 +2,7 @@
 #'
 #' @description This functions wraps a prompt with settings that ensure the LLM response
 #' is a valid JSON object, optionally matching a given JSON schema. Users
-#' may provide either an 'ellmer' type (e.g. `ellmer:type_object()`;
+#' may provide either an 'ellmer' type (e.g. [ellmer:type_object()];
 #' see https://ellmer.tidyverse.org/articles/structured-data.html) or
 #' a JSON Schema (as R list object) to define the expected structure of the response.
 #'
@@ -14,14 +14,15 @@
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
-#' @param schema A list which represents
-#' a JSON schema that the response should match.See example and your API's
-#' documentation for more information on defining JSON schemas. Note that the schema should be a
-#' list (R object) representing a JSON schema, not a JSON string
+#' @param schema Either a list which represents
+#' a JSON schema that the response should match, or an 'ellmer' definition of
+#' structured data (e.g., [ellmer::type_object()]; see https://ellmer.tidyverse.org/articles/structured-data.html).
+#' See also examples and your LLM provider API documentation about defining JSON schemas.
+#' Note that the schema should be a list (R object) representing a JSON schema, not a JSON string
 #' (use [jsonlite::fromJSON()] and [jsonlite::toJSON()] to convert between the two)
 #'
 #' @param schema_strict If TRUE, the provided schema will be strictly enforced.
-#' This option is passed as part of the schema when using type  type
+#' This option is passed as part of the schema when using type
 #' "openai" or "ollama", and when using the other types it is passed to
 #' [jsonvalidate::json_validate()]
 #'
@@ -80,17 +81,6 @@
 #' @family pre_built_prompt_wraps
 #' @family answer_as_prompt_wraps
 #' @family json
-#' @title Make LLM answer as JSON (with optional schema)
-#'
-#' @description Wrap a prompt so the LLM returns a valid JSON object,
-#' optionally constrained by a schema. The `schema` can be either
-#' a JSON Schema (R list) or an `ellmer::type_*` object.
-#'
-#' @param schema Either a JSON Schema (R list) or an `ellmer::type_*` object.
-#'   When an ellmer type is provided and the selected `type` supports JSON
-#'   schemas (e.g. "openai", "ollama", "text-based"), it will be converted
-#'   to JSON Schema via `ellmer_type_to_json_schema()`. When `type = "ellmer"`,
-#'   the ellmer type is used directly for structured calls.
 answer_as_json <- function(
   prompt,
   schema = NULL,
@@ -121,7 +111,7 @@ answer_as_json <- function(
   if (type == "auto" && getOption("tidyprompt.warn.auto.json", TRUE)) {
     cli::cli_alert_warning(
       paste0(
-        "{.strong `answer_as_json()`}:\n",
+        "{.strong `tidyprompt::answer_as_json()`}:\n",
         "* Automatically determining type based on 'llm_provider$api_type' ",
         "(or 'llm_provider$json_type' if set); this may not consider model compatibility\n",
         "* Manually set 'type' or 'llm_provider$json_type' if errors occur ",
