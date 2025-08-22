@@ -37,7 +37,7 @@
 #' }
 #' @param type The way that JSON response should be enforced:
 #' \itemize{
-#' #' \item "auto": Automatically determine the type based on 'llm_provider$api_type'
+#' \item "auto": Automatically determine the type based on 'llm_provider$api_type'
 #' or 'llm_provider$json_type' (if set; 'json_type' overrides 'api_type' determination).
 #' This may not always consider model compatibility and could lead to errors;
 #' set 'type' manually if errors occur; use 'text-based' if unsure
