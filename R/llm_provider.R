@@ -55,6 +55,22 @@ NULL
     #'  See `$add_handler_fn()`
     handler_fns = list(),
 
+    #' @field pre_prompt_wraps
+    #' A list of prompt wraps that will be applied to any prompt evaluated
+    #' by this [llm_provider-class] object, before any prompt-specific
+    #' prompt wraps are applied. See `$add_prompt_wrap()`.
+    #' This can be used to set default behavior for all prompts
+    #' evaluated by this [llm_provider-class] object.
+    pre_prompt_wraps = list(),
+
+    #' @field post_prompt_wraps
+    #' A list of prompt wraps that will be applied to any prompt evaluated
+    #' by this [llm_provider-class] object, after any prompt-specific
+    #' prompt wraps are applied. See `$add_prompt_wrap()`.
+    #' This can be used to set default behavior for all prompts
+    #' evaluated by this [llm_provider-class] object.
+    post_prompt_wraps = list(),
+
     #' @description
     #' Create a new [llm_provider-class] object
     #'
@@ -315,6 +331,112 @@ NULL
       stopifnot(is.list(handler_fns))
       self$handler_fns <- handler_fns
       return(self)
+    },
+
+    #' `r lifecycle::badge("experimental")`
+    #' @description
+    #' Add a provider-level prompt wrap template to be applied to all prompts.
+    #' @param prompt_wrap A list created by [provider_prompt_wrap()]
+    #' @param position One of "pre" or "post" (applied before/after prompt-specific wraps)
+    add_prompt_wrap = function(prompt_wrap, position = c("pre", "post")) {
+      position <- match.arg(position)
+      stopifnot(is.list(prompt_wrap))
+
+      # Normalize fields so downstream code can rely on them
+      needed <- c(
+        "type",
+        "modify_fn",
+        "extraction_fn",
+        "validation_fn",
+        "handler_fn",
+        "parameter_fn",
+        "name"
+      )
+      missing <- setdiff(needed, names(prompt_wrap))
+      for (nm in missing) prompt_wrap[[nm]] <- NULL
+
+      class(prompt_wrap) <- unique(c(
+        "provider_prompt_wrap",
+        class(prompt_wrap)
+      ))
+
+      if (identical(position, "pre")) {
+        self$pre_prompt_wraps <- c(self$pre_prompt_wraps, list(prompt_wrap))
+      } else {
+        self$post_prompt_wraps <- c(self$post_prompt_wraps, list(prompt_wrap))
+      }
+      invisible(self)
+    },
+
+    #' `r lifecycle::badge("experimental")`
+    #' @description
+    #' Apply all provider-level wraps to a prompt (character or tidyprompt)
+    #' and return a tidyprompt with wraps attached.
+    #' This is typically called inside `send_prompt()` before evaluation of
+    #' the prompt.
+    #' @param prompt A string, a chat history, a list containing
+    #' a chat history under key '$chat_history', or a [tidyprompt-class] object
+    apply_prompt_wraps = function(prompt) {
+      if (!inherits(prompt, "Tidyprompt")) {
+        prompt <- tidyprompt(prompt)
+      }
+
+      # Fresh Tidyprompt with same base/system/chat_history but no wraps yet
+      new_prompt <- `tidyprompt-class`$new(prompt$base_prompt)
+      new_prompt$system_prompt <- prompt$system_prompt
+      # Preserve chat history without constructing prompt text
+      new_prompt$.__enclos_env__$private$chat_history <-
+        prompt$.__enclos_env__$private$chat_history
+
+      # 1) Provider pre wraps
+      if (length(self$pre_prompt_wraps)) {
+        for (pw in self$pre_prompt_wraps) {
+          new_prompt <- prompt_wrap_internal(
+            new_prompt,
+            modify_fn = pw$modify_fn,
+            extraction_fn = pw$extraction_fn,
+            validation_fn = pw$validation_fn,
+            handler_fn = pw$handler_fn,
+            parameter_fn = pw$parameter_fn,
+            type = pw$type,
+            name = pw$name
+          )
+        }
+      }
+
+      # 2) Existing prompt wraps in their original order
+      if (length(prompt$get_prompt_wraps(order = "default"))) {
+        for (pw in prompt$get_prompt_wraps(order = "default")) {
+          new_prompt <- prompt_wrap_internal(
+            new_prompt,
+            modify_fn = pw$modify_fn,
+            extraction_fn = pw$extraction_fn,
+            validation_fn = pw$validation_fn,
+            handler_fn = pw$handler_fn,
+            parameter_fn = pw$parameter_fn,
+            type = pw$type,
+            name = pw$name
+          )
+        }
+      }
+
+      # 3) Provider post wraps
+      if (length(self$post_prompt_wraps)) {
+        for (pw in self$post_prompt_wraps) {
+          new_prompt <- prompt_wrap_internal(
+            new_prompt,
+            modify_fn = pw$modify_fn,
+            extraction_fn = pw$extraction_fn,
+            validation_fn = pw$validation_fn,
+            handler_fn = pw$handler_fn,
+            parameter_fn = pw$parameter_fn,
+            type = pw$type,
+            name = pw$name
+          )
+        }
+      }
+
+      new_prompt
     }
   ),
   private = list(

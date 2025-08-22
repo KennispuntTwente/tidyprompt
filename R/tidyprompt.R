@@ -283,18 +283,35 @@ NULL
     #'
     #' @param llm_provider Optional [llm_provider-class] object.
     #' This may sometimes affect the prompt text construction
+    #' @param apply_provider_prompt_wraps Logical. Whether to apply
+    #' provider-specific pre/post prompt wraps when constructing the prompt text
     #'
     #' @return A string representing the constructed prompt text
-    construct_prompt_text = function(llm_provider = NULL) {
+    construct_prompt_text = function(
+      llm_provider = NULL,
+      apply_provider_prompt_wraps = FALSE
+    ) {
       private$validate_tidyprompt()
       prompt_text <- self$base_prompt
-      wraps <- self$get_prompt_wraps(order = "modification")
+
+      # Add provider-specific pre/post prompt wraps
+      if (
+        isTRUE(is.function(llm_provider$apply_prompt_wraps)) &
+          isTRUE(apply_provider_prompt_wraps)
+      ) {
+        modified_self <- llm_provider$apply_prompt_wraps(self)
+      } else {
+        modified_self <- self
+      }
+
+      wraps <- modified_self$get_prompt_wraps(order = "modification")
 
       for (wrap in wraps) {
         if (!is.null(wrap$modify_fn)) {
           prompt_text <- wrap$modify_fn(prompt_text, llm_provider)
         }
       }
+
       prompt_text
     },
 

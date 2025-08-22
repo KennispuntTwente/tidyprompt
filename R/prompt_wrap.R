@@ -300,3 +300,77 @@ prompt_wrap_internal <- function(
 
   return(prompt)
 }
+
+#' Create a provider-level prompt wrap
+#' `r lifecycle::badge("experimental")`
+#'
+#' @description
+#' Build a provider-specific prompt wrap, to store on an [llm_provider-class] object
+#' (with `$add_prompt_wrap()`). These prompt wraps can be applied before or
+#' after any prompt-specific prompt wraps. In this way, you can ensure that
+#' certain prompt wraps are always applied when using a specific LLM provider.
+#'
+#' @inheritParams prompt_wrap
+#'
+#' @export
+#'
+#' @return A `provider_prompt_wrap` object, to be stored on an [llm_provider-class] object
+#'
+#' @example inst/examples/provider_prompt_wrap.R
+provider_prompt_wrap <- function(
+  modify_fn = NULL,
+  extraction_fn = NULL,
+  validation_fn = NULL,
+  handler_fn = NULL,
+  parameter_fn = NULL,
+  type = c("unspecified", "mode", "tool", "break", "check"),
+  name = NULL
+) {
+  type <- match.arg(type)
+
+  stopifnot(
+    is.null(modify_fn) || is.function(modify_fn),
+    is.null(extraction_fn) || is.function(extraction_fn),
+    is.null(validation_fn) || is.function(validation_fn),
+    is.null(handler_fn) || is.function(handler_fn),
+    is.null(parameter_fn) || is.function(parameter_fn)
+  )
+
+  if (type == "check") {
+    if (is.null(validation_fn))
+      stop("When using type 'check', validation_fn is required")
+    if (
+      !all(sapply(
+        list(modify_fn, extraction_fn, handler_fn, parameter_fn),
+        is.null
+      ))
+    )
+      stop("When using type 'check', only validation_fn is allowed")
+  }
+
+  if (
+    all(sapply(
+      list(modify_fn, extraction_fn, validation_fn, handler_fn, parameter_fn),
+      is.null
+    ))
+  )
+    stop(
+      "At least one of modify_fn, extraction_fn, validation_fn, handler_fn, or parameter_fn must be provided"
+    )
+
+  if (!is.null(parameter_fn) && length(formals(parameter_fn)) != 1)
+    stop("parameter_fn must take one argument: llm_provider")
+
+  structure(
+    list(
+      type = type,
+      modify_fn = modify_fn,
+      extraction_fn = extraction_fn,
+      validation_fn = validation_fn,
+      handler_fn = handler_fn,
+      parameter_fn = parameter_fn,
+      name = name
+    ),
+    class = c("provider_prompt_wrap", "prompt_wrap_spec")
+  )
+}

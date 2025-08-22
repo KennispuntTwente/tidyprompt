@@ -1,5 +1,12 @@
 # tidyprompt (development version)
 
+* Add provider-level prompt wraps (`provider_prompt_wrap()`) these are prompt
+wraps which can be attached to a LLM provider object. They can be applied to
+any prompt which is sent through this LLM provider, either before or after
+prompt-specific prompt wraps. This is useful when you want to achieve 
+certain behavior for various prompts, without having to re-apply the same
+prompt wrap to each prompt
+
 * `answer_as_json()`: support 'ellmer' definitions of structured ouput
 (e.g., `ellmer::type_object()`). `answer_as_json()` can convert between ellmer
 definitions and the previous R list objects which represent JSON schemas; thus,

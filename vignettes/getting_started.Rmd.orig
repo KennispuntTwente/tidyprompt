@@ -248,3 +248,25 @@ openai$verbose <- TRUE; options(tidyprompt.verbose = TRUE)
 
 See `prompt_wrap()` and the '[Creating prompt wraps](vignette("data-preparation"))'
 vignette for information on how to create your own prompt wraps.
+
+### Provider-level prompt wraps
+
+Provider-level prompt wraps let you set defaults for a specific LLM provider, so they apply to every prompt you send through it.
+This is useful if you want consistent behavior across all prompts without repeating the same wraps every time.
+You can choose to apply a provider-level prompt wrap either before or after the prompt-specific prompt wraps.
+
+```{r provider_wraps, cache=FALSE, eval=FALSE}
+# Example: add a "short answer" mode (provider-level post prompt wrap)
+ollama$add_prompt_wrap(
+  provider_prompt_wrap(
+    modify_fn = \(txt) paste0(
+      txt,
+      "\n\nPlease answer concisely (< 2 sentences)."
+    )
+  ),
+  position = "post"
+)
+
+# Use as usual: wraps are applied automatically
+"What's a vignette in R?" |> send_prompt(ollama)
+```

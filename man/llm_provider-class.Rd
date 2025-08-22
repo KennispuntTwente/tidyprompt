@@ -107,6 +107,18 @@ is set, this will override the api_type field for JSON mode determination.
 
 \item{\code{handler_fns}}{A list of functions that will be called after the completion of a chat.
 See \verb{$add_handler_fn()}}
+
+\item{\code{pre_prompt_wraps}}{A list of prompt wraps that will be applied to any prompt evaluated
+by this \linkS4class{llm_provider} object, before any prompt-specific
+prompt wraps are applied. See \verb{$add_prompt_wrap()}.
+This can be used to set default behavior for all prompts
+evaluated by this \linkS4class{llm_provider} object.}
+
+\item{\code{post_prompt_wraps}}{A list of prompt wraps that will be applied to any prompt evaluated
+by this \linkS4class{llm_provider} object, after any prompt-specific
+prompt wraps are applied. See \verb{$add_prompt_wrap()}.
+This can be used to set default behavior for all prompts
+evaluated by this \linkS4class{llm_provider} object.}
 }
 \if{html}{\out{</div>}}
 }
@@ -118,6 +130,8 @@ See \verb{$add_handler_fn()}}
 \item \href{#method-LlmProvider-complete_chat}{\code{llm_provider-class$complete_chat()}}
 \item \href{#method-LlmProvider-add_handler_fn}{\code{llm_provider-class$add_handler_fn()}}
 \item \href{#method-LlmProvider-set_handler_fns}{\code{llm_provider-class$set_handler_fns()}}
+\item \href{#method-LlmProvider-add_prompt_wrap}{\code{llm_provider-class$add_prompt_wrap()}}
+\item \href{#method-LlmProvider-apply_prompt_wraps}{\code{llm_provider-class$apply_prompt_wraps()}}
 \item \href{#method-LlmProvider-clone}{\code{llm_provider-class$clone()}}
 }
 }
@@ -281,7 +295,49 @@ See \verb{$add_handler_fn()} for more information
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{handler_fns}}{A list of handler functions to set}
+\item{\code{handler_fns}}{A list of handler functions to set
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LlmProvider-add_prompt_wrap"></a>}}
+\if{latex}{\out{\hypertarget{method-LlmProvider-add_prompt_wrap}{}}}
+\subsection{Method \code{add_prompt_wrap()}}{
+Add a provider-level prompt wrap template to be applied to all prompts.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{llm_provider-class$add_prompt_wrap(prompt_wrap, position = c("pre", "post"))}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{prompt_wrap}}{A list created by \code{\link[=provider_prompt_wrap]{provider_prompt_wrap()}}}
+
+\item{\code{position}}{One of "pre" or "post" (applied before/after prompt-specific wraps)
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LlmProvider-apply_prompt_wraps"></a>}}
+\if{latex}{\out{\hypertarget{method-LlmProvider-apply_prompt_wraps}{}}}
+\subsection{Method \code{apply_prompt_wraps()}}{
+Apply all provider-level wraps to a prompt (character or tidyprompt)
+and return a tidyprompt with wraps attached.
+This is typically called inside \code{send_prompt()} before evaluation of
+the prompt.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{llm_provider-class$apply_prompt_wraps(prompt)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{prompt}}{A string, a chat history, a list containing
+a chat history under key '$chat_history', or a \linkS4class{tidyprompt} object}
 }
 \if{html}{\out{</div>}}
 }

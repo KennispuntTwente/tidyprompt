@@ -222,7 +222,10 @@ A list of \code{\link[=prompt_wrap]{prompt_wrap()}} objects.
 \subsection{Method \code{construct_prompt_text()}}{
 Construct the complete prompt text.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{tidyprompt-class$construct_prompt_text(llm_provider = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{tidyprompt-class$construct_prompt_text(
+  llm_provider = NULL,
+  apply_provider_prompt_wraps = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -230,6 +233,9 @@ Construct the complete prompt text.
 \describe{
 \item{\code{llm_provider}}{Optional \linkS4class{llm_provider} object.
 This may sometimes affect the prompt text construction}
+
+\item{\code{apply_provider_prompt_wraps}}{Logical. Whether to apply
+provider-specific pre/post prompt wraps when constructing the prompt text}
 }
 \if{html}{\out{</div>}}
 }

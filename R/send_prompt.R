@@ -91,6 +91,11 @@ send_prompt <- function(
     is.null(stream) | is.logical(stream)
   )
 
+  # Add provider-specific pre/post prompt wraps
+  if (isTRUE(is.function(llm_provider$apply_prompt_wraps))) {
+    prompt <- llm_provider$apply_prompt_wraps(prompt)
+  }
+
   # Verify and configure llm_provider
   llm_provider <- llm_provider$clone()
   if (!is.null(verbose)) llm_provider$verbose <- verbose
