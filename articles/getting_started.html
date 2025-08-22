@@ -435,6 +435,30 @@ used to formulate a final answer.</p>
 <p>See <code><a href="../reference/prompt_wrap.html">prompt_wrap()</a></code> and the ‘<a href="creating_prompt_wraps.html">Creating prompt wraps</a>’ vignette
 for information on how to create your own prompt wraps.</p>
 </div>
+<div class="section level3">
+<h3 id="provider-level-prompt-wraps">Provider-level prompt wraps<a class="anchor" aria-label="anchor" href="#provider-level-prompt-wraps"></a>
+</h3>
+<p>Provider-level prompt wraps let you set defaults for a specific LLM
+provider, so they apply to every prompt you send through it. This is
+useful if you want consistent behavior across all prompts without
+repeating the same wraps every time. You can choose to apply a
+provider-level prompt wrap either before or after the prompt-specific
+prompt wraps.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Example: add a "short answer" mode (provider-level post prompt wrap)</span></span>
+<span><span class="va">ollama</span><span class="op">$</span><span class="fu">add_prompt_wrap</span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/provider_prompt_wrap.html">provider_prompt_wrap</a></span><span class="op">(</span></span>
+<span>    modify_fn <span class="op">=</span> \<span class="op">(</span><span class="va">txt</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>      <span class="va">txt</span>,</span>
+<span>      <span class="st">"\n\nPlease answer concisely (&lt; 2 sentences)."</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"post"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Use as usual: wraps are applied automatically</span></span>
+<span><span class="st">"What's a vignette in R?"</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">ollama</span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

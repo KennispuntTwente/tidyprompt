@@ -106,6 +106,22 @@ is set, this will override the api_type field for JSON mode determination.
 See <code>$add_handler_fn()</code></p></dd>
 
 
+<dt><code>pre_prompt_wraps</code></dt>
+<dd><p>A list of prompt wraps that will be applied to any prompt evaluated
+by this llm_provider object, before any prompt-specific
+prompt wraps are applied. See <code>$add_prompt_wrap()</code>.
+This can be used to set default behavior for all prompts
+evaluated by this llm_provider object.</p></dd>
+
+
+<dt><code>post_prompt_wraps</code></dt>
+<dd><p>A list of prompt wraps that will be applied to any prompt evaluated
+by this llm_provider object, after any prompt-specific
+prompt wraps are applied. See <code>$add_prompt_wrap()</code>.
+This can be used to set default behavior for all prompts
+evaluated by this llm_provider object.</p></dd>
+
+
 </dl><p></p></div>
     </div>
     <div class="section level2">
@@ -119,6 +135,8 @@ See <code>$add_handler_fn()</code></p></dd>
 <li><p><a href="#method-LlmProvider-complete_chat"><code>llm_provider-class$complete_chat()</code></a></p></li>
 <li><p><a href="#method-LlmProvider-add_handler_fn"><code>llm_provider-class$add_handler_fn()</code></a></p></li>
 <li><p><a href="#method-LlmProvider-set_handler_fns"><code>llm_provider-class$set_handler_fns()</code></a></p></li>
+<li><p><a href="#method-LlmProvider-add_prompt_wrap"><code>llm_provider-class$add_prompt_wrap()</code></a></p></li>
+<li><p><a href="#method-LlmProvider-apply_prompt_wraps"><code>llm_provider-class$apply_prompt_wraps()</code></a></p></li>
 <li><p><a href="#method-LlmProvider-clone"><code>llm_provider-class$clone()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-LlmProvider-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -285,7 +303,49 @@ See <code>$add_handler_fn()</code> for more information</p><div class="section">
 <div class="section">
 <h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>handler_fns</code></dt>
-<dd><p>A list of handler functions to set</p></dd>
+<dd><p>A list of handler functions to set
+<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="figures/lifecycle-experimental.svg" alt="[Experimental]"></a></p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-LlmProvider-add_prompt_wrap"></a><div class="section">
+<h3 id="method-add-prompt-wrap-">Method <code>add_prompt_wrap()</code><a class="anchor" aria-label="anchor" href="#method-add-prompt-wrap-"></a></h3>
+<p>Add a provider-level prompt wrap template to be applied to all prompts.</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">llm_provider</span><span class="op">-</span><span class="va">class</span><span class="op">$</span><span class="fu">add_prompt_wrap</span><span class="op">(</span><span class="va">prompt_wrap</span>, position <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pre"</span>, <span class="st">"post"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>prompt_wrap</code></dt>
+<dd><p>A list created by <code><a href="provider_prompt_wrap.html">provider_prompt_wrap()</a></code></p></dd>
+
+
+<dt><code>position</code></dt>
+<dd><p>One of "pre" or "post" (applied before/after prompt-specific wraps)
+<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="figures/lifecycle-experimental.svg" alt="[Experimental]"></a></p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-LlmProvider-apply_prompt_wraps"></a><div class="section">
+<h3 id="method-apply-prompt-wraps-">Method <code>apply_prompt_wraps()</code><a class="anchor" aria-label="anchor" href="#method-apply-prompt-wraps-"></a></h3>
+<p>Apply all provider-level wraps to a prompt (character or tidyprompt)
+and return a tidyprompt with wraps attached.
+This is typically called inside <code><a href="send_prompt.html">send_prompt()</a></code> before evaluation of
+the prompt.</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">llm_provider</span><span class="op">-</span><span class="va">class</span><span class="op">$</span><span class="fu">apply_prompt_wraps</span><span class="op">(</span><span class="va">prompt</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>prompt</code></dt>
+<dd><p>A string, a chat history, a list containing
+a chat history under key '$chat_history', or a <a href="tidyprompt-class.html">tidyprompt</a> object</p></dd>
 
 
 </dl><p></p></div>
@@ -294,12 +354,12 @@ See <code>$add_handler_fn()</code> for more information</p><div class="section">
 </div><p></p><hr><a id="method-LlmProvider-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">llm_provider</span><span class="op">-</span><span class="va">class</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
