@@ -31,6 +31,9 @@ can now also be used with tools from Model Context Protocol (MCP) servers
 which allows setting parameters like 'reasoning_effort' and 'verbosity' 
 (relevant for gpt-5). The OpenAI chat completions API is also still supported
 
+* `llm_provider_google_gemini()` has been superseded by
+`llm_provider_ellmer(ellmer::chat_google_gemini())`
+
 * Add a `json_type` field to LLM provider objects; when automatically
 determining the route towards structured output, this can override the type 
 decided by the `api_type` field (e.g., user can use this field to force the 

@@ -317,8 +317,16 @@ llm_provider_xai <- function(
 
 #' Create a new Google Gemini LLM provider
 #'
+#' @description
+#' `r lifecycle::badge("superseded")`
 #' This function creates a new [llm_provider-class] object that interacts with the Google Gemini API.
-#' Streaming is not yet supported in this implementation.
+#'
+#' @details
+#' Streaming is not yet supported in this implementation. Native functions
+#' like structured output and tool calling are also not supported in this implemetation.
+#' This may however be achieved through creating a [llm_provider_ellmer()] object
+#' with as input a `ellmer::chat_google_gemini()` object. Therefore, this function
+#' is now superseded by `llm_provider_ellmer(ellmer::chat_google_gemini())`.
 #'
 #' @param parameters A named list of parameters. Currently the following parameters are required:
 #'    - model: The name of the model to use (see: https://ai.google.dev/gemini-api/docs/models/gemini)

@@ -33,8 +33,15 @@ should be printed to the console}
 A new \linkS4class{llm_provider} object for use of the Google Gemini API
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
 This function creates a new \linkS4class{llm_provider} object that interacts with the Google Gemini API.
-Streaming is not yet supported in this implementation.
+}
+\details{
+Streaming is not yet supported in this implementation. Native functions
+like structured output and tool calling are also not supported in this implemetation.
+This may however be achieved through creating a \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}} object
+with as input a \code{ellmer::chat_google_gemini()} object. Therefore, this function
+is now superseded by \code{llm_provider_ellmer(ellmer::chat_google_gemini())}.
 }
 \examples{
 # Various providers:
