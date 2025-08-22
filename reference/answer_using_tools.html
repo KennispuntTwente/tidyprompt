@@ -7,8 +7,10 @@ send_prompt()). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
 (see ellmer::tool(); https://ellmer.tidyverse.org/articles/tool-calling.html).
-Model Context Protocol (MCP) tools from MCP servers, as returned from mcptools::mcp_tools(), may also
-be used."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
+Model Context Protocol (MCP) tools from MCP servers, as returned from
+mcptools::mcp_tools(), may also be used. Regardless of which type of
+tool definition is provided, the function will work with both 'ellmer' and
+regular LLM providers (the function converts between the two types as needed)."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
 Users can specify a list of functions that the LLM can call, and the
 prompt will be modified to include information, as well as an
 accompanying extraction function to call the functions (handled by
@@ -16,8 +18,10 @@ send_prompt()). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
 (see ellmer::tool(); https://ellmer.tidyverse.org/articles/tool-calling.html).
-Model Context Protocol (MCP) tools from MCP servers, as returned from mcptools::mcp_tools(), may also
-be used."></head><body>
+Model Context Protocol (MCP) tools from MCP servers, as returned from
+mcptools::mcp_tools(), may also be used. Regardless of which type of
+tool definition is provided, the function will work with both 'ellmer' and
+regular LLM providers (the function converts between the two types as needed)."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -66,8 +70,10 @@ accompanying extraction function to call the functions (handled by
 the help file (if available), or from documentation added by
 <code><a href="tools_add_docs.html">tools_add_docs()</a></code>. Users can also provide an 'ellmer' tool definition
 (see <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>; https://ellmer.tidyverse.org/articles/tool-calling.html).
-Model Context Protocol (MCP) tools from MCP servers, as returned from <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>, may also
-be used.</p>
+Model Context Protocol (MCP) tools from MCP servers, as returned from
+<code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>, may also be used. Regardless of which type of
+tool definition is provided, the function will work with both 'ellmer' and
+regular LLM providers (the function converts between the two types as needed).</p>
     </div>
 
     <div class="section level2">
@@ -93,8 +99,8 @@ or a list of either, which the LLM will be able to call. If an R function is pas
 which has been documented in a help file (e.g., because it is part of a package),
 the documentation will be parsed from the help file. If it is a custom function,
 documentation should be added with <code><a href="tools_add_docs.html">tools_add_docs()</a></code> or with <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>.
-Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
-<code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code></p></dd>
+Note that you can also provide Model Context Protocol (MCP) tools from MCP servers
+as returned from <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code></p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -104,9 +110,9 @@ Note that you can also provide Model Context Protocol (MCP) tools from MCP serve
 set 'type' manually if errors occur). 'openai' and 'ollama' will set the
 relevant API parameters. 'ellmer' will register the tool in the 'ellmer' chat
 object of the LLM provider; note that this will only work for an <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code>
-('auto' should always set this type if you are using an 'ellmer' LLM provider).
-'text-based' will provide function definitions
-in the prompt, extract function calls from the LLM response, and call the
+('auto' will always set this type if you are using an 'ellmer' LLM provider).
+'text-based' will provide function definitions in the prompt, extract function
+calls from the LLM response, and call the
 functions, providing the results back via <code><a href="llm_feedback.html">llm_feedback()</a></code>. 'text-based'
 always works, but may be inefficient for APIs that support tool calling
 natively. However, 'text-based' may be more reliable and flexible, especially
