@@ -445,7 +445,9 @@ repeating the same wraps every time. You can choose to apply a
 provider-level prompt wrap either before or after the prompt-specific
 prompt wraps.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Example: add a "short answer" mode (provider-level post prompt wrap)</span></span>
+<code class="sourceCode R"><span><span class="va">ollama</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/llm_provider_ollama.html">llm_provider_ollama</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Example: add a "short answer" mode (provider-level post prompt wrap)</span></span>
 <span><span class="va">ollama</span><span class="op">$</span><span class="fu">add_prompt_wrap</span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/provider_prompt_wrap.html">provider_prompt_wrap</a></span><span class="op">(</span></span>
 <span>    modify_fn <span class="op">=</span> \<span class="op">(</span><span class="va">txt</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
