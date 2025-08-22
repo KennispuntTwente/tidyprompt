@@ -1,4 +1,4 @@
-# --- Tool conversion: ellmer <-> tidyprompt ---------------------------------
+# R/helper_ellmer_tool_compatability.R
 
 # Cache class signature for ellmer ToolDef so we can robustly detect it
 .ELLMER_TOOLDEF_CLASS_SIG <- local({
@@ -159,7 +159,8 @@ ellmer_tool_to_tidyprompt <- function(tooldef) {
     as.pairlist(blanks)
   }
 
-  wrapper <- function() { }
+  wrapper <- function() {
+  }
   formals(wrapper) <- get_tool_formals(tooldef)
   body(wrapper) <- quote({
     tool <- attr(sys.function(), "ellmer_tool", exact = TRUE)

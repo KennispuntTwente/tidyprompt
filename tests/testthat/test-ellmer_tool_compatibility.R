@@ -1,6 +1,6 @@
 # tests/testthat/test-ellmer_tool_compatability.R
 #
-# This tests the helper functions in R/helper_ellmer_json_compatability.R
+# This tests the helper functions in R/helper_ellmer_json_compatibility.R
 #   for converting between ellmer ToolDef <-> tidyprompt tools (functions+docs)
 
 # library(testthat)
@@ -32,13 +32,17 @@ docs_types_only <- function(docs) {
         s <- sub[[sn]]
         if (is.list(s)) {
           # support deeper nesting if present
-          out[[nm]][[sn]] <- if (is.list(s$type)) s$type else (s$type %||% "unknown")
+          out[[nm]][[sn]] <- if (is.list(s$type)) s$type else
+            (s$type %||% "unknown")
         } else {
           out[[nm]][[sn]] <- s %||% "unknown"
         }
       }
     } else if (!is.null(a$enum) || identical(a$type, "match.arg")) {
-      out[[nm]] <- list(type = "match.arg", values = sort(as.character(a$default_value %||% character())))
+      out[[nm]] <- list(
+        type = "match.arg",
+        values = sort(as.character(a$default_value %||% character()))
+      )
     } else {
       out[[nm]] <- a$type %||% "unknown"
     }
@@ -57,8 +61,12 @@ ellmer_tool_prop_schemas <- function(tooldef, strict = TRUE) {
     # attribute fallback
     at <- attributes(tooldef@arguments) %||% list()
     reserved <- c(
-      ".additional_properties", "additional_properties", "class",
-      "description", "required", "properties"
+      ".additional_properties",
+      "additional_properties",
+      "class",
+      "description",
+      "required",
+      "properties"
     )
     prop_names <- setdiff(names(at), reserved)
     props <- lapply(prop_names, function(nm) at[[nm]])
@@ -99,11 +107,11 @@ testthat::test_that("ellmer_tool_to_tidyprompt_docs maps common types correctly"
     f,
     description = "Mixed args",
     arguments = list(
-      s  = ellmer::type_string("S"),
-      n  = ellmer::type_number(),
-      i  = ellmer::type_integer(),
-      b  = ellmer::type_boolean(),
-      c  = ellmer::type_enum(c("a","b")),
+      s = ellmer::type_string("S"),
+      n = ellmer::type_number(),
+      i = ellmer::type_integer(),
+      b = ellmer::type_boolean(),
+      c = ellmer::type_enum(c("a", "b")),
       vs = ellmer::type_array(ellmer::type_string()),
       obj = ellmer::type_object(
         x = ellmer::type_string(),
@@ -115,14 +123,14 @@ testthat::test_that("ellmer_tool_to_tidyprompt_docs maps common types correctly"
   docs <- ellmer_tool_to_tidyprompt_docs(td)
   # Types-only assertions
   types <- docs_types_only(docs)
-  testthat::expect_equal(types$s,  "string")
-  testthat::expect_equal(types$n,  "numeric")
-  testthat::expect_equal(types$i,  "integer")
-  testthat::expect_equal(types$b,  "logical")
+  testthat::expect_equal(types$s, "string")
+  testthat::expect_equal(types$n, "numeric")
+  testthat::expect_equal(types$i, "integer")
+  testthat::expect_equal(types$b, "logical")
   testthat::expect_equal(types$vs, "vector string")
   testthat::expect_true(is.list(types$c))
   testthat::expect_equal(unname(types$c$type), "match.arg")
-  testthat::expect_equal(unname(types$c$values), c("a","b"))
+  testthat::expect_equal(unname(types$c$values), c("a", "b"))
   testthat::expect_true(is.list(types$obj))
   testthat::expect_equal(types$obj$x, "string")
   testthat::expect_equal(types$obj$y, "integer")
@@ -159,7 +167,11 @@ testthat::test_that("ellmer_tool_to_tidyprompt creates a working wrapper with do
 testthat::test_that("tidyprompt_docs_to_ellmer_tool builds a ToolDef that matches formals and types", {
   testthat::skip_if_not_installed("ellmer")
 
-  get_weather_like <- function(city, units = c("metric","imperial"), opts = list(detail = TRUE)) {
+  get_weather_like <- function(
+    city,
+    units = c("metric", "imperial"),
+    opts = list(detail = TRUE)
+  ) {
     paste(city, units[1], if (isTRUE(opts$detail)) "(detail)" else "")
   }
 
@@ -167,9 +179,9 @@ testthat::test_that("tidyprompt_docs_to_ellmer_tool builds a ToolDef that matche
     name = "get_weather_like",
     description = "Demo weather-like tool",
     arguments = list(
-      city  = list(type = "string",  description = "City name"),
-      units = list(type = "match.arg", default_value = c("metric","imperial")),
-      opts  = list(type = list(detail = "logical"))
+      city = list(type = "string", description = "City name"),
+      units = list(type = "match.arg", default_value = c("metric", "imperial")),
+      opts = list(type = list(detail = "logical"))
     ),
     return = list(description = "A short string")
   )
@@ -178,13 +190,15 @@ testthat::test_that("tidyprompt_docs_to_ellmer_tool builds a ToolDef that matche
   testthat::expect_true(is_ellmer_tool(td))
 
   # Names must match function formals
-  testthat::expect_identical(names(formals(get_weather_like)),
-                             names(td@arguments@properties))
+  testthat::expect_identical(
+    names(formals(get_weather_like)),
+    names(td@arguments@properties)
+  )
 
   # Per-argument schema checks
   ps <- ellmer_tool_prop_schemas(td, strict = TRUE)
   testthat::expect_equal(ps$city$type, "string")
-  testthat::expect_equal(sort(ps$units$enum), c("imperial","metric"))
+  testthat::expect_equal(sort(ps$units$enum), c("imperial", "metric"))
 
   # opts should be an object with a boolean subproperty "detail"
   testthat::expect_equal(ps$opts$type, "object")
@@ -278,14 +292,17 @@ testthat::test_that("normalize_tool_dual returns both sides from tidyprompt func
   say <- function(text, shout = FALSE) {
     if (isTRUE(shout)) toupper(text) else text
   }
-  say <- tools_add_docs(say, list(
-    name = "say",
-    description = "Echo text",
-    arguments = list(
-      text = list(type = "string"),
-      shout = list(type = "logical")
+  say <- tools_add_docs(
+    say,
+    list(
+      name = "say",
+      description = "Echo text",
+      arguments = list(
+        text = list(type = "string"),
+        shout = list(type = "logical")
+      )
     )
-  ))
+  )
 
   out <- normalize_tool_dual(say)
   testthat::expect_true(is.function(out$tidyprompt_tool))

@@ -1,10 +1,10 @@
 # tests/testthat/test-ellmer_json_compatability.R
 
-# This tests the helper functions in R/helper_ellmer_json_compatability.R
+# This tests the helper functions in R/helper_ellmer_json_compatibility.R
 #   and ensures that the conversion between JSON schema and ellmer types works correctly
 
 # library(testthat)
-# source(here::here("R", "helper_ellmer_json_compatability.R"))
+# devtools::load_all()
 
 # ---- Helpers ---------------------------------------------------------------
 
