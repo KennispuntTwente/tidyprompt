@@ -1,7 +1,7 @@
 # `answer_using_tools()` prompt wrap --------------------------------------
 
 #' @title
-#' Enable LLM to call R functions
+#' Enable LLM to call R functions (and/or MCP server tools)
 #'
 #' @description
 #' This function adds the ability for the a LLM to call R functions.
@@ -11,11 +11,15 @@
 #' [send_prompt()]). Documentation for the functions is extracted from
 #' the help file (if available), or from documentation added by
 #' [tools_add_docs()]. Users can also provide an 'ellmer' tool definition
-#' (see [ellmer::tool()]; https://ellmer.tidyverse.org/articles/tool-calling.html).
+#' (see [ellmer::tool()]; ['ellmer' documentation](https://ellmer.tidyverse.org/articles/tool-calling.html)).
 #' Model Context Protocol (MCP) tools from MCP servers, as returned from
 #' [mcptools::mcp_tools()], may also be used. Regardless of which type of
 #' tool definition is provided, the function will work with both 'ellmer' and
 #' regular LLM providers (the function converts between the two types as needed).
+#'
+#' @details
+#' Note that conversion between 'tidyprompt' and 'ellmer' tool definitions
+#' is experimntal and might contain bugs.
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
@@ -28,24 +32,23 @@
 #' as returned from [mcptools::mcp_tools()]
 #'
 #' @param type (optional) The way that tool calling should be enabled.
-#' 'auto' will automatically determine the type based on 'llm_provider$api_type'
+#' "auto" will automatically determine the type based on `llm_provider$api_type`
 #' (note that this may not consider model compatibility, and could lead to errors;
-#' set 'type' manually if errors occur). 'openai' and 'ollama' will set the
-#' relevant API parameters. 'ellmer' will register the tool in the 'ellmer' chat
+#' set 'type' manually if errors occur). "openai" and "ollama" will set the
+#' relevant API parameters. "ellmer" will register the tool in the 'ellmer' chat
 #' object of the LLM provider; note that this will only work for an [llm_provider_ellmer()]
-#' ('auto' will always set this type if you are using an 'ellmer' LLM provider).
-#' 'text-based' will provide function definitions in the prompt, extract function
+#' ("auto" will always set the type to "ellmer" if you are using an 'ellmer' LLM provider).
+#' "text-based" will provide function definitions in the prompt, extract function
 #' calls from the LLM response, and call the
-#' functions, providing the results back via [llm_feedback()]. 'text-based'
+#' functions, providing the results back via [llm_feedback()]. "text-based"
 #' always works, but may be inefficient for APIs that support tool calling
-#' natively. However, 'text-based' may be more reliable and flexible, especially
-#' when combining with other prompt wraps. 'openai','ollama', and 'ellmer' may not allow
-#' for retries if the function call did not provide the expected result. Note that
-#' when using 'openai', 'ollama', or 'ellmer', tool calls are not counted as interactions and
-#' may continue indefinitely (use with caution)
+#' natively. Note that when using "openai", "ollama", or "ellmer", tool calls are not counted
+#' as interactions by [send_prompt()] and may continue indefinitely unless restricted
+#' by other means
 #'
 #' @return A [tidyprompt()] with an added [prompt_wrap()] which
-#' will allow the LLM to call R functions
+#' will allow the LLM to call the given R functions when evaluating
+#' the prompt with [send_prompt()]
 #'
 #' @export
 #'

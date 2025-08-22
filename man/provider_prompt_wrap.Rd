@@ -2,8 +2,7 @@
 % Please edit documentation in R/prompt_wrap.R
 \name{provider_prompt_wrap}
 \alias{provider_prompt_wrap}
-\title{Create a provider-level prompt wrap
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}}
+\title{Create a provider-level prompt wrap}
 \usage{
 provider_prompt_wrap(
   modify_fn = NULL,
@@ -91,6 +90,7 @@ This can be used to identify the prompt wrap in the \linkS4class{tidyprompt} obj
 A \code{provider_prompt_wrap} object, to be stored on an \linkS4class{llm_provider} object
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Build a provider-specific prompt wrap, to store on an \linkS4class{llm_provider} object
 (with \verb{$add_prompt_wrap()}). These prompt wraps can be applied before or
 after any prompt-specific prompt wraps. In this way, you can ensure that

@@ -2,7 +2,7 @@
 % Please edit documentation in R/answer_using_tools.R
 \name{answer_using_tools}
 \alias{answer_using_tools}
-\title{Enable LLM to call R functions}
+\title{Enable LLM to call R functions (and/or MCP server tools)}
 \usage{
 answer_using_tools(
   prompt,
@@ -22,25 +22,24 @@ Note that you can also provide Model Context Protocol (MCP) tools from MCP serve
 as returned from \code{\link[mcptools:client]{mcptools::mcp_tools()}}}
 
 \item{type}{(optional) The way that tool calling should be enabled.
-'auto' will automatically determine the type based on 'llm_provider$api_type'
+"auto" will automatically determine the type based on \code{llm_provider$api_type}
 (note that this may not consider model compatibility, and could lead to errors;
-set 'type' manually if errors occur). 'openai' and 'ollama' will set the
-relevant API parameters. 'ellmer' will register the tool in the 'ellmer' chat
+set 'type' manually if errors occur). "openai" and "ollama" will set the
+relevant API parameters. "ellmer" will register the tool in the 'ellmer' chat
 object of the LLM provider; note that this will only work for an \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}}
-('auto' will always set this type if you are using an 'ellmer' LLM provider).
-'text-based' will provide function definitions in the prompt, extract function
+("auto" will always set the type to "ellmer" if you are using an 'ellmer' LLM provider).
+"text-based" will provide function definitions in the prompt, extract function
 calls from the LLM response, and call the
-functions, providing the results back via \code{\link[=llm_feedback]{llm_feedback()}}. 'text-based'
+functions, providing the results back via \code{\link[=llm_feedback]{llm_feedback()}}. "text-based"
 always works, but may be inefficient for APIs that support tool calling
-natively. However, 'text-based' may be more reliable and flexible, especially
-when combining with other prompt wraps. 'openai','ollama', and 'ellmer' may not allow
-for retries if the function call did not provide the expected result. Note that
-when using 'openai', 'ollama', or 'ellmer', tool calls are not counted as interactions and
-may continue indefinitely (use with caution)}
+natively. Note that when using "openai", "ollama", or "ellmer", tool calls are not counted
+as interactions by \code{\link[=send_prompt]{send_prompt()}} and may continue indefinitely unless restricted
+by other means}
 }
 \value{
 A \code{\link[=tidyprompt]{tidyprompt()}} with an added \code{\link[=prompt_wrap]{prompt_wrap()}} which
-will allow the LLM to call R functions
+will allow the LLM to call the given R functions when evaluating
+the prompt with \code{\link[=send_prompt]{send_prompt()}}
 }
 \description{
 This function adds the ability for the a LLM to call R functions.
@@ -50,11 +49,15 @@ accompanying extraction function to call the functions (handled by
 \code{\link[=send_prompt]{send_prompt()}}). Documentation for the functions is extracted from
 the help file (if available), or from documentation added by
 \code{\link[=tools_add_docs]{tools_add_docs()}}. Users can also provide an 'ellmer' tool definition
-(see \code{\link[ellmer:tool]{ellmer::tool()}}; https://ellmer.tidyverse.org/articles/tool-calling.html).
+(see \code{\link[ellmer:tool]{ellmer::tool()}}; \href{https://ellmer.tidyverse.org/articles/tool-calling.html}{'ellmer' documentation}).
 Model Context Protocol (MCP) tools from MCP servers, as returned from
 \code{\link[mcptools:client]{mcptools::mcp_tools()}}, may also be used. Regardless of which type of
 tool definition is provided, the function will work with both 'ellmer' and
 regular LLM providers (the function converts between the two types as needed).
+}
+\details{
+Note that conversion between 'tidyprompt' and 'ellmer' tool definitions
+is experimntal and might contain bugs.
 }
 \examples{
 # When using functions from base R or R packages,
@@ -177,9 +180,10 @@ prompt_with_weather_function_ellmer <-
 #   you can also use Model Context Protocol (MCP) server tools with
 #   `answer_using_tools()`:
 \dontrun{
-  mcp_tools <- mcptools::mcp_tools()
+  prompt_using_mcp_tools <- mcptools::mcp_tools()
   "Push my latest commit to GitHub" |>
     answer_using_tools(mcp_tools)
+  send_prompt(prompt_using_mcp_tools)
 }
 
 # `answer_using_tools()` will automatically attempt to use the most appropriate

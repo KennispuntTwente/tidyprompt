@@ -1,5 +1,7 @@
 #' Make LLM answer as a category
-#' For multiple categories, see [answer_as_multi_category()]
+#'
+#' @details
+#' For multiple categories, see [answer_as_multi_category()].
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #' @param categories A character vector of category names. Must not be empty
@@ -70,7 +72,9 @@ answer_as_category <- function(
 
 
 #' Build prompt for categorizing a text into multiple categories
-#' For single category, see [answer_as_category()]
+#'
+#' @details
+#' For a single category, see [answer_as_category()].
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #' @param categories A character vector of category names. Must not be empty

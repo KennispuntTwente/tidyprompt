@@ -2,8 +2,7 @@
 % Please edit documentation in R/answer_as_category.R
 \name{answer_as_category}
 \alias{answer_as_category}
-\title{Make LLM answer as a category
-For multiple categories, see \code{\link[=answer_as_multi_category]{answer_as_multi_category()}}}
+\title{Make LLM answer as a category}
 \usage{
 answer_as_category(prompt, categories, descriptions = NULL)
 }
@@ -24,7 +23,9 @@ a character vector of length one
 }
 \description{
 Make LLM answer as a category
-For multiple categories, see \code{\link[=answer_as_multi_category]{answer_as_multi_category()}}
+}
+\details{
+For multiple categories, see \code{\link[=answer_as_multi_category]{answer_as_multi_category()}}.
 }
 \examples{
 \dontrun{

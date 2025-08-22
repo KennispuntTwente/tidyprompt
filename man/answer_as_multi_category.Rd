@@ -2,8 +2,7 @@
 % Please edit documentation in R/answer_as_category.R
 \name{answer_as_multi_category}
 \alias{answer_as_multi_category}
-\title{Build prompt for categorizing a text into multiple categories
-For single category, see \code{\link[=answer_as_category]{answer_as_category()}}}
+\title{Build prompt for categorizing a text into multiple categories}
 \usage{
 answer_as_multi_category(prompt, categories, descriptions = NULL)
 }
@@ -23,7 +22,9 @@ will ensure that the LLM response is a vector of fitting categories of a text
 }
 \description{
 Build prompt for categorizing a text into multiple categories
-For single category, see \code{\link[=answer_as_category]{answer_as_category()}}
+}
+\details{
+For a single category, see \code{\link[=answer_as_category]{answer_as_category()}}.
 }
 \examples{
 \dontrun{

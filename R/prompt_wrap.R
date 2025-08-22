@@ -302,9 +302,9 @@ prompt_wrap_internal <- function(
 }
 
 #' Create a provider-level prompt wrap
-#' `r lifecycle::badge("experimental")`
 #'
 #' @description
+#' `r lifecycle::badge("experimental")`
 #' Build a provider-specific prompt wrap, to store on an [llm_provider-class] object
 #' (with `$add_prompt_wrap()`). These prompt wraps can be applied before or
 #' after any prompt-specific prompt wraps. In this way, you can ensure that

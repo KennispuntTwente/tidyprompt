@@ -118,9 +118,10 @@ prompt_with_weather_function_ellmer <-
 #   you can also use Model Context Protocol (MCP) server tools with
 #   `answer_using_tools()`:
 \dontrun{
-  mcp_tools <- mcptools::mcp_tools()
+  prompt_using_mcp_tools <- mcptools::mcp_tools()
   "Push my latest commit to GitHub" |>
     answer_using_tools(mcp_tools)
+  send_prompt(prompt_using_mcp_tools)
 }
 
 # `answer_using_tools()` will automatically attempt to use the most appropriate

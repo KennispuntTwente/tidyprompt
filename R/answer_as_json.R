@@ -1,30 +1,29 @@
-#' @title Make LLM answer as JSON (with optional schema)
+#' @title Make LLM answer as JSON (with optional schema; structured output)
 #'
 #' @description This functions wraps a prompt with settings that ensure the LLM response
-#' is a valid JSON object, optionally matching a given JSON schema. Users
+#' is a valid JSON object, optionally matching a given JSON schema
+#' (also known as 'structured output'/'structured data'). Users
 #' may provide either an 'ellmer' type (e.g. [ellmer::type_object()];
-#' see https://ellmer.tidyverse.org/articles/structured-data.html) or
-#' a JSON Schema (as R list object) to define the expected structure of the response.
+#' see ['ellmer' documentation](https://ellmer.tidyverse.org/articles/structured-data.html)) or
+#' a JSON schema (as R list object) to enforce structure on the response.
 #'
 #' The function can work with all models and providers through text-based
 #' handling, but also supports native settings for the OpenAI, Ollama,
-#' and various 'ellmer' types. (See argument 'type'.) This means that it is possible to easily
-#' switch between providers with different levels of JSON support,
-#' while ensuring the results will be in the correct format.
+#' and various 'ellmer' types of LLM providers. (See argument 'type'.)
+#' This means that it is possible to easily switch between providers with
+#' different levels of structured output support, while always ensuring
+#' the response will be in the desired format.
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
-#' @param schema Either a list which represents
+#' @param schema Either a R list object which represents
 #' a JSON schema that the response should match, or an 'ellmer' definition of
-#' structured data (e.g., [ellmer::type_object()]; see https://ellmer.tidyverse.org/articles/structured-data.html).
-#' See also examples and your LLM provider API documentation about defining JSON schemas.
-#' Note that the schema should be a list (R object) representing a JSON schema, not a JSON string
-#' (use [jsonlite::fromJSON()] and [jsonlite::toJSON()] to convert between the two)
+#' structured data (e.g., [ellmer::type_object()]; see ['ellmer' documentation](https://ellmer.tidyverse.org/articles/structured-data.html))
 #'
 #' @param schema_strict If TRUE, the provided schema will be strictly enforced.
 #' This option is passed as part of the schema when using type
-#' "openai" or "ollama", and when using the other types it is passed to
-#' [jsonvalidate::json_validate()]
+#' "openai", "ollama", or "ellmer", and when using "ollama_oo", "openai_oo", or "text-based"
+#' it is passed to [jsonvalidate::json_validate()] when validating the response
 #'
 #' @param schema_in_prompt_as If providing a schema and
 #' when using type "text-based", "openai_oo", or "ollama_oo", this argument specifies
@@ -61,18 +60,20 @@
 #' you want to use the API's JSON support, but their schema support is limited
 #' \item "ellmer": A parameter will be added to the LLM provider, indicating
 #' that the response should be structured according to the provided schema.
-#' This is only useful when using an `llm_provider_ellmer()` object,
-#' and will lead to errors for other LLM provider types. Typically,
-#' when type is set to 'auto' and the `llm_provider` is an 'ellmer' LLM provider,
-#' this will be automatically selected (so it should not be necessary to set
+#' The native 'ellmer' `chat$chat_structured()` function will then be used to obtain
+#' the response. This type only useful when using an `llm_provider_ellmer()` object.
+#' When `type` is set to "auto" and the `llm_provider` is an 'ellmer' LLM provider,
+#' this type will be automatically selected (so it should not be necessary to set
 #' this option manually)
 #' }
-#' Note that the "openai" and "ollama" types may also work for other APIs with a similar structure.
+#' Note that the "openai" and "ollama" types may also work for other APIs with a
+#'  similar structure.
 #' Note furthermore that the "ellmer" type is still experimental and conversion
-#' between 'ellmer' schemas and R list schemas may contain bugs.
+#'  between 'ellmer' schemas and R list schemas might contain bugs.
 #'
 #' @return A [tidyprompt()] with an added [prompt_wrap()] which will ensure
-#' that the LLM response is a valid JSON object
+#' that the LLM response is a valid JSON object. Note that the prompt wrap
+#' will parse the JSON response and return it as an R object (usually a list)
 #'
 #' @export
 #'
