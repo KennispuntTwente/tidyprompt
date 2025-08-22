@@ -35,15 +35,18 @@ library(tidyprompt)
 At the moment, 'tidyprompt' includes pre-built functions to connect with various
 LLM providers, such as Ollama, OpenAI, OpenRouter, Mistral, Groq, XAI (Grok), and Google Gemini.
 
-An (experimental) function is also included with which users can user an `ellmer::chat()` object
-to build an LLM provider; this allows you to use any LLM provider you can configure with the
-'ellmer' R package (including its respective configuration and features).
+With the `llm_provider_ellmer()` function, you can also create an LLM provider
+from an `ellmer::chat()` object. This allows you to use any LLM provider
+that you can configure with the 'ellmer' R package (including its respective
+configuration and features). When using an 'ellmer' LLM provider,
+functions like `answer_as_json()` and `answer_using_tools()` will also call the native
+'ellmer' functions for these features.
 
-With the `llm_provider-class`, you can easily write a hook for any other LLM provider.
+Furthermore, with the `llm_provider-class`, you can easily write a hook for any other LLM provider.
 You could make API calls using the 'httr2' package or use another R package that already has
-a hook for the LLM provider you want to use. If your API of choice follows the structure
-of the OpenAI API, you can call `llm_provider_openai()` and change
-the relevant parameters (like the URL and the API key).
+a hook for the LLM provider you want to use. If your API of choice is compatible with the structure
+of the OpenAI API, you can call `llm_provider_openai()` and change only
+the URL and the API key to make it work.
 
 ```{r llm_provider}
 # Ollama running on local PC
