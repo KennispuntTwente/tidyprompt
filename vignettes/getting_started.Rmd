@@ -184,12 +184,9 @@ returning JSON objects and adhering to JSON schemas (e.g., OpenAI, Ollama). Text
 possible, also for providers which do not natively support such functions. This means that
 you can always switch between providers while ensuring the results will be in the correct format.
 
-It should also be noted that native JSON enforcement may also restrict the model too much,
-so it is always good to test and see what works best for your use case. In our experience,
-text-based handling is often more flexible and robust, especially when combining
-multiple prompt wraps. Note also that JSON schemas may not enforce all qualities 
-you are looking for in the output, so you may still need to add additional prompt wraps
-to ensure the output is as desired.
+`answer_as_json()` can take schemas defined as either a R list object representing a JSON schema,
+or structured output definitions from the 'ellmer' package (e.g., `ellmer::type_object()`).
+See the documentation of `answer_as_json()` for more information on how to use it.
 
 ### answer_by: Adding a reasoning mode to the LLM
 
@@ -253,11 +250,21 @@ This enables the LLM to autonomously retrieve additional information or take oth
 `answer_using_tools()` automatically extracts documentation when it is available
 for base R functions and functions from packages. Types are inferred from the
 default arguments of the function. If you want to define a custom function and/or override the default documentation,
-you can use `tools_add_docs()`. See example usage in the documentation
-of `answer_using_tools()`.
+you can use `tools_add_docs()`. See example usage in the documentation of `answer_using_tools()`.
+
+`answer_using_tools()` also accepts tool definitions from `ellmer::tool()`.
+Because `answer_using_tools()` can convert tool definitions, `ellmer::tool()`
+definitions will work with any LLM provider type (also non-'ellmer' LLM
+providers). Similarly, when using an `llm_provider_ellmer()`, a tool definition
+can also be given with `tools_add_docs()`. And, when using an `llm_provider_ellmer()`,
+`answer_using_tools()` will call the native 'ellmer' functions to register
+tools. See example usage in the documentation of `answer_using_tools()`.
+
+Tool definitions returned by `mcptools::mcp_tools()` may also be provided,
+allowing the use of tools from Model Context Protocol (MCP) servers.
 
 `answer_using_tools()` supports both text-based function calling and native function calling (via API
-parameters, currently implemented for OpenAI and Ollama API structures).
+parameters, currently implemented for OpenAI and Ollama API structures, and 'ellmer' LLM providers).
 
 ``` r
   "What are the files in my current directory?" |>
