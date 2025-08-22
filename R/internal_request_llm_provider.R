@@ -111,7 +111,7 @@ req_llm_stream <- function(req, api_type, verbose) {
             message_accumulator,
             data$message$content
           )
-          if (isTRUE(verbose)) message(data$message$content)
+          if (isTRUE(verbose)) cat(data$message$content)
         }
       }
     }
