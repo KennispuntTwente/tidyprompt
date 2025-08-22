@@ -380,6 +380,8 @@ This is useful if you want consistent behavior across all prompts without repeat
 You can choose to apply a provider-level prompt wrap either before or after the prompt-specific prompt wraps.
 
 ```{r provider_wraps, cache=FALSE, eval=FALSE}
+ollama <- llm_provider_ollama()
+
 # Example: add a "short answer" mode (provider-level post prompt wrap)
 ollama$add_prompt_wrap(
   provider_prompt_wrap(
