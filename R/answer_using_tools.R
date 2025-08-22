@@ -1,3 +1,5 @@
+# `answer_using_tools()` prompt wrap --------------------------------------
+
 #' @title
 #' Enable LLM to call R functions
 #'
@@ -10,8 +12,10 @@
 #' the help file (if available), or from documentation added by
 #' [tools_add_docs()]. Users can also provide an 'ellmer' tool definition
 #' (see [ellmer::tool()]; https://ellmer.tidyverse.org/articles/tool-calling.html).
-#' Model Context Protocol (MCP) tools from MCP servers, as returned from [mcptools::mcp_tools()], may also
-#' be used.
+#' Model Context Protocol (MCP) tools from MCP servers, as returned from
+#' [mcptools::mcp_tools()], may also be used. Regardless of which type of
+#' tool definition is provided, the function will work with both 'ellmer' and
+#' regular LLM providers (the function converts between the two types as needed).
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
@@ -20,8 +24,8 @@
 #' which has been documented in a help file (e.g., because it is part of a package),
 #' the documentation will be parsed from the help file. If it is a custom function,
 #' documentation should be added with [tools_add_docs()] or with [ellmer::tool()].
-#' Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
-#' [mcptools::mcp_tools()]
+#' Note that you can also provide Model Context Protocol (MCP) tools from MCP servers
+#' as returned from [mcptools::mcp_tools()]
 #'
 #' @param type (optional) The way that tool calling should be enabled.
 #' 'auto' will automatically determine the type based on 'llm_provider$api_type'
@@ -29,9 +33,9 @@
 #' set 'type' manually if errors occur). 'openai' and 'ollama' will set the
 #' relevant API parameters. 'ellmer' will register the tool in the 'ellmer' chat
 #' object of the LLM provider; note that this will only work for an [llm_provider_ellmer()]
-#' ('auto' should always set this type if you are using an 'ellmer' LLM provider).
-#''text-based' will provide function definitions
-#' in the prompt, extract function calls from the LLM response, and call the
+#' ('auto' will always set this type if you are using an 'ellmer' LLM provider).
+#' 'text-based' will provide function definitions in the prompt, extract function
+#' calls from the LLM response, and call the
 #' functions, providing the results back via [llm_feedback()]. 'text-based'
 #' always works, but may be inefficient for APIs that support tool calling
 #' natively. However, 'text-based' may be more reliable and flexible, especially
@@ -201,212 +205,97 @@ answer_using_tools <- function(
     t <- determine_type(llm_provider)
     # Native tool handling is done by the provider/model itself
     if (t == "ellmer") return(response)
-    if (!t %in% c("openai", "ollama")) return(response)
+    if (!(t %in% c("openai", "ollama"))) return(response)
 
-    # Attempt to find tool calls in the response body;
-    #   it's a bit of a mess at the moment, as we attempt to parse
-    #   from Ollama response structure, OpenAI chat completions response structure,
-    #   and OpenAI responses API response structure
-    #   TODO: clean this up by breaking it into smaller functions, clarify flow
-    while (TRUE) {
-      body <- response$http$response$body
+    repeat {
+      # 1) Normalize body
+      body <- .parse_http_body(response$http$response$body)
+      if (is.null(body)) break
 
-      if ("tool_calls" %in% names(body)) {
-        # In some cases body has already been converted; see if we can find
-        #   tool in potentially converted body
-        # TODO: find out if this is stil necesarry
-        tool_calls <- body$tool_calls
-      } else {
-        # Now converting raw bytes body to JSON
-        body <- tryCatch(
-          body |> rawToChar() |> jsonlite::fromJSON(),
-          error = function(e) NULL
-        )
-        # If NULL, no body present & we won't find tool calls
-        if (is.null(body)) break
-
-        # If not NULL, setup list in which we will store normalized tool calls
-        tool_calls <- list()
-
-        # Check OpenAI
-        if (t == "openai") {
-          if (length(body$choices$message$tool_calls) > 0) {
-            # Check for tool calls from chat completions API response
-            for (tool_call in body$choices$message$tool_calls) {
-              tool_calls[[length(tool_calls) + 1]] <- list(
-                id = tool_call$id,
-                type = tool_call$type,
-                "function" = as.list(tool_call[["function"]])
-              )
-            }
-          } else if (
-            # Check for tool calls from responses API response
-            isTRUE(nrow(body$output) > 0) &&
-              isTRUE(any(body$output$type == "function_call"))
-          ) {
-            function_calls <- body$output |>
-              dplyr::filter(
-                type == "function_call"
-              )
-            # Every tool call is a row
-            for (i in seq_len(nrow(function_calls))) {
-              tool_call <- function_calls[i, ]
-              tool_calls[[length(tool_calls) + 1]] <- list(
-                id = tool_call$id,
-                type = tool_call$type,
-                "function" = list(
-                  name = tool_call$name,
-                  arguments = tool_call$arguments
-                )
-              )
-            }
-          } else {
-            # No function call detected
-            break
-          }
-        }
-
-        # Check Ollama
-        if (t == "ollama") {
-          if (length(body$message$tool_calls) == 0) break
-          for (i in seq_along(body$message$tool_calls)) {
-            tool_call <- body$message$tool_calls[i]
-            tool_calls[[length(tool_calls) + 1]] <- list(
-              "function" = as.list(tool_call[["function"]])
-            )
-          }
-        }
-      }
-
-      # If no tool calls found, we quit
+      # 2) Extract tool calls for this provider type
+      tool_calls <- .get_tool_calls(body, t)
       if (length(tool_calls) == 0) break
 
-      # If we have found tool calls, we'll add them to the messages
-      #   object that we will send back to the LLM for the next request
+      # 3) Rebuild messages from completed chat history, then add assistant tool_calls
       chat_history <- response$completed
-      messages <- lapply(seq_len(nrow(chat_history)), function(i) {
-        list(role = chat_history$role[i], content = chat_history$content[i])
-      })
-      if (t == "openai")
+      messages <- .messages_from_history(chat_history)
+
+      if (t == "openai") {
         messages[[length(messages) + 1]] <- list(
           role = "assistant",
           tool_calls = tool_calls
         )
-      if (t == "ollama")
+      } else if (t == "ollama") {
+        # Keep original Ollama structure if available
         messages[[length(messages) + 1]] <- list(
           role = "assistant",
           tool_calls = body$message$tool_calls
         )
+      }
 
-      # Now we'll iterate over the tool calls and call the functions
+      # 4) Iterate over tool calls: parse args, call tool, record result
       for (tool_call in tool_calls) {
         tool_name <- tool_call[["function"]]$name
         tool <- tp_tools[[tool_name]]
 
-        # First parse arguments; a bit of a mess as they come in different forms,
-        #   still. TODO: normalize better in previous step?
-        arguments <- NULL
-        if (t == "ollama") {
-          arguments <- tool_call[["function"]]$arguments |> as.list()
-        } else {
-          try(
-            {
-              arguments <- tool_call[["function"]]$arguments |>
-                jsonlite::fromJSON()
-            },
-            silent = TRUE
-          )
+        # Parse arguments robustly
+        arguments <- .parse_arguments(tool_call, t)
 
-          if (is.null(arguments)) {
-            try(
-              {
-                arguments <- tool_call[["function"]]$args |>
-                  jsonlite::fromJSON()
-              },
-              silent = TRUE
-            )
-          }
-        }
-
-        # Now that we know function call + its arguments, add that to the chat
-        #   history. It's not necesarry for API call, but just to keep history for the user
-        chat_history <- chat_history |>
-          dplyr::bind_rows(
-            data.frame(
-              role = "assistant",
-              content = paste0(
-                "~>> Calling function '",
-                tool_name,
-                "' with arguments:\n",
-                jsonlite::toJSON(arguments, auto_unbox = FALSE, pretty = TRUE)
-              ),
-              tool_call = TRUE,
-              tool_call_id = ifelse(is.null(tool_call$id), NA, tool_call$id),
-              tool_result = FALSE
-            )
-          )
-
-        # If verbose or streaming, print the tool call
-        if (
-          isTRUE(llm_provider$parameters$stream) | isTRUE(llm_provider$verbose)
-        ) {
-          message(
-            chat_history |>
-              dplyr::slice_tail(n = 1) |>
-              dplyr::pull(.data$content)
-          )
-          message("")
-        }
-
-        # Do the function call to get the result
-        result <- tryCatch(
-          {
-            do.call(tool, arguments)
-          },
-          error = function(e) {
-            glue::glue("Error: {e$message}")
-          }
+        # Record the call in chat history
+        pretty_args <- tryCatch(
+          jsonlite::toJSON(arguments, auto_unbox = FALSE, pretty = TRUE),
+          error = function(e) "null"
+        )
+        chat_history <- .append_history(
+          chat_history,
+          role = "assistant",
+          content = paste0(
+            "~>> Calling function '",
+            tool_name,
+            "' with arguments:\n",
+            pretty_args
+          ),
+          tool_call_id = tool_call$id,
+          tool_call = TRUE,
+          tool_result = FALSE
+        )
+        .maybe_message(
+          dplyr::slice_tail(chat_history, n = 1)$content,
+          llm_provider
         )
 
-        # Format the result
+        # Call the tool safely
+        result <- tryCatch(
+          do.call(tool, arguments),
+          error = function(e) glue::glue("Error: {e$message}")
+        )
+
+        # Normalize result to character
         if (length(result) > 0) result <- paste(result, collapse = ", ")
         if (length(result) == 0) result <- ""
         result <- as.character(result)
 
-        # Add the result to the messages list for the request to LLM
+        # Add tool result to next request messages
         message_addition <- list(role = "tool", content = result)
         if (t == "openai") message_addition$tool_call_id <- tool_call$id
         messages[[length(messages) + 1]] <- message_addition
 
-        # And add the result to the chat history
-        chat_history <- chat_history |>
-          dplyr::bind_rows(
-            data.frame(
-              role = "tool",
-              content = paste0(
-                "~>> Result:\n",
-                result
-              ),
-              tool_call = FALSE,
-              tool_call_id = ifelse(is.null(tool_call$id), NA, tool_call$id),
-              tool_result = TRUE
-            )
-          )
-
-        # When streaming or verbose, print the result to console
-        if (
-          isTRUE(llm_provider$parameters$stream) | isTRUE(llm_provider$verbose)
-        ) {
-          message(paste0("~>> Result:\n", result))
-          message("")
-        }
+        # Record result in chat history
+        chat_history <- .append_history(
+          chat_history,
+          role = "tool",
+          content = paste0("~>> Result:\n", result),
+          tool_call_id = tool_call$id,
+          tool_call = FALSE,
+          tool_result = TRUE
+        )
+        .maybe_message(paste0("~>> Result:\n", result), llm_provider)
       }
 
-      # Finally, setup the new request; messages now contains
-      #   the tool call + the result, so we can continue by sending a request
-      #   to the LLM again
+      # 5) Send follow-up request including tool outputs, keep loop if model asks again
       new_request <- response$http$request
       new_request$body$data$messages <- messages
+
       response <- request_llm_provider(
         chat_history,
         new_request,
@@ -526,6 +415,173 @@ answer_using_tools <- function(
     name = "answer_using_tools"
   )
 }
+
+
+# Helpers for handler_fn in `answer_using_tools()` ------------------------
+
+# These functions are used by the handler_fn in `answer_using_tools()`,
+#  to parse tool calls from LLM responses of various API providers,
+#  normalize them, call the relevant R functions, and provide the results
+#  back to the LLM
+# Used for text-based, openai, and ollama types; when using an 'ellmer'
+#   LLM provider, tool calling is handled natively by 'ellmer'
+
+.parse_http_body <- function(resp_body) {
+  # If it's already a list with tool_calls (some wrappers pre-normalize), return it
+  if (is.list(resp_body) && ("tool_calls" %in% names(resp_body))) {
+    return(resp_body)
+  }
+  # Try to decode raw -> JSON -> list
+  if (is.raw(resp_body)) {
+    return(tryCatch(
+      jsonlite::fromJSON(rawToChar(resp_body)),
+      error = function(e) NULL
+    ))
+  }
+  # If it's character JSON, try to parse
+  if (is.character(resp_body) && length(resp_body) == 1) {
+    return(tryCatch(
+      jsonlite::fromJSON(resp_body),
+      error = function(e) NULL
+    ))
+  }
+  # If it's already a list but without tool_calls, just return it
+  if (is.list(resp_body)) return(resp_body)
+  NULL
+}
+
+.normalize_openai_tool_calls <- function(body) {
+  calls <- list()
+
+  # OpenAI Chat Completions-style: body$choices$message$tool_calls
+  if (
+    !is.null(body$choices) &&
+      !is.null(body$choices$message) &&
+      length(body$choices$message$tool_calls) > 0
+  ) {
+    for (tc in body$choices$message$tool_calls) {
+      calls[[length(calls) + 1]] <- list(
+        id = tc$id,
+        type = tc$type,
+        "function" = as.list(tc[["function"]])
+      )
+    }
+    return(calls)
+  }
+
+  # OpenAI Responses API-style: data.frame body$output with type == "function_call"
+  if (
+    !is.null(body$output) &&
+      is.data.frame(body$output) &&
+      nrow(body$output) > 0 &&
+      any(body$output$type == "function_call")
+  ) {
+    fc <- body$output[body$output$type == "function_call", , drop = FALSE]
+    for (i in seq_len(nrow(fc))) {
+      calls[[length(calls) + 1]] <- list(
+        id = fc$id[i],
+        type = fc$type[i],
+        "function" = list(
+          name = fc$name[i],
+          arguments = fc$arguments[i]
+        )
+      )
+    }
+    return(calls)
+  }
+
+  # Nothing found
+  calls
+}
+
+.normalize_ollama_tool_calls <- function(body) {
+  calls <- list()
+  if (
+    !is.null(body$message) &&
+      length(body$message$tool_calls) > 0
+  ) {
+    for (i in seq_along(body$message$tool_calls)) {
+      tc <- body$message$tool_calls[i]
+      calls[[length(calls) + 1]] <- list(
+        "function" = as.list(tc[["function"]])
+      )
+    }
+  }
+  calls
+}
+
+.get_tool_calls <- function(body, t) {
+  # Case where upstream wrapped a tool_calls list directly in body
+  if (!is.null(body$tool_calls) && length(body$tool_calls) > 0) {
+    return(body$tool_calls)
+  }
+  if (t == "openai") return(.normalize_openai_tool_calls(body))
+  if (t == "ollama") return(.normalize_ollama_tool_calls(body))
+  list()
+}
+
+.parse_arguments <- function(tool_call, t) {
+  if (t == "ollama") {
+    return(as.list(tool_call[["function"]]$arguments))
+  }
+  # OpenAI: try "arguments" then "args", both JSON
+  args <- NULL
+  try(
+    {
+      args <- jsonlite::fromJSON(tool_call[["function"]]$arguments)
+    },
+    silent = TRUE
+  )
+  if (is.null(args)) {
+    try(
+      {
+        args <- jsonlite::fromJSON(tool_call[["function"]]$args)
+      },
+      silent = TRUE
+    )
+  }
+  args
+}
+
+.append_history <- function(
+  history,
+  role,
+  content,
+  tool_call_id = NA,
+  tool_call = FALSE,
+  tool_result = FALSE
+) {
+  dplyr::bind_rows(
+    history,
+    data.frame(
+      role = role,
+      content = content,
+      tool_call = tool_call,
+      tool_call_id = ifelse(is.null(tool_call_id), NA, tool_call_id),
+      tool_result = tool_result
+    )
+  )
+}
+
+.maybe_message <- function(text, llm_provider) {
+  if (isTRUE(llm_provider$parameters$stream) || isTRUE(llm_provider$verbose)) {
+    message(text)
+    message("")
+  }
+}
+
+.messages_from_history <- function(history_df) {
+  lapply(seq_len(nrow(history_df)), function(i) {
+    list(role = history_df$role[i], content = history_df$content[i])
+  })
+}
+
+
+# Add documentation to functions ------------------------------------------
+
+# These functions are used to extract & add documentation to/from R functions,
+#   so that LLMs can be provided with information about the functions
+# They are sort of superseded by the 'ellmer' integration and `ellmer::tool()`
 
 #' Add tidyprompt function documentation to a function
 #'

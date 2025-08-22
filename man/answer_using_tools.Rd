@@ -18,8 +18,8 @@ or a list of either, which the LLM will be able to call. If an R function is pas
 which has been documented in a help file (e.g., because it is part of a package),
 the documentation will be parsed from the help file. If it is a custom function,
 documentation should be added with \code{\link[=tools_add_docs]{tools_add_docs()}} or with \code{\link[ellmer:tool]{ellmer::tool()}}.
-Note that you can also provide Model Context Protocol (MCP) tools from MCP servers as returned from
-\code{\link[mcptools:client]{mcptools::mcp_tools()}}}
+Note that you can also provide Model Context Protocol (MCP) tools from MCP servers
+as returned from \code{\link[mcptools:client]{mcptools::mcp_tools()}}}
 
 \item{type}{(optional) The way that tool calling should be enabled.
 'auto' will automatically determine the type based on 'llm_provider$api_type'
@@ -27,9 +27,9 @@ Note that you can also provide Model Context Protocol (MCP) tools from MCP serve
 set 'type' manually if errors occur). 'openai' and 'ollama' will set the
 relevant API parameters. 'ellmer' will register the tool in the 'ellmer' chat
 object of the LLM provider; note that this will only work for an \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}}
-('auto' should always set this type if you are using an 'ellmer' LLM provider).
-'text-based' will provide function definitions
-in the prompt, extract function calls from the LLM response, and call the
+('auto' will always set this type if you are using an 'ellmer' LLM provider).
+'text-based' will provide function definitions in the prompt, extract function
+calls from the LLM response, and call the
 functions, providing the results back via \code{\link[=llm_feedback]{llm_feedback()}}. 'text-based'
 always works, but may be inefficient for APIs that support tool calling
 natively. However, 'text-based' may be more reliable and flexible, especially
@@ -51,8 +51,10 @@ accompanying extraction function to call the functions (handled by
 the help file (if available), or from documentation added by
 \code{\link[=tools_add_docs]{tools_add_docs()}}. Users can also provide an 'ellmer' tool definition
 (see \code{\link[ellmer:tool]{ellmer::tool()}}; https://ellmer.tidyverse.org/articles/tool-calling.html).
-Model Context Protocol (MCP) tools from MCP servers, as returned from \code{\link[mcptools:client]{mcptools::mcp_tools()}}, may also
-be used.
+Model Context Protocol (MCP) tools from MCP servers, as returned from
+\code{\link[mcptools:client]{mcptools::mcp_tools()}}, may also be used. Regardless of which type of
+tool definition is provided, the function will work with both 'ellmer' and
+regular LLM providers (the function converts between the two types as needed).
 }
 \examples{
 # When using functions from base R or R packages,
