@@ -49,7 +49,7 @@ complex, robust interactions with LLMs.
 gained popularity for interfacing with LLM APIs. ‘tidyprompt’ supports
 connecting to LLM providers from ‘ellmer’ chat objects, and ‘ellmer’
 definitions for structured output and tools (see [more information
-below](#tidyprompt-versus-ellmer--tidyllm)).*
+below](#how-does-tidyprompt-relate-to-ellmer-and-tidyllm)).*
 
 ## Installation
 
@@ -60,7 +60,7 @@ Install the development version from GitHub:
 remotes::install_github("KennispuntTwente/tidyprompt")
 ```
 
-Or install from CRAN (0.0.1):
+Or install from CRAN (0.1.0):
 
 ``` r
 install.packages("tidyprompt")
@@ -195,36 +195,28 @@ popularized by the ‘tidyverse’ and familiar to many R users.
 ‘tidyprompt’ should be seen as a tool which can be used to enhance the
 functionality of LLMs beyond what APIs natively offer. It is designed to
 be flexible and provider-agnostic, so that its features can be used with
-a wide range of LLM providers and models.
+a wide range of LLM providers and models. It is primarily focused on
+‘text-based’ handling of LLMs, where textual output is parsed to achieve
+structured output and other functionalities.
 
-‘tidyprompt’ is primarily focused on ‘text-based’ handling of LLMs,
-where textual output is parsed to achieve structured output and other
-functionalities. Several LLM providers and models also offers forms of
-‘native’ handling, where the LLM is directly controlled by the LLM
-provider to provide output in a certain manner.
+Several LLM providers and models also offers forms of ‘native’ handling,
+where the LLM is directly controlled by the LLM provider to provide
+output in a certain manner. Where appropriate, ‘tidyprompt’ supports
+such native configuration of specific APIs. Currently,
+`answer_as_json()` and `answer_using_tools()` offer native support for
+adhering to JSON schemas and calling functions.
 
-Where appropriate, ‘tidyprompt’ may also support native configuration of
-specific APIs. Currently, `answer_as_json()` and `answer_using_tools()`
-offer native support for adhering to JSON schemas and calling functions.
-Native handling may be powerful in some cases, but restrictive in other
-cases. It is good to test what works best for your use case. Note also
-that prompt wraps may extend what is enforced by native handling, such
-as adding additional validation or feedback.
+The functions introduced by ‘tidyprompt’ can go beyond what is enforced
+by native handling, for example by adding additional validation or
+feedback as defined by your R code (i.e., logic and actions which cannot
+be captured in just a structured output schema).
 
-The philosophy behind ‘tidyprompt’ is furthermore that it aims to be
-flexible enough that users can implement advanced features, potentially
-specific to certain LLM providers, within the options of their custom
-prompt wraps. This way, ‘tidyprompt’ can be a powerful tool for a wide
-range of use cases, without focusing on maintaining provider-specific
-features.
+### How does ‘tidyprompt’ relate to ‘ellmer’ and ‘tidyllm’?
 
-#### How does ‘tidyprompt’ relate to ‘ellmer’?
-
-In line with the above, ‘tidyprompt’ is less focused on interfacing with
-the APIs of various LLM providers, like R packages ‘ellmer’ and
-‘tidyllm’ do. Instead, ‘tidyprompt’ is primarily focused on offering a
-framework for constructing prompts and associated logic for interactions
-with LLMs.
+‘tidyprompt’ is less focused on interfacing with the APIs of various LLM
+providers, like R packages ‘ellmer’ and ‘tidyllm’ do. Instead,
+‘tidyprompt’ is primarily focused on offering a framework for
+constructing prompts and associated logic for interactions with LLMs.
 
 We aim to design ‘tidyprompt’ in such a way that it can be compatible
 with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface
