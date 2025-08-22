@@ -33,7 +33,7 @@ test_that("answer_as_key_value returns key-value pairs", {
 
   ollama <- llm_provider_ollama()
 
-  response <- "Provide the capitals of these countries: The Netherlands, France, Japan." |>
+  response <- "Provide the capitals of these countries: Germany, France, Japan." |>
     answer_as_key_value(
       key_name = "country",
       value_name = "capital",
@@ -43,6 +43,6 @@ test_that("answer_as_key_value returns key-value pairs", {
 
   expect_true(is.list(response))
   expect_equal(length(response), 3)
-  expect_true(all(c("The Netherlands", "France", "Japan") %in% names(response)))
-  expect_true(all(c("Amsterdam", "Paris", "Tokyo") %in% response))
+  expect_true(all(c("Germany", "France", "Japan") %in% names(response)))
+  expect_true(all(c("Berlin", "Paris", "Tokyo") %in% response))
 })
