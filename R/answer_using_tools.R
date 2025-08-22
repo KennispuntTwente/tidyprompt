@@ -351,7 +351,9 @@ answer_using_tools <- function(
           isTRUE(llm_provider$parameters$stream) | isTRUE(llm_provider$verbose)
         ) {
           message(
-            chat_history |> dplyr::slice_tail(n = 1) |> dplyr::pull(content)
+            chat_history |>
+              dplyr::slice_tail(n = 1) |>
+              dplyr::pull(.data$content)
           )
           message("")
         }
