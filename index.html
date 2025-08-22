@@ -69,7 +69,7 @@
 <li><p><strong>function calling</strong>: Give a LLM the ability to autonomously call R functions (‘tools’). With this, the LLM can retrieve information or take other actions. ‘tidyprompt’ also supports R code generation and evaluation, allowing LLMs to run R code. Tools from Model Context Protocol (MCP) servers are also supported</p></li>
 </ul>
 <p>With its features, ‘tidyprompt’ extends the functionality of LLMs beyond what is natively offered by LLM APIs, and you can elegantly design complex, robust interactions with LLMs.</p>
-<p><em>‘tidyprompt’ is compatible with the <a href="https://ellmer.tidyverse.org/index.html" class="external-link">‘ellmer’</a> R package, which has gained popularity for interfacing with LLM APIs. ‘tidyprompt’ supports connecting to LLM providers from ‘ellmer’ chat objects, and ‘ellmer’ definitions for structured output and tools (see <a href="#how-does-tidyprompt-relate-to-ellmer">more information below</a>).</em></p>
+<p><em>‘tidyprompt’ is compatible with the <a href="https://ellmer.tidyverse.org/index.html" class="external-link">‘ellmer’</a> R package, which has gained popularity for interfacing with LLM APIs. ‘tidyprompt’ supports connecting to LLM providers from ‘ellmer’ chat objects, and ‘ellmer’ definitions for structured output and tools (see <a href="#how-does-tidyprompt-relate-to-ellmer-and-tidyllm">more information below</a>).</em></p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -184,15 +184,15 @@
 <p>‘tidyprompt’ should be seen as a tool which can be used to enhance the functionality of LLMs beyond what APIs natively offer. It is designed to be flexible and provider-agnostic, so that its features can be used with a wide range of LLM providers and models. It is primarily focused on ‘text-based’ handling of LLMs, where textual output is parsed to achieve structured output and other functionalities.</p>
 <p>Several LLM providers and models also offers forms of ‘native’ handling, where the LLM is directly controlled by the LLM provider to provide output in a certain manner. Where appropriate, ‘tidyprompt’ supports such native configuration of specific APIs. Currently, <code><a href="reference/answer_as_json.html">answer_as_json()</a></code> and <code><a href="reference/answer_using_tools.html">answer_using_tools()</a></code> offer native support for adhering to JSON schemas and calling functions.</p>
 <p>The functions introduced by ‘tidyprompt’ can go beyond what is enforced by native handling, for example by adding additional validation or feedback as defined by your R code (i.e., logic and actions which cannot be captured in just a structured output schema).</p>
-<div class="section level4">
-<h4 id="how-does-tidyprompt-relate-to-ellmer">How does ‘tidyprompt’ relate to ‘ellmer’?<a class="anchor" aria-label="anchor" href="#how-does-tidyprompt-relate-to-ellmer"></a>
-</h4>
+</div>
+<div class="section level3">
+<h3 id="how-does-tidyprompt-relate-to-ellmer-and-tidyllm">How does ‘tidyprompt’ relate to ‘ellmer’ and ‘tidyllm’?<a class="anchor" aria-label="anchor" href="#how-does-tidyprompt-relate-to-ellmer-and-tidyllm"></a>
+</h3>
 <p>‘tidyprompt’ is less focused on interfacing with the APIs of various LLM providers, like R packages ‘ellmer’ and ‘tidyllm’ do. Instead, ‘tidyprompt’ is primarily focused on offering a framework for constructing prompts and associated logic for interactions with LLMs.</p>
 <p>We aim to design ‘tidyprompt’ in such a way that it can be compatible with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface to LLM APIs.</p>
 <p>‘ellmer’ specifically has surfaced as the most popular R package for interfacing with LLM APIs. Therefore, we have introduced a LLM provider which can be built from an ‘ellmer’ chat object (see: <code><a href="reference/llm_provider_ellmer.html">tidyprompt::llm_provider_ellmer()</a></code>). This allows users to use any LLM provider that can be configured with ‘ellmer’, including the respective configuration and features from the ‘ellmer’ package.</p>
 <p>Furthermore, <code><a href="reference/answer_as_json.html">answer_as_json()</a></code> and <code><a href="reference/answer_using_tools.html">answer_using_tools()</a></code> support ‘ellmer’ defintions for structured output and tools. When using an ‘ellmer’ LLM provider, these functions will also call the native ‘ellmer’ functions to obtain structured output and register tools. (And because <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code> returns ‘ellmer’ tool definitions, <code><a href="reference/answer_using_tools.html">answer_using_tools()</a></code> also supports tools from MCP servers.)</p>
 <p>This means that ‘tidyprompt’ extends what is possible with ‘ellmer’ (and vice versa).</p>
-</div>
 </div>
 </div>
 </div>
