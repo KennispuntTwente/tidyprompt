@@ -1,4 +1,4 @@
-# tidyprompt (development version)
+# tidyprompt 0.2.0
 
 * Add provider-level prompt wraps (`provider_prompt_wrap()`) these are prompt
 wraps which can be attached to a LLM provider object. They can be applied to
