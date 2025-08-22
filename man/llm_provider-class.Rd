@@ -295,8 +295,7 @@ See \verb{$add_handler_fn()} for more information
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{handler_fns}}{A list of handler functions to set
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}}
+\item{\code{handler_fns}}{A list of handler functions to set}
 }
 \if{html}{\out{</div>}}
 }
@@ -315,8 +314,7 @@ Add a provider-level prompt wrap template to be applied to all prompts.
 \describe{
 \item{\code{prompt_wrap}}{A list created by \code{\link[=provider_prompt_wrap]{provider_prompt_wrap()}}}
 
-\item{\code{position}}{One of "pre" or "post" (applied before/after prompt-specific wraps)
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}}
+\item{\code{position}}{One of "pre" or "post" (applied before/after prompt-specific wraps)}
 }
 \if{html}{\out{</div>}}
 }

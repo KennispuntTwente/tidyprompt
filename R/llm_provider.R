@@ -333,7 +333,6 @@ NULL
       return(self)
     },
 
-    #' `r lifecycle::badge("experimental")`
     #' @description
     #' Add a provider-level prompt wrap template to be applied to all prompts.
     #' @param prompt_wrap A list created by [provider_prompt_wrap()]
@@ -368,7 +367,6 @@ NULL
       invisible(self)
     },
 
-    #' `r lifecycle::badge("experimental")`
     #' @description
     #' Apply all provider-level wraps to a prompt (character or tidyprompt)
     #' and return a tidyprompt with wraps attached.
