@@ -108,6 +108,19 @@ answer_as_json <- function(
     stop("The 'schema' list must be non-empty.")
   }
 
+  original_schema <- schema
+  if (is.list(schema)) {
+    # Inherit 'strict' if present in a wrapper and user didn't set TRUE explicitly
+    if (
+      isFALSE(schema_strict) &&
+        !is.null(schema$strict) &&
+        is.logical(schema$strict)
+    ) {
+      schema_strict <- isTRUE(schema$strict)
+    }
+    schema <- unwrap_json_schema(schema)
+  }
+
   if (type == "auto" && getOption("tidyprompt.warn.auto.json", TRUE)) {
     cli::cli_alert_warning(
       paste0(
@@ -221,7 +234,7 @@ answer_as_json <- function(
     # Otherwise, enforce JSON via instructions (text-based style),
     # optionally embedding a JSON example or schema (requires JSON Schema form).
     prompt_text <- glue::glue(
-      "{prompt_text}\n\nYour must format your response as a JSON object."
+      "{prompt_text}\n\nYou must format your response as a JSON object."
     )
 
     if (!is.null(schema) && !is.null(sch$json_schema)) {
@@ -330,4 +343,33 @@ jsonvalidate_installed <- function() {
     return(invisible(FALSE))
   }
   return(invisible(TRUE))
+}
+
+# Unwrap common JSON schema wrappers (OpenAI/our own)
+unwrap_json_schema <- function(x) {
+  if (!is.list(x)) return(x)
+
+  # Case 1: OpenAI-style response_format wrapper
+  if (
+    !is.null(x$response_format) &&
+      is.list(x$response_format) &&
+      identical(x$response_format$type, "json_schema") &&
+      is.list(x$response_format$json_schema)
+  ) {
+    js <- x$response_format$json_schema
+    return(unwrap_json_schema(js))
+  }
+
+  # Case 2: top-level wrapper with json_schema field
+  if (!is.null(x$json_schema) && is.list(x$json_schema)) {
+    return(unwrap_json_schema(x$json_schema))
+  }
+
+  # Case 3: wrapper like list(name=..., schema=..., strict=...)
+  if (!is.null(x$schema) && is.list(x$schema)) {
+    return(x$schema)
+  }
+
+  # Already a bare JSON Schema (has typical keywords)
+  x
 }
