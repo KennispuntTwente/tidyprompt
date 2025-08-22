@@ -254,7 +254,7 @@ answer_as_json <- function(
 
     # In ellmer structured mode, we already get an R object matching the type.
     if (isTRUE(t == "ellmer") && !is.null(schema)) {
-      return(llm_response)
+      return(llm_response |> jsonlite::fromJSON())
     }
 
     jsons <- extraction_fn_json(llm_response)
