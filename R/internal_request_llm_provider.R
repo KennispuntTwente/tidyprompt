@@ -115,6 +115,7 @@ req_llm_stream <- function(req, api_type, verbose) {
         }
       }
     }
+    cat("\n")
   } else if (!using_responses) {
     # OpenAI Chat Completions (SSE) — use resp_stream_sse for robust parsing
     if (is.null(role)) role <- "assistant"
@@ -122,7 +123,10 @@ req_llm_stream <- function(req, api_type, verbose) {
     repeat {
       ev <- httr2::resp_stream_sse(resp)
       if (!nzchar(ev$data)) next # keepalive / empty
-      if (identical(ev$data, "[DONE]")) break # sentinel
+      if (identical(ev$data, "[DONE]")) {
+        cat("\n")
+        break
+      }
 
       payload <- tryCatch(jsonlite::fromJSON(ev$data), error = function(e) NULL)
       if (is.null(payload)) next
@@ -165,7 +169,10 @@ req_llm_stream <- function(req, api_type, verbose) {
 
     repeat {
       ev <- httr2::resp_stream_sse(resp)
-      if (is.null(ev)) break
+      if (is.null(ev)) {
+        cat("\n")
+        break
+      }
       if (!nzchar(ev$data) || identical(ev$data, "[DONE]")) next
 
       payload <- tryCatch(
