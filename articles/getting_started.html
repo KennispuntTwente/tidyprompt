@@ -235,13 +235,11 @@ and adhering to JSON schemas (e.g., OpenAI, Ollama). Text-based handling
 is however always possible, also for providers which do not natively
 support such functions. This means that you can always switch between
 providers while ensuring the results will be in the correct format.</p>
-<p>It should also be noted that native JSON enforcement may also
-restrict the model too much, so it is always good to test and see what
-works best for your use case. In our experience, text-based handling is
-often more flexible and robust, especially when combining multiple
-prompt wraps. Note also that JSON schemas may not enforce all qualities
-you are looking for in the output, so you may still need to add
-additional prompt wraps to ensure the output is as desired.</p>
+<p><code><a href="../reference/answer_as_json.html">answer_as_json()</a></code> can take schemas defined as either a R
+list object representing a JSON schema, or structured output definitions
+from the ‘ellmer’ package (e.g., <code><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">ellmer::type_object()</a></code>).
+See the documentation of <code><a href="../reference/answer_as_json.html">answer_as_json()</a></code> for more
+information on how to use it.</p>
 </div>
 </div>
 <div class="section level3">
@@ -311,9 +309,23 @@ function. If you want to define a custom function and/or override the
 default documentation, you can use <code><a href="../reference/tools_add_docs.html">tools_add_docs()</a></code>. See
 example usage in the documentation of
 <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code>.</p>
+<p><code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> also accepts tool definitions from
+<code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>. Because <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code>
+can convert tool definitions, <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code> definitions
+will work with any LLM provider type (also non-‘ellmer’ LLM providers).
+Similarly, when using an <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code>, a tool
+definition can also be given with <code><a href="../reference/tools_add_docs.html">tools_add_docs()</a></code>. And,
+when using an <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code>,
+<code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> will call the native ‘ellmer’
+functions to register tools. See example usage in the documentation of
+<code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code>.</p>
+<p>Tool definitions returned by <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code> may
+also be provided, allowing the use of tools from Model Context Protocol
+(MCP) servers.</p>
 <p><code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> supports both text-based function
 calling and native function calling (via API parameters, currently
-implemented for OpenAI and Ollama API structures).</p>
+implemented for OpenAI and Ollama API structures, and ‘ellmer’ LLM
+providers).</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="st">"What are the files in my current directory?"</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="../reference/answer_using_tools.html">answer_using_tools</a></span><span class="op">(</span><span class="va">list.files</span><span class="op">)</span> <span class="op">|&gt;</span></span>
