@@ -77,17 +77,20 @@ a chat.</p>
 <p>At the moment, ‘tidyprompt’ includes pre-built functions to connect
 with various LLM providers, such as Ollama, OpenAI, OpenRouter, Mistral,
 Groq, XAI (Grok), and Google Gemini.</p>
-<p>An (experimental) function is also included with which users can user
-an <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object to build an LLM provider; this
-allows you to use any LLM provider you can configure with the ‘ellmer’ R
-package (including its respective configuration and features).</p>
+<p>With the <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code> function, you can also
+create an LLM provider from an <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object. This
+allows you to use any LLM provider that you can configure with the
+‘ellmer’ R package (including its respective configuration and
+features). When using an ‘ellmer’ LLM provider, functions like
+<code><a href="../reference/answer_as_json.html">answer_as_json()</a></code> and <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> will
+also call the native ‘ellmer’ functions for these features.</p>
 <p>Furthermore, with the <code>llm_provider-class</code>, you can easily
 write a hook for any other LLM provider. You could make API calls using
 the ‘httr2’ package or use another R package that already has a hook for
-the LLM provider you want to use. If your API of choice follows the
-structure of the OpenAI API, you can call
-<code><a href="../reference/llm_provider_openai.html">llm_provider_openai()</a></code> and change the relevant parameters
-(like the URL and the API key).</p>
+the LLM provider you want to use. If your API of choice is compatible
+with the structure of the OpenAI API, you can call
+<code><a href="../reference/llm_provider_openai.html">llm_provider_openai()</a></code> and change only the URL and the API
+key to make it work.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Ollama running on local PC</span></span>
 <span><span class="va">ollama</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/llm_provider_ollama.html">llm_provider_ollama</a></span><span class="op">(</span></span>
