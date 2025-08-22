@@ -1,15 +1,19 @@
 test_that("answer_as_json (text-based) works without schema", {
-  skip_test_if_no_ollama()
+  skip_test_if_no_openai()
 
   response <- "Create a very short persona" |>
     answer_as_json(type = "text-based") |>
-    send_prompt(llm_provider_ollama())
+    send_prompt(
+      llm_provider_openai(
+        url = "https://api.openai.com/v1/responses"
+      )$set_parameters(list(model = "gpt-4.1-mini"))
+    )
 
   expect_true(is.list(response), info = "Response should be a list")
 })
 
 test_that("answer_as_json (text-based) works with json schema", {
-  skip_test_if_no_ollama()
+  skip_test_if_no_openai()
 
   schema <- list(
     "$schema" = "http://json-schema.org/draft-04/schema#",
@@ -59,7 +63,11 @@ test_that("answer_as_json (text-based) works with json schema", {
 
   response <- "Create a persona" |>
     answer_as_json(schema, schema_strict = TRUE, type = "text-based") |>
-    send_prompt(llm_provider_ollama())
+    send_prompt(
+      llm_provider_openai(
+        url = "https://api.openai.com/v1/responses"
+      )$set_parameters(list(model = "gpt-4.1-mini"))
+    )
 
   expect_true(is.list(response), info = "Response should be a list")
 
@@ -204,4 +212,77 @@ test_that("answer_as_json (ollama via auto) works", {
       answer_as_json(type = "auto") |>
       send_prompt(llm_provider_ollama())
   )
+})
+
+test_that("answer_as_json (compatability with ellmer) works", {
+  skip_test_if_no_openai()
+
+  # Persona validation function
+  is_valid_persona <- function(persona) {
+    if (!is.list(persona)) return(FALSE)
+
+    required_fields <- c("name", "age", "hobbies")
+    if (!all(required_fields %in% names(persona))) return(FALSE)
+
+    if (!is.character(persona$name) || length(persona$name) != 1) return(FALSE)
+    if (!is.numeric(persona$age) || length(persona$age) != 1) return(FALSE)
+    if (
+      !is.vector(persona$hobbies) || !all(sapply(persona$hobbies, is.character))
+    )
+      return(FALSE)
+
+    TRUE
+  }
+
+  # Ellmer LLM provider
+  ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
+    model = "gpt-4.1-mini"
+  ))
+
+  # Ellmer schema
+  ellmer_schema <- ellmer::type_object(
+    name = ellmer::type_string(),
+    age = ellmer::type_integer(),
+    hobbies = ellmer::type_array(ellmer::type_string())
+  )
+
+  # Ellmer LLM provider with Ellmer schema
+  result_ellmer_x_ellmer <- "Create a persona" |>
+    answer_as_json(ellmer_schema) |>
+    send_prompt(ellmer_openai)
+  expect_true(is_valid_persona(result_ellmer_x_ellmer))
+
+  # Regular LLM provider with Ellmer schema
+  result_tidyrpompt_x_ellmer <- "Create a persona" |>
+    answer_as_json(ellmer_schema) |>
+    send_prompt(
+      llm_provider_openai(
+        url = "https://api.openai.com/v1/responses"
+      )$set_parameters(list(model = "gpt-4.1-mini"))
+    )
+  expect_true(is_valid_persona(result_tidyrpompt_x_ellmer))
+
+  # Regular schema
+  schema <- list(
+    "$schema" = "http://json-schema.org/draft-04/schema#",
+    title = "Persona",
+    type = "object",
+    properties = list(
+      name = list(type = "string", description = "The persona's name"),
+      age = list(type = "integer", description = "The persona's age"),
+      hobbies = list(
+        type = "array",
+        items = list(type = "string"),
+        description = "List of hobbies"
+      )
+    ),
+    required = c("name", "age", "hobbies"),
+    additionalProperties = FALSE
+  )
+
+  # Ellmer LLM provider with regular schema
+  result_ellmer_x_regular <- "Create a persona" |>
+    answer_as_json(schema) |>
+    send_prompt(ellmer_openai)
+  expect_true(is_valid_persona(result_ellmer_x_regular))
 })
