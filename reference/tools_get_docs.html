@@ -235,9 +235,10 @@ custom documentation</p>
 <span class="r-in"><span><span class="co">#   you can also use Model Context Protocol (MCP) server tools with</span></span></span>
 <span class="r-in"><span><span class="co">#   `answer_using_tools()`:</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span>  <span class="va">mcp_tools</span> <span class="op">&lt;-</span> <span class="fu">mcptools</span><span class="fu">::</span><span class="fu"><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcp_tools</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">prompt_using_mcp_tools</span> <span class="op">&lt;-</span> <span class="fu">mcptools</span><span class="fu">::</span><span class="fu"><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcp_tools</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="st">"Push my latest commit to GitHub"</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="answer_using_tools.html">answer_using_tools</a></span><span class="op">(</span><span class="va">mcp_tools</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">prompt_using_mcp_tools</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># `answer_using_tools()` will automatically attempt to use the most appropriate</span></span></span>
