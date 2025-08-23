@@ -216,6 +216,7 @@ test_that("answer_as_json (ollama via auto) works", {
 
 test_that("answer_as_json (compatability with ellmer) works", {
   skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
 
   # Persona validation function
   is_valid_persona <- function(persona) {
@@ -285,4 +286,182 @@ test_that("answer_as_json (compatability with ellmer) works", {
     answer_as_json(schema) |>
     send_prompt(ellmer_openai)
   expect_true(is_valid_persona(result_ellmer_x_regular))
+})
+
+test_that("answer_as_json + llm_provider_ellmer: scalar types", {
+  skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
+
+  ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
+    model = "gpt-4.1-mini"
+  ))
+
+  # type_string()
+  res_str <- "Return the string 'hello' only." |>
+    answer_as_json(ellmer::type_string()) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.character(res_str) && length(res_str) == 1)
+
+  # type_integer()
+  res_int <- "Return the integer 7 only." |>
+    answer_as_json(ellmer::type_integer()) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.numeric(res_int) && length(res_int) == 1)
+  expect_equal(as.integer(res_int), 7L)
+
+  # type_number()
+  res_num <- "Return the number 3.14 only." |>
+    answer_as_json(ellmer::type_number()) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.numeric(res_num) && length(res_num) == 1)
+  expect_gt(res_num, 3)
+  expect_lt(res_num, 3.2)
+
+  # type_boolean()
+  res_bool <- "Return the boolean true only." |>
+    answer_as_json(ellmer::type_boolean()) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.logical(res_bool) && length(res_bool) == 1)
+
+  # type_enum()
+  allowed <- c("Technology", "Sports", "Politics")
+  res_enum <- "Categorize: 'AI chips surge in demand'. Choose one of Technology, Sports, Politics; return only the category." |>
+    answer_as_json(ellmer::type_enum(allowed)) |>
+    send_prompt(ellmer_openai)
+  enum_val <- if (is.factor(res_enum)) as.character(res_enum) else res_enum
+  expect_true(is.character(enum_val) && enum_val %in% allowed)
+})
+
+test_that("answer_as_json + llm_provider_ellmer: arrays of scalars", {
+  skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
+
+  ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
+    model = "gpt-4.1-mini"
+  ))
+
+  # vector of integers
+  res_int_vec <- "Return exactly: 18, 21, 30." |>
+    answer_as_json(ellmer::type_array(ellmer::type_integer())) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.numeric(res_int_vec))
+  expect_length(res_int_vec, 3)
+  expect_equal(as.integer(res_int_vec), c(18L, 21L, 30L))
+
+  # vector of numbers
+  res_num_vec <- "Return exactly: 1.5, 2.0, 2.5." |>
+    answer_as_json(ellmer::type_array(ellmer::type_number())) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.numeric(res_num_vec))
+  expect_equal(length(res_num_vec), 3)
+  expect_true(all(res_num_vec > 0))
+
+  # vector of enums
+  allowed <- c("red", "green", "blue")
+  res_enum_vec <- "Return these colours in order: red, green, blue." |>
+    answer_as_json(ellmer::type_array(ellmer::type_enum(allowed))) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.character(res_enum_vec) || is.factor(res_enum_vec))
+  if (is.factor(res_enum_vec)) res_enum_vec <- as.character(res_enum_vec)
+  expect_equal(res_enum_vec, allowed)
+})
+
+test_that("answer_as_json + llm_provider_ellmer: arrays of objects -> data.frame", {
+  skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
+
+  ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
+    model = "gpt-4.1-mini"
+  ))
+
+  prompt <- r"(
+    * John Smith. Age: 30. Height: 180 cm. Weight: 80 kg.
+    * Jane Doe. Age: 25. Height: 165 cm. Weight: 50 kg.
+    * Jose Rodriguez. Age: 40. Height: 190 cm. Weight: 90 kg.
+  )"
+
+  type_person <- ellmer::type_object(
+    name = ellmer::type_string(),
+    age = ellmer::type_integer(),
+    height = ellmer::type_number("in cm"),
+    weight = ellmer::type_number("in kg")
+  )
+  type_people <- ellmer::type_array(type_person)
+
+  df <- prompt |>
+    answer_as_json(type_people) |>
+    send_prompt(ellmer_openai)
+
+  expect_s3_class(df, "data.frame")
+  expect_true(all(c("name", "age", "height", "weight") %in% names(df)))
+  expect_equal(nrow(df), 3)
+  expect_true(is.character(df$name))
+  expect_true(
+    is.numeric(df$age) && is.numeric(df$height) && is.numeric(df$weight)
+  )
+})
+
+test_that("answer_as_json + llm_provider_ellmer: optional fields (required = FALSE)", {
+  skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
+
+  ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
+    model = "gpt-4.1-mini"
+  ))
+
+  type_person_opt <- ellmer::type_object(
+    name = ellmer::type_string(required = FALSE),
+    age = ellmer::type_integer(required = FALSE)
+  )
+
+  # Only age present
+  res_age_only <- "I'm 33 years old." |>
+    answer_as_json(type_person_opt) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.list(res_age_only))
+  expect_true(all(names(res_age_only) %in% c("name", "age")))
+  if ("age" %in% names(res_age_only)) {
+    expect_true(is.numeric(res_age_only$age) && length(res_age_only$age) == 1)
+  }
+
+  # Only name present
+  res_name_only <- "My name is Taylor." |>
+    answer_as_json(type_person_opt) |>
+    send_prompt(ellmer_openai)
+  expect_true(is.list(res_name_only))
+  expect_true(all(names(res_name_only) %in% c("name", "age")))
+  if ("name" %in% names(res_name_only)) {
+    expect_true(
+      is.character(res_name_only$name) && nchar(res_name_only$name) > 0
+    )
+  }
+})
+
+test_that("answer_as_json + llm_provider_ellmer: arrays of enums and objects combined", {
+  skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
+
+  ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
+    model = "gpt-4.1-mini"
+  ))
+
+  # Object with an enum and an array of enums
+  type_pref <- ellmer::type_object(
+    primary = ellmer::type_enum(c("red", "green", "blue")),
+    fallback = ellmer::type_array(ellmer::type_enum(c("red", "green", "blue")))
+  )
+
+  res_pref <- "Primary colour is green; fallbacks are red then blue." |>
+    answer_as_json(type_pref) |>
+    send_prompt(ellmer_openai)
+
+  expect_true(is.list(res_pref))
+  primary <- if (is.factor(res_pref$primary))
+    as.character(res_pref$primary) else res_pref$primary
+  expect_true(primary %in% c("red", "green", "blue"))
+
+  fallbacks <- res_pref$fallback
+  if (is.factor(fallbacks)) fallbacks <- as.character(fallbacks)
+  expect_true(is.character(fallbacks))
+  expect_true(all(fallbacks %in% c("red", "green", "blue")))
 })

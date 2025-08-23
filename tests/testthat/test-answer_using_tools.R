@@ -155,6 +155,7 @@ test_that("native openai function calling works (responses API, non-stream)", {
 
 test_that("function calling works with ellmer llm provider", {
   skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
 
   ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
     model = "gpt-4.1-mini"
@@ -169,6 +170,7 @@ test_that("function calling works with ellmer llm provider", {
 
 test_that("function calling works with ellmer tool definition", {
   skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
 
   ellmer_openai <- llm_provider_ellmer(ellmer::chat_openai(
     model = "gpt-4.1-mini"
