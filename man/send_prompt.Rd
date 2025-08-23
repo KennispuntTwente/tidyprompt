@@ -67,9 +67,17 @@ the final response; here, only the first and last message from the user, the
 last message from the assistant, and all messages from the system are kept),
 \item 'start_time' (the time when the function was called),
 \item 'end_time' (the time when the function ended),
-\item 'duration_seconds' (the duration of the function in seconds), and
+\item 'duration_seconds' (the duration of the function in seconds),
 \item 'http_list' (a list with all HTTP responses made during the interactions;
-as returned by \code{llm_provider$complete_chat()}).
+as returned by \code{llm_provider$complete_chat()}),
+\item 'ellmer_chat' (if \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}} was used, this will be
+the updated 'ellmer' chat object, containing for instance
+the turns and possible tool calls. (As this function
+uses a clone of the provided LLM provider, the 'ellmer' chat object in the
+LLM provider will not be updated; via this way, you can
+then still get an updated 'ellmer' chat object. Note that turns in the 'ellmer'
+chat object may not contain the full chat history when \code{clean_chat_history = TRUE}
+was used.)
 }
 }
 }

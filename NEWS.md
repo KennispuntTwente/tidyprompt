@@ -27,6 +27,10 @@ package 'mcptools' returns 'ellmer' tool definitions with
 `mcptools::mcp_tools()`, `answer_using_tools()`
 can now also be used with tools from Model Context Protocol (MCP) servers
 
+* `send_prompt()` can now return an updated 'ellmer' chat object when using an
+`llm_provider_ellmer()` (containing for instance the history of 'ellmer' turns 
+and tool calls)
+
 * `llm_provider_openai()` now supports (as default) the OpenAI responses API,
 which allows setting parameters like 'reasoning_effort' and 'verbosity' 
 (relevant for gpt-5). The OpenAI chat completions API is also still supported

@@ -54,9 +54,17 @@
 #' last message from the assistant, and all messages from the system are kept),
 #'    \item 'start_time' (the time when the function was called),
 #'    \item 'end_time' (the time when the function ended),
-#'    \item 'duration_seconds' (the duration of the function in seconds), and
+#'    \item 'duration_seconds' (the duration of the function in seconds),
 #'    \item 'http_list' (a list with all HTTP responses made during the interactions;
-#'    as returned by `llm_provider$complete_chat()`).
+#'    as returned by `llm_provider$complete_chat()`),
+#'    \item 'ellmer_chat' (if [llm_provider_ellmer()] was used, this will be
+#'    the updated 'ellmer' chat object, containing for instance
+#'    the turns and possible tool calls. (As this function
+#'    uses a clone of the provided LLM provider, the 'ellmer' chat object in the
+#'    LLM provider will not be updated; via this way, you can
+#'    then still get an updated 'ellmer' chat object. Note that turns in the 'ellmer'
+#'    chat object may not contain the full chat history when `clean_chat_history = TRUE`
+#'    was used.)
 #'  }
 #' }
 #'
@@ -120,6 +128,9 @@ send_prompt <- function(
   # Initialize variables which keep track of the process
   if (return_mode == "full") start_time <- Sys.time()
   http <- list(requests = list(), responses = list())
+  # Object which keeps ellmer chat object, turns, structured output;
+  #   when using an ellmer LLM provider:
+  ellmer_chat <- NULL
 
   ## 2 Chat history, send_chat, handler_fns
 
@@ -160,6 +171,10 @@ send_prompt <- function(
       http$responses[[length(http$responses) + 1]] <<- http_response
     for (http_request in response$http$request)
       http$requests[[length(http$requests) + 1]] <<- http_request
+
+    if (!is.null(response$ellmer_chat)) {
+      ellmer_chat <<- response$ellmer_chat
+    }
 
     utils::tail(chat_history$content, 1)
   }
@@ -357,6 +372,7 @@ send_prompt <- function(
         )
       )
     return_list$http <- http
+    return_list$ellmer_chat <- ellmer_chat
 
     return(return_list)
   }

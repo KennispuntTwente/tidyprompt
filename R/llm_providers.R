@@ -739,7 +739,7 @@ llm_provider_ellmer <- function(
 
   complete_chat <- function(chat_history) {
     private$sync_model()
-    ch <- self$ellmer_chat$clone()
+    ch <- self$ellmer_chat
     params <- self$parameters
 
     if (!all(c("role", "content") %in% names(chat_history))) {
@@ -760,6 +760,8 @@ llm_provider_ellmer <- function(
       ch <- ch$set_turns(lapply(seq_len(nrow(hist)), function(i) {
         to_turn(hist$role[i], hist$content[i])
       }))
+    } else {
+      ch <- ch$set_turns(list())
     }
 
     # Prompt = last message
@@ -777,17 +779,13 @@ llm_provider_ellmer <- function(
 
     if (use_structured) {
       reply_struct <- ch$chat_structured(prompt, type = structured_type)
-
       # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
       assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
         as.character()
-
-      structured_payload <- reply_struct
     } else {
       # Regular chat
       reply_any <- ch$chat(prompt)
       assistant_text <- as.character(reply_any)
-      structured_payload <- NULL
     }
 
     completed <- dplyr::bind_rows(
@@ -802,11 +800,7 @@ llm_provider_ellmer <- function(
     list(
       completed = completed,
       http = list(request = NULL, response = NULL),
-      ellmer = list(
-        chat = ch,
-        turns = tryCatch(ch$get_turns(), error = function(e) NULL),
-        structured = structured_payload # <-- NEW: raw structured result for fast-path extractors
-      )
+      ellmer_chat = ch
     )
   }
 
