@@ -137,9 +137,17 @@ the final response; here, only the first and last message from the user, the
 last message from the assistant, and all messages from the system are kept),</p></li>
 <li><p>'start_time' (the time when the function was called),</p></li>
 <li><p>'end_time' (the time when the function ended),</p></li>
-<li><p>'duration_seconds' (the duration of the function in seconds), and</p></li>
+<li><p>'duration_seconds' (the duration of the function in seconds),</p></li>
 <li><p>'http_list' (a list with all HTTP responses made during the interactions;
-as returned by <code>llm_provider$complete_chat()</code>).</p></li>
+as returned by <code>llm_provider$complete_chat()</code>),</p></li>
+<li><p>'ellmer_chat' (if <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> was used, this will be
+the updated 'ellmer' chat object, containing for instance
+the turns and possible tool calls. (As this function
+uses a clone of the provided LLM provider, the 'ellmer' chat object in the
+LLM provider will not be updated; via this way, you can
+then still get an updated 'ellmer' chat object. Note that turns in the 'ellmer'
+chat object may not contain the full chat history when <code>clean_chat_history = TRUE</code>
+was used.)</p></li>
 </ul></li>
 </ul></div>
     <div class="section level2">
