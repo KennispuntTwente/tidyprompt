@@ -124,6 +124,10 @@ The function should return a (modified or identical) completion object.
 This can be used for advanced side effects, like logging, or native tool calling,
 or keeping track of token usage. See <a href="llm_provider-class.html">llm_provider</a> for more information;
 handler_fn is attached to the <a href="llm_provider-class.html">llm_provider</a> object that is being used.
+When using an <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code>, the up-to-date ellmer_chat is synced
+onto the provider before handlers run. This allows handlers to access,
+for instance, the current cost of the conversation, and, for instance,
+to stop the conversation if a certain budget is exceeded.
 For example usage, see source code of <code><a href="answer_using_tools.html">answer_using_tools()</a></code></p></dd>
 
 
