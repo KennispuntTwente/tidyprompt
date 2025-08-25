@@ -31,6 +31,11 @@ can now also be used with tools from Model Context Protocol (MCP) servers
 `llm_provider_ellmer()` (containing for instance the history of 'ellmer' turns 
 and tool calls)
 
+* `send_prompt()`'s `clean_chat_history` argument is now defaulted to `FALSE`,
+as it may be confusing for users to see cleaned chat histories without
+having actively requested this. If `return_mode = "full"`, `$clean_chat_history`
+is also no longer included when `clean_chat_history = FALSE`
+
 * `llm_provider_openai()` now supports (as default) the OpenAI responses API,
 which allows setting parameters like 'reasoning_effort' and 'verbosity' 
 (relevant for gpt-5). The OpenAI chat completions API is also still supported

@@ -8,7 +8,7 @@ send_prompt(
   prompt,
   llm_provider = llm_provider_ollama(),
   max_interactions = 10,
-  clean_chat_history = TRUE,
+  clean_chat_history = FALSE,
   verbose = NULL,
   stream = NULL,
   return_mode = c("only_response", "full")

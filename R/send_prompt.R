@@ -80,7 +80,7 @@ send_prompt <- function(
   prompt,
   llm_provider = llm_provider_ollama(),
   max_interactions = 10,
-  clean_chat_history = TRUE,
+  clean_chat_history = FALSE,
   verbose = NULL,
   stream = NULL,
   return_mode = c("only_response", "full")
@@ -360,9 +360,14 @@ send_prompt <- function(
     return_list$response <- response
     return_list$interactions <- interactions
     return_list$chat_history <- chat_history
-    return_list$chat_history_clean <- clean_chat_history(chat_history)
+
+    if (clean_chat_history) {
+      return_list$chat_history_clean <- clean_chat_history(chat_history)
+    }
+
     return_list$start_time <- start_time
     return_list$end_time <- Sys.time()
+
     return_list$duration_seconds <-
       as.numeric(
         difftime(
@@ -371,14 +376,13 @@ send_prompt <- function(
           units = "secs"
         )
       )
+
     return_list$http <- http
     return_list$ellmer_chat <- ellmer_chat
 
     return(return_list)
   }
 }
-
-# Create internal function which cleans the chat_history
 
 #' Create chat history dataframe
 #'
