@@ -17,7 +17,12 @@ test_that("extraction and validation works", {
 test_that("full return mode works", {
   fake_llm <- llm_provider_fake()
 
-  response <- "hi" |> send_prompt(fake_llm, return_mode = "full")
+  response <- "hi" |>
+    send_prompt(
+      fake_llm,
+      return_mode = "full",
+      clean_chat_history = TRUE
+    )
 
   expect_type(response$response, "character")
   expect_type(response$interactions, "double")
