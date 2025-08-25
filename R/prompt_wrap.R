@@ -58,6 +58,10 @@
 #' This can be used for advanced side effects, like logging, or native tool calling,
 #'  or keeping track of token usage. See [llm_provider-class] for more information;
 #'  handler_fn is attached to the [llm_provider-class] object that is being used.
+#' When using an [llm_provider_ellmer()], the up-to-date ellmer_chat is synced
+#'  onto the provider before handlers run. This allows handlers to access,
+#'  for instance, the current cost of the conversation, and, for instance,
+#'  to stop the conversation if a certain budget is exceeded.
 #' For example usage, see source code of [answer_using_tools()]
 
 #' @param parameter_fn A function that takes the [llm_provider-class] object

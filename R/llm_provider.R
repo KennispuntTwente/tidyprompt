@@ -216,6 +216,13 @@ NULL
       environment(private$complete_chat_function) <- environment()
       response <- private$complete_chat_function(chat_history)
 
+      # If this is an ellmer provider, sync the chat object
+      #   This ensures handler_fn can access the current state of the chat
+      #   object (e.g., to monitor cost and cancel if over budget)
+      if (!is.null(response$ellmer_chat) && "ellmer_chat" %in% names(self)) {
+        self$ellmer_chat <- response$ellmer_chat
+      }
+
       # Filter content with empty string ("") (Ollama tool call)
       response$completed <- response$completed[
         response$completed$content != "",

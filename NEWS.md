@@ -29,7 +29,8 @@ can now also be used with tools from Model Context Protocol (MCP) servers
 
 * `send_prompt()` can now return an updated 'ellmer' chat object when using an
 `llm_provider_ellmer()` (containing for instance the history of 'ellmer' turns 
-and tool calls)
+and tool calls). Additionally fixed issues with how turn history is handled
+in 'ellmer' chat objects
 
 * `send_prompt()`'s `clean_chat_history` argument is now defaulted to `FALSE`,
 as it may be confusing for users to see cleaned chat histories without

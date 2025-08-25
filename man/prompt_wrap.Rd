@@ -43,6 +43,10 @@ The function should return a (modified or identical) completion object.
 This can be used for advanced side effects, like logging, or native tool calling,
 or keeping track of token usage. See \linkS4class{llm_provider} for more information;
 handler_fn is attached to the \linkS4class{llm_provider} object that is being used.
+When using an \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}}, the up-to-date ellmer_chat is synced
+onto the provider before handlers run. This allows handlers to access,
+for instance, the current cost of the conversation, and, for instance,
+to stop the conversation if a certain budget is exceeded.
 For example usage, see source code of \code{\link[=answer_using_tools]{answer_using_tools()}}}
 
 \item{parameter_fn}{A function that takes the \linkS4class{llm_provider} object
