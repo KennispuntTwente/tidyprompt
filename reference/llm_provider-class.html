@@ -93,12 +93,21 @@ for instance, as is done in the <code><a href="answer_as_json.html">answer_as_js
 
 
 <dt><code>json_type</code></dt>
-<dd><p>The type of JSON mode to use (e.g., 'auto', 'openai', 'ollama', or 'text-based').
+<dd><p>The type of JSON mode to use (e.g., 'auto', 'openai', 'ollama', 'ellmer', or 'text-based').
 Using 'auto' or having this field not set, the api_type field will be used to
 determine the JSON mode during the <code><a href="answer_as_json.html">answer_as_json()</a></code> function. If this field
 is set, this will override the api_type field for JSON mode determination.
 (Note: this determination only happens when the 'type' argument in
 <code><a href="answer_as_json.html">answer_as_json()</a></code> is also set to 'auto'.)</p></dd>
+
+
+<dt><code>tool_type</code></dt>
+<dd><p>The type of tool use mode to use (e.g., 'auto', 'openai', 'ollama', 'ellmer', or 'text-based').
+Using 'auto' or having this field not set, the api_type field will be used to
+determine the tool use mode during the <code><a href="answer_using_tools.html">answer_using_tools()</a></code> function. If this field
+is set, this will override the api_type field for tool use mode determination
+(Note: this determination only happens when the 'type' argument in
+<code><a href="answer_using_tools.html">answer_using_tools()</a></code> is also set to 'auto'.)</p></dd>
 
 
 <dt><code>handler_fns</code></dt>
