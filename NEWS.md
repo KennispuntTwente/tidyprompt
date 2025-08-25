@@ -1,3 +1,5 @@
+# tidyprompt (development version)
+
 # tidyprompt 0.2.0
 
 * Add provider-level prompt wraps (`provider_prompt_wrap()`) these are prompt
