@@ -98,12 +98,19 @@ printed to the console}
 This is used to determine certain specific behaviors for different APIs,
 for instance, as is done in the \code{\link[=answer_as_json]{answer_as_json()}} function}
 
-\item{\code{json_type}}{The type of JSON mode to use (e.g., 'auto', 'openai', 'ollama', or 'text-based').
+\item{\code{json_type}}{The type of JSON mode to use (e.g., 'auto', 'openai', 'ollama', 'ellmer', or 'text-based').
 Using 'auto' or having this field not set, the api_type field will be used to
 determine the JSON mode during the \code{\link[=answer_as_json]{answer_as_json()}} function. If this field
 is set, this will override the api_type field for JSON mode determination.
 (Note: this determination only happens when the 'type' argument in
 \code{\link[=answer_as_json]{answer_as_json()}} is also set to 'auto'.)}
+
+\item{\code{tool_type}}{The type of tool use mode to use (e.g., 'auto', 'openai', 'ollama', 'ellmer', or 'text-based').
+Using 'auto' or having this field not set, the api_type field will be used to
+determine the tool use mode during the \code{\link[=answer_using_tools]{answer_using_tools()}} function. If this field
+is set, this will override the api_type field for tool use mode determination
+(Note: this determination only happens when the 'type' argument in
+\code{\link[=answer_using_tools]{answer_using_tools()}} is also set to 'auto'.)}
 
 \item{\code{handler_fns}}{A list of functions that will be called after the completion of a chat.
 See \verb{$add_handler_fn()}}

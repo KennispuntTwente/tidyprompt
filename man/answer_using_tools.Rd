@@ -23,6 +23,7 @@ as returned from \code{\link[mcptools:client]{mcptools::mcp_tools()}}}
 
 \item{type}{(optional) The way that tool calling should be enabled.
 "auto" will automatically determine the type based on \code{llm_provider$api_type}
+or 'llm_provider$tool_type' (if set; 'tool_type' overrides 'api_type' determination)
 (note that this may not consider model compatibility, and could lead to errors;
 set 'type' manually if errors occur). "openai" and "ollama" will set the
 relevant API parameters. "ellmer" will register the tool in the 'ellmer' chat

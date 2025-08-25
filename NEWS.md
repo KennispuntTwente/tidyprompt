@@ -44,12 +44,13 @@ which allows setting parameters like 'reasoning_effort' and 'verbosity'
 * `llm_provider_google_gemini()` has been superseded by
 `llm_provider_ellmer(ellmer::chat_google_gemini())`
 
-* Add a `json_type` field to LLM provider objects; when automatically
-determining the route towards structured output, this can override the type 
-decided by the `api_type` field (e.g., user can use this field to force the 
-text-based type, for instance when using an OpenAI type LLM provider but with a 
-model which does not support the typical OpenAI API parameters for structured 
-output)
+* Add a `json_type` & `tool_type` field to LLM provider objects; when 
+automatically determining the route towards structured output (in 
+`answer_as_json()`) and tool use (in `answer_using_tools()`), this can override
+the type decided by the `api_type` field (e.g., user can use this field to force
+the text-based type, for instance when using an OpenAI type LLM provider but
+with a model which does not support the typical OpenAI API parameters for 
+structured output)
 
 * Update how responses are streamed (with `httr2::req_perform_connection()`, 
 since `httr2::req_perform_stream()` is being deprecated)

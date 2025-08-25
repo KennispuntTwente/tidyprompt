@@ -33,6 +33,7 @@
 #'
 #' @param type (optional) The way that tool calling should be enabled.
 #' "auto" will automatically determine the type based on `llm_provider$api_type`
+#' or 'llm_provider$tool_type' (if set; 'tool_type' overrides 'api_type' determination)
 #' (note that this may not consider model compatibility, and could lead to errors;
 #' set 'type' manually if errors occur). "openai" and "ollama" will set the
 #' relevant API parameters. "ellmer" will register the tool in the 'ellmer' chat
@@ -72,7 +73,7 @@ answer_using_tools <- function(
       paste0(
         "{.strong `answer_using_tools()`}:\n",
         "* Automatically determining type based on 'llm_provider$api_type';\n",
-        "this does not consider model compatability\n",
+        "(or 'llm_provider$tool_type' if set); this does not consider model compatability\n",
         "* Manually set argument 'type' if errors occur ",
         "(\"text-based\" always works)\n",
         "* Use `options(tidyprompt.warn.auto.tools = FALSE)` to suppress this warning"
@@ -134,6 +135,20 @@ answer_using_tools <- function(
 
   determine_type <- function(llm_provider = NULL) {
     if (type != "auto") return(type)
+    valid_types <- c(
+      "text-based",
+      "openai",
+      "ollama",
+      "ellmer"
+    )
+    provider_json_type <- llm_provider[["tool_type"]]
+    if (
+      !is.null(provider_json_type) &&
+        !identical(provider_json_type, "auto") &&
+        provider_json_type %in% valid_types
+    ) {
+      return(provider_json_type)
+    }
     if (isTRUE(llm_provider$api_type == "openai")) return("openai")
     if (isTRUE(llm_provider$api_type == "ollama")) return("ollama")
     if (isTRUE(llm_provider$api_type == "ellmer")) return("ellmer")
