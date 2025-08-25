@@ -7,7 +7,7 @@ prompt-specific prompt wraps. This is useful when you want to achieve
 certain behavior for various prompts, without having to re-apply the same
 prompt wrap to each prompt
 
-* `answer_as_json()`: support 'ellmer' definitions of structured ouput
+* `answer_as_json()`: support 'ellmer' definitions of structured output
 (e.g., `ellmer::type_object()`). `answer_as_json()` can convert between ellmer
 definitions and the previous R list objects which represent JSON schemas; thus,
 'ellmer' and R list object definitions work with both regular and 'ellmer'
