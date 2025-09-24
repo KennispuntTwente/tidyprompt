@@ -422,8 +422,7 @@ answer_using_r <- function(
           } else {
             output$stdout |>
             paste(collapse = \"\\n\") |>
-            stringr::str_trunc(1000) |>
-            print()
+            stringr::str_trunc(1000)
           }
         }\n\n",
       "--- Last object: ---\n",
