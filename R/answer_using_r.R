@@ -422,8 +422,7 @@ answer_using_r <- function(
           } else {
             output$stdout |>
             paste(collapse = \"\\n\") |>
-            stringr::str_trunc(1000) |>
-            print()
+            stringr::str_trunc(1000)
           }
         }\n\n",
       "--- Last object: ---\n",
@@ -431,10 +430,9 @@ answer_using_r <- function(
           if (is.null(output$result)) {
             \"No object produced.\"
           } else {
-            output$result |>
+            utils::capture.output(print(output$result)) |>
             paste(collapse = \"\\n\") |>
-            stringr::str_trunc(100) |>
-            print()
+            stringr::str_trunc(100)
           }
         }"
     )
