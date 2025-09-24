@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* `answer_using_r()`: fixed error with unsafe conversion of resulting object
+to character
+
 # tidyprompt 0.2.0
 
 * Add provider-level prompt wraps (`provider_prompt_wrap()`) these are prompt
