@@ -115,6 +115,12 @@ is set, this will override the api_type field for tool use mode determination
 \item{\code{handler_fns}}{A list of functions that will be called after the completion of a chat.
 See \verb{$add_handler_fn()}}
 
+\item{\code{stream_callback}}{Optional callback for streaming tokens/chunks. If set, this will be
+called as \code{stream_callback(chunk, meta)} where \code{chunk} is the latest
+streamed text and \code{meta} is a list with fields like \code{llm_provider},
+\code{chat_history}, \code{latest_message}, \code{partial_response}, \code{api_type}, etc.
+This field is \emph{not} sent to the provider API.}
+
 \item{\code{pre_prompt_wraps}}{A list of prompt wraps that will be applied to any prompt evaluated
 by this \linkS4class{llm_provider} object, before any prompt-specific
 prompt wraps are applied. See \verb{$add_prompt_wrap()}.

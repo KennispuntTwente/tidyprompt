@@ -393,8 +393,10 @@ send_prompt <- function(
 #' @param role Role of the message (e.g. "user", "assistant", "system")
 #' @param content Content of the message
 #' @param tool_result Logical indicating whether the message is a tool result.
-#' This will ensure it is not removed when cleaning the context window by
-#' [clean_chat_history()]
+#' This will ensure it is not removed when the chat history context window is
+#' cleaned by `clean_chat_history()` (which is an internal function which will keep only the
+#' first and last message from the user, the last message from the assistant,
+#' all messages from the system, and all tool_result messages)
 #'
 #' @return A dataframe with the chat history
 #'

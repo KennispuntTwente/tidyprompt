@@ -907,16 +907,16 @@ gd_get_args_defaults_types <- function(func) {
 #' @param default_value The default value of the argument
 #'
 #' @return A string indicating the type of the argument. The possible types are:
-#' - 'integer': The argument is an integer value
-#' - 'numeric': The argument is a numeric value
-#' - 'logical': The argument is a logical value
-#' - 'string': The argument is a character value
-#' - 'match.arg': The argument is a match.arg-type argument
-#' - 'vector [integer/numeric/logical/string/unknown] ': The argument is a vector
-#'  of the specified type
-#' - 'list': The argument is a list
-#' - 'call': The argument is a call to a function
-#' - 'unknown': The type of the argument is unknown
+#' - "integer": The argument is an integer value
+#' - "numeric": The argument is a numeric value
+#' - "logical": The argument is a logical value
+#' - "string": The argument is a character value
+#' - "match.arg": The argument is a match.arg-type argument
+#' - "vector \[<type>\]": The argument is a vector of the specified type
+#'   (e.g. "integer", "numeric", "logical", "string", or "unknown")
+#' - "list": The argument is a list
+#' - "call": The argument is a call to a function
+#' - "unknown": The type of the argument is unknown
 #'
 #' @noRd
 #' @keywords internal
