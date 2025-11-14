@@ -9,4 +9,4 @@
 - [Sentiment analysis in R with a LLM and
   'tidyprompt'](https://kennispunttwente.github.io/tidyprompt/articles/sentiment_analysis.md):
 - [Streaming LLM responses to Shiny with
-  ipc](https://kennispunttwente.github.io/tidyprompt/articles/streaming-shiny-ipc.md):
+  ipc](https://kennispunttwente.github.io/tidyprompt/articles/streaming_shiny_ipc.md):
