@@ -1,14 +1,10 @@
 ---
-<title>Streaming LLM responses to Shiny with ipc</title>
-<author>tidyprompt authors</author>
-<date>"`r Sys.Date()`"</date>
-<output>rmarkdown::html_vignette</output>
-<vignette>
-  <title>Streaming (async) LLM responses to Shiny apps</title>
-  <author>tidyprompt authors</author>
-  <engine>knitr::rmarkdown</engine>
-  <output>rmarkdown::html_vignette</output>
-</vignette>
+title: "Streaming LLM responses to Shiny with ipc"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Streaming LLM responses to Shiny with ipc}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
