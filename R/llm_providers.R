@@ -50,12 +50,17 @@ llm_provider_ollama <- function(
     request <- httr2::request(self$url) |>
       httr2::req_body_json(body)
 
+    stream_cb <- self$stream_callback %||%
+      getOption("tidyprompt.stream_callback", NULL)
+
     request_llm_provider(
       chat_history,
       request,
       stream = self$parameters$stream,
       verbose = self$verbose,
-      api_type = self$api_type
+      api_type = self$api_type,
+      stream_callback = stream_cb,
+      llm_provider = self
     )
   }
 
@@ -162,12 +167,17 @@ llm_provider_openai <- function(
       httr2::req_body_json(body) |>
       httr2::req_headers(!!!headers)
 
+    stream_cb <- self$stream_callback %||%
+      getOption("tidyprompt.stream_callback", NULL)
+
     request_llm_provider(
       chat_history,
       request,
       stream = self$parameters$stream,
       verbose = self$verbose,
-      api_type = self$api_type
+      api_type = self$api_type,
+      stream_callback = stream_cb,
+      llm_provider = self
     )
   }
 
@@ -777,13 +787,56 @@ llm_provider_ellmer <- function(
     use_structured <- !is.null(structured_type) &&
       is.function(ch$chat_structured)
 
+    # Central streaming hook: if provided, we will stream tokens/chunks
+    # through this function instead of letting ellmer print to console.
+    stream_cb <- self$stream_callback %||%
+      getOption("tidyprompt.stream_callback", NULL)
+
     if (use_structured) {
       reply_struct <- ch$chat_structured(prompt, type = structured_type)
       # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
       assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
         as.character()
+    } else if (isTRUE(params$stream) && is.function(ch$stream)) {
+      # --- Streaming path (ellmer-style sync streaming) ----------------------
+      stream <- ch$stream(prompt)
+
+      partial_response <- ""
+
+      coro::loop(for (chunk in stream) {
+        if (length(chunk) == 0L || all(is.na(chunk))) next
+
+        chunk_str <- paste0(as.character(chunk), collapse = "")
+        if (!nzchar(chunk_str)) next
+
+        partial_response <<- paste0(partial_response, chunk_str)
+
+        # If a callback is provided, use it; otherwise, mirror HTTP providers
+        # by cat()ing chunks when verbose = TRUE.
+        if (is.function(stream_cb)) {
+          latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
+
+          meta <- list(
+            llm_provider     = self,
+            chat_history     = chat_history,
+            latest_message   = latest_message,
+            partial_response = partial_response,
+            chunk            = chunk_str,
+            api_type         = "ellmer",
+            endpoint         = "chat",
+            verbose          = self$verbose
+          )
+
+          stream_cb(chunk_str, meta)
+        } else if (isTRUE(self$verbose)) {
+          cat(chunk_str)
+        }
+      })
+
+      # After streaming, use accumulated partial_response as assistant text
+      assistant_text <- partial_response
     } else {
-      # Regular chat
+      # Regular, non-streaming chat
       reply_any <- ch$chat(prompt)
       assistant_text <- as.character(reply_any)
     }

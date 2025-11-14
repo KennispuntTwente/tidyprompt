@@ -26,13 +26,22 @@ request_llm_provider <- function(
   request,
   stream = NULL,
   verbose = getOption("tidyprompt.verbose", TRUE),
-  api_type = c("openai", "ollama")
+  api_type = c("openai", "ollama"),
+  stream_callback = NULL,
+  llm_provider = NULL
 ) {
   api_type <- match.arg(api_type)
   request <- normalize_openai_request(request, api_type)
 
   if (!is.null(stream) && stream) {
-    req_result <- req_llm_stream(request, api_type, verbose)
+    req_result <- req_llm_stream(
+      req = request,
+      api_type = api_type,
+      verbose = verbose,
+      stream_callback = stream_callback,
+      chat_history = chat_history,
+      llm_provider = llm_provider
+    )
   } else {
     req_result <- req_llm_non_stream(request, api_type, verbose)
   }
@@ -82,14 +91,56 @@ req_llm_handle_error <- function(e) {
   stop(msg, call. = FALSE)
 }
 
-req_llm_stream <- function(req, api_type, verbose) {
+req_llm_stream <- function(
+  req,
+  api_type,
+  verbose,
+  stream_callback = NULL,
+  chat_history = NULL,
+  llm_provider = NULL
+) {
   role <- NULL
   message_accumulator <- ""
   tool_calls <- list()
 
   using_responses <- (api_type == "openai") && is_openai_responses_endpoint(req)
 
-  # No low-level HTTP verbosity; we'll print only tokens ourselves
+  # Resolve a central stream callback (provider-level overrides may already
+  # have been applied before calling this function)
+  stream_callback <- stream_callback %||%
+    getOption("tidyprompt.stream_callback", NULL)
+
+  partial_response <- ""
+
+  emit_chunk <- function(text) {
+    if (is.null(text) || !nzchar(text)) return(invisible(NULL))
+
+    partial_response <<- paste0(partial_response, as.character(text))
+
+    if (is.function(stream_callback)) {
+      latest_message <- NULL
+      if (is.data.frame(chat_history) && nrow(chat_history) > 0) {
+        latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
+      }
+
+      meta <- list(
+        llm_provider = llm_provider,
+        chat_history = chat_history,
+        latest_message = latest_message,
+        partial_response = partial_response,
+        chunk = as.character(text),
+        api_type = api_type,
+        endpoint = if (using_responses) "responses" else "chat",
+        verbose = verbose
+      )
+      stream_callback(as.character(text), meta)
+    } else if (isTRUE(verbose)) {
+      cat(text)
+    }
+    invisible(NULL)
+  }
+
+  # No low-level HTTP verbosity; we'll print only tokens ourselves or via callback
   resp <- tryCatch(
     httr2::req_perform_connection(req, verbosity = 0),
     error = function(e) req_llm_handle_error(e)
@@ -111,11 +162,11 @@ req_llm_stream <- function(req, api_type, verbose) {
             message_accumulator,
             data$message$content
           )
-          if (isTRUE(verbose)) cat(data$message$content)
+          emit_chunk(data$message$content)
         }
       }
     }
-    cat("\n")
+    emit_chunk("\n")
   } else if (!using_responses) {
     # OpenAI Chat Completions (SSE) — use resp_stream_sse for robust parsing
     if (is.null(role)) role <- "assistant"
@@ -155,7 +206,7 @@ req_llm_stream <- function(req, api_type, verbose) {
         add <- d$content
         if (length(add) > 0 && !is.na(add)) {
           message_accumulator <- paste0(message_accumulator, add)
-          if (isTRUE(verbose)) cat(add)
+          emit_chunk(add)
         }
       }
     }
@@ -170,7 +221,7 @@ req_llm_stream <- function(req, api_type, verbose) {
     repeat {
       ev <- httr2::resp_stream_sse(resp)
       if (is.null(ev)) {
-        cat("\n")
+        emit_chunk("\n")
         break
       }
       if (!nzchar(ev$data) || identical(ev$data, "[DONE]")) next
@@ -196,7 +247,7 @@ req_llm_stream <- function(req, api_type, verbose) {
           message_accumulator,
           as.character(payload$delta)
         )
-        if (isTRUE(verbose)) cat(payload$delta)
+        emit_chunk(as.character(payload$delta))
         next
       }
 

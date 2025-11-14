@@ -64,6 +64,14 @@ NULL
     #'  See `$add_handler_fn()`
     handler_fns = list(),
 
+    #' @field stream_callback
+    #' Optional callback for streaming tokens/chunks. If set, this will be
+    #' called as `stream_callback(chunk, meta)` where `chunk` is the latest
+    #' streamed text and `meta` is a list with fields like `llm_provider`,
+    #' `chat_history`, `latest_message`, `partial_response`, `api_type`, etc.
+    #' This field is *not* sent to the provider API.
+    stream_callback = NULL,
+
     #' @field pre_prompt_wraps
     #' A list of prompt wraps that will be applied to any prompt evaluated
     #' by this [llm_provider-class] object, before any prompt-specific
