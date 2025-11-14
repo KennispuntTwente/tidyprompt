@@ -41,12 +41,15 @@ Below is a minimal example which shows how to achieve this. We will:
 ## Example
 
 ``` r
+# Install required packages if not already installed
 packages <- c("shiny", "ipc", "future", "tidyprompt")
 for (pkg in packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     install.packages(pkg)
   }
 }
+
+# Load required packages
 library(shiny)
 library(ipc)
 library(future)
@@ -56,7 +59,7 @@ library(tidyprompt)
 # Enable asynchronous processing
 future::plan(future::multisession)
 
-# Base provider (OpenAI, streaming enabled by default)
+# Base provider (OpenAI; has streaming enabled by default)
 base_provider <- llm_provider_openai()
 
 ui <- fluidPage(
@@ -82,7 +85,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   # Queue to bridge async future back into Shiny
   queue <- shinyQueue()
-  queue$consumer$start(100)  # process queue every 100 ms
+  queue$consumer$start(100) # process queue every 100 ms
 
   # Reactive that holds the accumulated streamed text
   partial_response <- reactiveVal("")
