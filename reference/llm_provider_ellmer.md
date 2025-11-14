@@ -59,7 +59,7 @@ object (and not in the `$parameters` list). `$get_chat()` and
 however some parameters that can be set in the `$parameters` list; these
 are documented below.
 
-1.  Streaming can be controlled though via the `$parameters$stream`
+1.  Streaming can be controlled through via the `$parameters$stream`
     parameter. If set to TRUE (default), streaming will be used if
     supported by the underlying
     [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
