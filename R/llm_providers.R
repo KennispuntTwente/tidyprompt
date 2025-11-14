@@ -718,7 +718,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #' to manipulate the chat object. There are however some parameters that can be set
 #' in the `$parameters` list; these are documented below.
 #'
-#' 1) Streaming can be controlled though via the `$parameters$stream` parameter.
+#' 1) Streaming can be controlled through via the `$parameters$stream` parameter.
 #' If set to TRUE (default), streaming will be used if supported by the underlying
 #' `ellmer::chat()` object. If the underlying `ellmer::chat()` object does not support streaming,
 #' you may need to set this parameter to FALSE to avoid errors.
