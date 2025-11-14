@@ -78,11 +78,15 @@ Other llm_provider:
 
 - `stream_callback`:
 
-  Optional callback for streaming tokens/chunks. If set, this will be
-  called as `stream_callback(chunk, meta)` where `chunk` is the latest
-  streamed text and `meta` is a list with fields like `llm_provider`,
-  `chat_history`, `latest_message`, `partial_response`, `api_type`, etc.
-  This field is *not* sent to the provider API.
+  Optional callback function for streaming tokens/chunks. If set, this
+  function will be called with arguments `(chunk, meta)` where `chunk`
+  is the latest streamed text chunk and `meta` is a list with fields
+  including `llm_provider`, `chat_history`, and `partial_response` to
+  provide more context about the current prompt that is being replied
+  to. You may use this to implement custom streaming behaviour; see
+  `vignette(`"streaming_shiny_ipc", "tidyprompt")\` for an example of
+  how this function is used to stream a non-blocking async LLM response
+  to a Shiny app using the 'ipc' package.
 
 - `pre_prompt_wraps`:
 
