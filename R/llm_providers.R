@@ -803,6 +803,7 @@ llm_provider_ellmer <- function(
 
       # Create environment to hold partial response
       partial_response_env <- new.env()
+      assign("partial_response", "", envir = partial_response_env)
 
       coro::loop(for (chunk in stream) {
         if (length(chunk) == 0L || all(is.na(chunk))) next
