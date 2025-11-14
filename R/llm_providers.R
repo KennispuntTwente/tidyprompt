@@ -801,7 +801,8 @@ llm_provider_ellmer <- function(
       # --- Streaming path (ellmer-style sync streaming) ----------------------
       stream <- ch$stream(prompt)
 
-      partial_response <- ""
+      # Create environment to hold partial response
+      partial_response_env <- new.env()
 
       coro::loop(for (chunk in stream) {
         if (length(chunk) == 0L || all(is.na(chunk))) next
@@ -809,7 +810,9 @@ llm_provider_ellmer <- function(
         chunk_str <- paste0(as.character(chunk), collapse = "")
         if (!nzchar(chunk_str)) next
 
-        partial_response <<- paste0(partial_response, chunk_str)
+        current_response <- get("partial_response", envir = partial_response_env)
+        updated_response <- paste0(current_response, chunk_str)
+        assign("partial_response", updated_response, envir = partial_response_env)
 
         # If a callback is provided, use it; otherwise, mirror HTTP providers
         # by cat()ing chunks when verbose = TRUE.
@@ -820,7 +823,7 @@ llm_provider_ellmer <- function(
             llm_provider     = self,
             chat_history     = chat_history,
             latest_message   = latest_message,
-            partial_response = partial_response,
+            partial_response = updated_response,
             chunk            = chunk_str,
             api_type         = "ellmer",
             endpoint         = "chat",
@@ -834,7 +837,11 @@ llm_provider_ellmer <- function(
       })
 
       # After streaming, use accumulated partial_response as assistant text
-      assistant_text <- partial_response
+      assistant_text <- get("partial_response", envir = partial_response_env)
+      # If it leads with '\n', strip that
+      assistant_text <- sub("^\n", "", assistant_text)
+      # If it ends with '\n', strip that
+      assistant_text <- sub("\n$", "", assistant_text)
     } else {
       # Regular, non-streaming chat
       reply_any <- ch$chat(prompt)
