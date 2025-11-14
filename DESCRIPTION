@@ -45,6 +45,7 @@ Suggests:
     tidyjson,
     DBI,
     ellmer (>= 0.3.0),
+    coro,
     mcptools
 VignetteBuilder: knitr
 Imports: 

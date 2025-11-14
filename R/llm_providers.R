@@ -713,17 +713,24 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #'
 #' @details
 #' Unlike other LLM provider classes,
-#' LLM provider settings need to be managed in the `ellmer::chat()` object
+#' most LLM provider settings need to be managed in the `ellmer::chat()` object
 #' (and not in the `$parameters` list). `$get_chat()` and `$set_chat()` may be used
-#' to manipulate the chat object.
+#' to manipulate the chat object. There are however some parameters that can be set
+#' in the `$parameters` list; these are documented below.
 #'
-#' A special parameter `$.ellmer_structured_type` may be set in the `$parameters` list;
+#' 1) Streaming can be controlled though via the `$parameters$stream` parameter.
+#' If set to TRUE (default), streaming will be used if supported by the underlying
+#' `ellmer::chat()` object. If the underlying `ellmer::chat()` object does not support streaming,
+#' you may need to set this parameter to FALSE to avoid errors.
+#'
+#' 2) A special parameter `$.ellmer_structured_type` may also be set in the `$parameters` list;
 #' this parameter is used to specify a structured output format. This should be a 'ellmer'
 #' structured type (e.g., `ellmer::type_object`; see https://ellmer.tidyverse.org/articles/structured-data.html).
 #' `answer_as_json()` sets this parameter to obtain structured output
 #' (it is not recommended to set this parameter manually, but it is possible).
 #'
 #' @param chat An `ellmer::chat()` object (e.g., `ellmer::chat_openai()`)
+#' @param parameters A named list of parameters. See 'details' for supported parameters
 #' @param verbose A logical indicating whether the interaction with the [llm_provider-class]
 #' should be printed to the console. Default is TRUE
 #'
@@ -736,6 +743,9 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #' @family llm_provider
 llm_provider_ellmer <- function(
   chat,
+  parameters = list(
+    stream = getOption("tidyprompt.stream", TRUE)
+  ),
   verbose = getOption("tidyprompt.verbose", TRUE)
 ) {
   if (missing(chat) || is.null(chat)) {
@@ -745,6 +755,17 @@ llm_provider_ellmer <- function(
     stop(
       "`chat` doesn't look like an ellmer chat object (no `$chat()` method)."
     )
+  }
+
+  if (
+    isTRUE(parameters$stream)
+    && !requireNamespace("coro", quietly = TRUE)
+  ) {
+    stop(paste0(
+      "The 'coro' package is required for streaming with `llm_provider_ellmer()`.\n",
+      "Please install it first (e.g., `install.packages('coro')`), ",
+      "or set `parameters$stream = FALSE` to disable streaming"
+    ))
   }
 
   complete_chat <- function(chat_history) {
