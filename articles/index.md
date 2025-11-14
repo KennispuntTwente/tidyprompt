@@ -8,5 +8,5 @@
   started](https://kennispunttwente.github.io/tidyprompt/articles/getting_started.md):
 - [Sentiment analysis in R with a LLM and
   'tidyprompt'](https://kennispunttwente.github.io/tidyprompt/articles/sentiment_analysis.md):
-- [Streaming LLM responses to Shiny with
-  ipc](https://kennispunttwente.github.io/tidyprompt/articles/streaming_shiny_ipc.md):
+- [Streaming LLM responses to Shiny
+  apps](https://kennispunttwente.github.io/tidyprompt/articles/streaming_shiny_ipc.md):

@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Streaming LLM responses to Shiny with ipc • tidyprompt</title>
+<title>Streaming LLM responses to Shiny apps • tidyprompt</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Streaming LLM responses to Shiny with ipc">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Streaming LLM responses to Shiny apps">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -36,7 +36,7 @@
 <li><a class="dropdown-item" href="../articles/creating_prompt_wraps.html">Creating prompt wraps</a></li>
     <li><a class="dropdown-item" href="../articles/getting_started.html">Getting started</a></li>
     <li><a class="dropdown-item" href="../articles/sentiment_analysis.html">Sentiment analysis in R with a LLM and 'tidyprompt'</a></li>
-    <li><a class="dropdown-item" href="../articles/streaming_shiny_ipc.html">Streaming LLM responses to Shiny with ipc</a></li>
+    <li><a class="dropdown-item" href="../articles/streaming_shiny_ipc.html">Streaming LLM responses to Shiny apps</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -59,7 +59,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Streaming LLM responses to Shiny with ipc</h1>
+      <h1>Streaming LLM responses to Shiny apps</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/KennispuntTwente/tidyprompt/blob/main/vignettes/streaming_shiny_ipc.Rmd" class="external-link"><code>vignettes/streaming_shiny_ipc.Rmd</code></a></small>
@@ -72,20 +72,27 @@
 gathered with ‘tidyprompt’ to a Shiny app in real-time.</p>
 <p>Shiny apps run on a single R process, meaning that when you call an
 LLM synchronously, the UI will be blocked until the response is
-complete. Therefore, you typically want to use
-<code><a href="../reference/send_prompt.html">send_prompt()</a></code> in an asynchronous manner (e.g., with the
-‘future’ and ‘promises’ packages).</p>
+complete. Therefore, when integrating LLM calls into Shiny apps, you
+typically want to use <code><a href="../reference/send_prompt.html">send_prompt()</a></code> asynchronously (e.g.,
+with the ‘future’ and ‘promises’ packages).</p>
 <p>If you just want to show the final LLM response after it is complete,
-this is straightforward. But if you show the response as it streams in
-token-by-token, this is more complicated.</p>
-<p>For LLM providers created with ‘tidyprompt’ that support streaming
-responses, you can provide a <code>stream_callback</code> function that
-is called for each token (or text chunk) as it arrives from the LLM. We
-can leverage this to push the tokens into the Shiny app in real-time.
-Using the ‘ipc’ package, we can send messages from the background R
-process (where the LLM call runs) back to the main Shiny R process to
-update a reactive value that holds the streamed text.</p>
-<p>Below is a minimal example of how to achieve this. We will:</p>
+this is fairly straightforward. But if you want to show the LLM response
+as it streams in token-by-token, this is a bit more complex. The
+asynchronous process will have to somehow communicate back to the main
+Shiny R process to update the UI in real-time as new tokens arrive.</p>
+<p>Therefore, for LLM providers created with ‘tidyprompt’ that support
+streaming responses, you can set the <code>stream_callback</code> field
+of your <code>llm_provider</code> object. This is a function that is
+called for each token (or text chunk) as it arrives from the LLM. You
+can then leverage this to push the tokens into the Shiny app in
+real-time. The ‘ipc’ package can facilitate herein, allowing
+inter-process communication between the background R process (where the
+LLM call runs) and the main Shiny R process (where the UI runs). Each
+time a new output token arrives, the <code>stream_callback</code> can
+push then push the token into a reactive value in the main Shiny
+process.</p>
+<p>Below is a minimal example which shows how to achieve this. We
+will:</p>
 <ul>
 <li>create an <code>llm_provider</code> with streaming enabled;</li>
 <li>define a <code>stream_callback</code> that writes tokens into an
@@ -94,10 +101,10 @@ update a reactive value that holds the streamed text.</p>
 (<code>future::plan(multisession)</code>) where we call
 <code><a href="../reference/send_prompt.html">send_prompt()</a></code>;</li>
 <li>consume the queue from the Shiny main process to update the UI,
-showing a live stream of LLM output</li>
+showing a live stream of LLM output.</li>
 </ul>
 <div class="section level2">
-<h2 id="example-app">Example app<a class="anchor" aria-label="anchor" href="#example-app"></a>
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">packages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shiny"</span>, <span class="st">"ipc"</span>, <span class="st">"future"</span>, <span class="st">"tidyprompt"</span><span class="op">)</span></span>

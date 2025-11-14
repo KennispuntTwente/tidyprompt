@@ -1,28 +1,33 @@
-# Streaming LLM responses to Shiny with ipc
+# Streaming LLM responses to Shiny apps
 
 This vignette shows a minimal example of how to stream a LLM response
 gathered with ‘tidyprompt’ to a Shiny app in real-time.
 
 Shiny apps run on a single R process, meaning that when you call an LLM
 synchronously, the UI will be blocked until the response is complete.
-Therefore, you typically want to use
+Therefore, when integrating LLM calls into Shiny apps, you typically
+want to use
 [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
-in an asynchronous manner (e.g., with the ‘future’ and ‘promises’
-packages).
+asynchronously (e.g., with the ‘future’ and ‘promises’ packages).
 
 If you just want to show the final LLM response after it is complete,
-this is straightforward. But if you show the response as it streams in
-token-by-token, this is more complicated.
+this is fairly straightforward. But if you want to show the LLM response
+as it streams in token-by-token, this is a bit more complex. The
+asynchronous process will have to somehow communicate back to the main
+Shiny R process to update the UI in real-time as new tokens arrive.
 
-For LLM providers created with ‘tidyprompt’ that support streaming
-responses, you can provide a `stream_callback` function that is called
-for each token (or text chunk) as it arrives from the LLM. We can
-leverage this to push the tokens into the Shiny app in real-time. Using
-the ‘ipc’ package, we can send messages from the background R process
-(where the LLM call runs) back to the main Shiny R process to update a
-reactive value that holds the streamed text.
+Therefore, for LLM providers created with ‘tidyprompt’ that support
+streaming responses, you can set the `stream_callback` field of your
+`llm_provider` object. This is a function that is called for each token
+(or text chunk) as it arrives from the LLM. You can then leverage this
+to push the tokens into the Shiny app in real-time. The ‘ipc’ package
+can facilitate herein, allowing inter-process communication between the
+background R process (where the LLM call runs) and the main Shiny R
+process (where the UI runs). Each time a new output token arrives, the
+`stream_callback` can push then push the token into a reactive value in
+the main Shiny process.
 
-Below is a minimal example of how to achieve this. We will:
+Below is a minimal example which shows how to achieve this. We will:
 
 - create an `llm_provider` with streaming enabled;
 - define a `stream_callback` that writes tokens into an
@@ -31,9 +36,9 @@ Below is a minimal example of how to achieve this. We will:
   (`future::plan(multisession)`) where we call
   [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md);
 - consume the queue from the Shiny main process to update the UI,
-  showing a live stream of LLM output
+  showing a live stream of LLM output.
 
-## Example app
+## Example
 
 ``` r
 packages <- c("shiny", "ipc", "future", "tidyprompt")
