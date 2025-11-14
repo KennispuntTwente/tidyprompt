@@ -42,7 +42,6 @@ Suggests:
     callr,
     skimr,
     jsonvalidate,
-    tidyjson,
     DBI,
     ellmer (>= 0.3.0),
     coro,
