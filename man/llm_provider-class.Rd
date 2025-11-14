@@ -115,6 +115,15 @@ is set, this will override the api_type field for tool use mode determination
 \item{\code{handler_fns}}{A list of functions that will be called after the completion of a chat.
 See \verb{$add_handler_fn()}}
 
+\item{\code{stream_callback}}{Optional callback function for streaming tokens/chunks. If set, this function will be
+called with arguments \verb{(chunk, meta)} where \code{chunk} is the latest
+streamed text chunk and \code{meta} is a list with fields including \code{llm_provider},
+\code{chat_history}, and \code{partial_response} to provide more context about the current
+prompt that is being replied to. You may use this to implement custom streaming behaviour;
+see \verb{vignette(}"streaming_shiny_ipc", "tidyprompt")` for an example of how this
+function is used to stream a non-blocking async LLM response to a Shiny app using the
+'ipc' package.}
+
 \item{\code{pre_prompt_wraps}}{A list of prompt wraps that will be applied to any prompt evaluated
 by this \linkS4class{llm_provider} object, before any prompt-specific
 prompt wraps are applied. See \verb{$add_prompt_wrap()}.

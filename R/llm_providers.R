@@ -50,12 +50,17 @@ llm_provider_ollama <- function(
     request <- httr2::request(self$url) |>
       httr2::req_body_json(body)
 
+    stream_cb <- self$stream_callback %||%
+      getOption("tidyprompt.stream_callback", NULL)
+
     request_llm_provider(
       chat_history,
       request,
       stream = self$parameters$stream,
       verbose = self$verbose,
-      api_type = self$api_type
+      api_type = self$api_type,
+      stream_callback = stream_cb,
+      llm_provider = self
     )
   }
 
@@ -162,12 +167,17 @@ llm_provider_openai <- function(
       httr2::req_body_json(body) |>
       httr2::req_headers(!!!headers)
 
+    stream_cb <- self$stream_callback %||%
+      getOption("tidyprompt.stream_callback", NULL)
+
     request_llm_provider(
       chat_history,
       request,
       stream = self$parameters$stream,
       verbose = self$verbose,
-      api_type = self$api_type
+      api_type = self$api_type,
+      stream_callback = stream_cb,
+      llm_provider = self
     )
   }
 
@@ -703,17 +713,24 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #'
 #' @details
 #' Unlike other LLM provider classes,
-#' LLM provider settings need to be managed in the `ellmer::chat()` object
+#' most LLM provider settings need to be managed in the `ellmer::chat()` object
 #' (and not in the `$parameters` list). `$get_chat()` and `$set_chat()` may be used
-#' to manipulate the chat object.
+#' to manipulate the chat object. There are however some parameters that can be set
+#' in the `$parameters` list; these are documented below.
 #'
-#' A special parameter `$.ellmer_structured_type` may be set in the `$parameters` list;
+#' 1) Streaming can be controlled through via the `$parameters$stream` parameter.
+#' If set to TRUE (default), streaming will be used if supported by the underlying
+#' `ellmer::chat()` object. If the underlying `ellmer::chat()` object does not support streaming,
+#' you may need to set this parameter to FALSE to avoid errors.
+#'
+#' 2) A special parameter `$.ellmer_structured_type` may also be set in the `$parameters` list;
 #' this parameter is used to specify a structured output format. This should be a 'ellmer'
 #' structured type (e.g., `ellmer::type_object`; see https://ellmer.tidyverse.org/articles/structured-data.html).
 #' `answer_as_json()` sets this parameter to obtain structured output
 #' (it is not recommended to set this parameter manually, but it is possible).
 #'
 #' @param chat An `ellmer::chat()` object (e.g., `ellmer::chat_openai()`)
+#' @param parameters A named list of parameters. See 'details' for supported parameters
 #' @param verbose A logical indicating whether the interaction with the [llm_provider-class]
 #' should be printed to the console. Default is TRUE
 #'
@@ -726,6 +743,9 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #' @family llm_provider
 llm_provider_ellmer <- function(
   chat,
+  parameters = list(
+    stream = getOption("tidyprompt.stream", TRUE)
+  ),
   verbose = getOption("tidyprompt.verbose", TRUE)
 ) {
   if (missing(chat) || is.null(chat)) {
@@ -735,6 +755,17 @@ llm_provider_ellmer <- function(
     stop(
       "`chat` doesn't look like an ellmer chat object (no `$chat()` method)."
     )
+  }
+
+  if (
+    isTRUE(parameters$stream)
+    && !requireNamespace("coro", quietly = TRUE)
+  ) {
+    stop(paste0(
+      "The 'coro' package is required for streaming with `llm_provider_ellmer()`.\n",
+      "Please install it first (e.g., `install.packages('coro')`), ",
+      "or set `parameters$stream = FALSE` to disable streaming"
+    ))
   }
 
   complete_chat <- function(chat_history) {
@@ -777,13 +808,64 @@ llm_provider_ellmer <- function(
     use_structured <- !is.null(structured_type) &&
       is.function(ch$chat_structured)
 
+    # Central streaming hook: if provided, we will stream tokens/chunks
+    # through this function instead of letting ellmer print to console.
+    stream_cb <- self$stream_callback %||%
+      getOption("tidyprompt.stream_callback", NULL)
+
     if (use_structured) {
       reply_struct <- ch$chat_structured(prompt, type = structured_type)
       # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
       assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
         as.character()
+    } else if (isTRUE(params$stream) && is.function(ch$stream)) {
+      # --- Streaming path (ellmer-style sync streaming) ----------------------
+      stream <- ch$stream(prompt)
+
+      # Create environment to hold partial response
+      partial_response_env <- new.env()
+      assign("partial_response", "", envir = partial_response_env)
+
+      coro::loop(for (chunk in stream) {
+        if (length(chunk) == 0L || all(is.na(chunk))) next
+
+        chunk_str <- paste0(as.character(chunk), collapse = "")
+        if (!nzchar(chunk_str)) next
+
+        current_response <- get("partial_response", envir = partial_response_env)
+        updated_response <- paste0(current_response, chunk_str)
+        assign("partial_response", updated_response, envir = partial_response_env)
+
+        # If a callback is provided, use it; otherwise, mirror HTTP providers
+        # by cat()ing chunks when verbose = TRUE.
+        if (is.function(stream_cb)) {
+          latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
+
+          meta <- list(
+            llm_provider     = self,
+            chat_history     = chat_history,
+            latest_message   = latest_message,
+            partial_response = updated_response,
+            chunk            = chunk_str,
+            api_type         = "ellmer",
+            endpoint         = "chat",
+            verbose          = self$verbose
+          )
+
+          stream_cb(chunk_str, meta)
+        } else if (isTRUE(self$verbose)) {
+          cat(chunk_str)
+        }
+      })
+
+      # After streaming, use accumulated partial_response as assistant text
+      assistant_text <- get("partial_response", envir = partial_response_env)
+      # If it leads with '\n', strip that
+      assistant_text <- sub("^\n", "", assistant_text)
+      # If it ends with '\n', strip that
+      assistant_text <- sub("\n$", "", assistant_text)
     } else {
-      # Regular chat
+      # Regular, non-streaming chat
       reply_any <- ch$chat(prompt)
       assistant_text <- as.character(reply_any)
     }

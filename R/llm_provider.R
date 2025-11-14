@@ -64,6 +64,17 @@ NULL
     #'  See `$add_handler_fn()`
     handler_fns = list(),
 
+    #' @field stream_callback
+    #' Optional callback function for streaming tokens/chunks. If set, this function will be
+    #' called with arguments `(chunk, meta)` where `chunk` is the latest
+    #' streamed text chunk and `meta` is a list with fields including `llm_provider`,
+    #' `chat_history`, and `partial_response` to provide more context about the current
+    #' prompt that is being replied to. You may use this to implement custom streaming behaviour;
+    #' see `vignette(`"streaming_shiny_ipc", "tidyprompt")` for an example of how this
+    #' function is used to stream a non-blocking async LLM response to a Shiny app using the
+    #' 'ipc' package.
+    stream_callback = NULL,
+
     #' @field pre_prompt_wraps
     #' A list of prompt wraps that will be applied to any prompt evaluated
     #' by this [llm_provider-class] object, before any prompt-specific

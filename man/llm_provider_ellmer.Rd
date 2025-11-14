@@ -4,10 +4,16 @@
 \alias{llm_provider_ellmer}
 \title{Create a new LLM provider from an \code{ellmer::chat()} object}
 \usage{
-llm_provider_ellmer(chat, verbose = getOption("tidyprompt.verbose", TRUE))
+llm_provider_ellmer(
+  chat,
+  parameters = list(stream = getOption("tidyprompt.stream", TRUE)),
+  verbose = getOption("tidyprompt.verbose", TRUE)
+)
 }
 \arguments{
 \item{chat}{An \code{ellmer::chat()} object (e.g., \code{ellmer::chat_openai()})}
+
+\item{parameters}{A named list of parameters. See 'details' for supported parameters}
 
 \item{verbose}{A logical indicating whether the interaction with the \linkS4class{llm_provider}
 should be printed to the console. Default is TRUE}
@@ -27,15 +33,21 @@ other LLM providers, and may not function optimally.
 }
 \details{
 Unlike other LLM provider classes,
-LLM provider settings need to be managed in the \code{ellmer::chat()} object
+most LLM provider settings need to be managed in the \code{ellmer::chat()} object
 (and not in the \verb{$parameters} list). \verb{$get_chat()} and \verb{$set_chat()} may be used
-to manipulate the chat object.
-
-A special parameter \verb{$.ellmer_structured_type} may be set in the \verb{$parameters} list;
+to manipulate the chat object. There are however some parameters that can be set
+in the \verb{$parameters} list; these are documented below.
+\enumerate{
+\item Streaming can be controlled through via the \verb{$parameters$stream} parameter.
+If set to TRUE (default), streaming will be used if supported by the underlying
+\code{ellmer::chat()} object. If the underlying \code{ellmer::chat()} object does not support streaming,
+you may need to set this parameter to FALSE to avoid errors.
+\item A special parameter \verb{$.ellmer_structured_type} may also be set in the \verb{$parameters} list;
 this parameter is used to specify a structured output format. This should be a 'ellmer'
 structured type (e.g., \code{ellmer::type_object}; see https://ellmer.tidyverse.org/articles/structured-data.html).
 \code{answer_as_json()} sets this parameter to obtain structured output
 (it is not recommended to set this parameter manually, but it is possible).
+}
 }
 \examples{
 # Various providers:
