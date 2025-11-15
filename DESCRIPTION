@@ -46,6 +46,7 @@ Suggests:
     ellmer (>= 0.3.0),
     coro,
     ggplot2,
+    Cairo,
     mcptools,
     grid
 VignetteBuilder: knitr

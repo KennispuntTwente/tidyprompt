@@ -182,19 +182,44 @@ add_image <- function(
 .tp_plot_to_png_raw <- function(plot_obj, width = 800, height = 600, res = 96, bg = "white") {
   base_args <- list(width = width, height = height, res = res, units = "px", bg = bg)
 
+  if (isTRUE(requireNamespace("ragg", quietly = TRUE))) {
+    raw <- .tp_try_plot_to_png(plot_obj, base_args, device = "ragg")
+    if (!is.null(raw)) {
+      return(raw)
+    }
+  }
+
+  if (isTRUE(requireNamespace("Cairo", quietly = TRUE))) {
+    raw <- .tp_try_plot_to_png(plot_obj, base_args, device = "Cairo")
+    if (!is.null(raw)) {
+      return(raw)
+    }
+  }
+
   option_type <- getOption("bitmapType")
   candidate_types <- list(NULL)
-  if (!is.null(option_type)) {
-    candidate_types <- c(candidate_types, list(option_type))
+  add_candidate <- function(x) {
+    if (!is.null(x) && !(is.character(x) && identical(x, ""))) {
+      candidate_types <<- c(candidate_types, list(x))
+    }
   }
-  if (isTRUE(capabilities("cairo"))) {
-    candidate_types <- c(candidate_types, list("cairo", "cairo-png"))
+  add_candidate(option_type)
+  add_candidate("cairo")
+  add_candidate("cairo-png")
+  if (.Platform$OS.type == "windows") {
+    add_candidate("windows")
   }
-  # Deduplicate while preserving order
+  if (.Platform$OS.type == "unix") {
+    add_candidate("Xlib")
+  }
+  sysname <- tryCatch(tolower(Sys.info()[["sysname"]]), error = function(e) "")
+  if (identical(sysname, "darwin") || identical(sysname, "macos")) {
+    add_candidate("quartz")
+  }
   candidate_types <- candidate_types[!duplicated(candidate_types)]
 
   for (type in candidate_types) {
-    raw <- .tp_try_plot_to_png(plot_obj, base_args, type)
+    raw <- .tp_try_plot_to_png(plot_obj, base_args, device = "grDevices", type = type)
     if (!is.null(raw)) {
       return(raw)
     }
@@ -203,19 +228,55 @@ add_image <- function(
   stop("Unable to convert plot to image; rendered file is empty.")
 }
 
-.tp_try_plot_to_png <- function(plot_obj, base_args, type = NULL) {
+.tp_try_plot_to_png <- function(plot_obj, base_args, device = c("grDevices", "ragg", "Cairo"), type = NULL) {
+  device <- match.arg(device)
   file <- tempfile(fileext = ".png")
   on.exit(unlink(file), add = TRUE)
 
-  args <- c(list(filename = file), base_args)
-  if (!is.null(type)) {
-    args$type <- type
-  }
+  open_device <- switch(
+    device,
+    ragg = {
+      function() {
+        agg_args <- list(
+          filename = file,
+          width = base_args$width,
+          height = base_args$height,
+          units = "px",
+          background = base_args$bg,
+          res = base_args$res
+        )
+        do.call(getExportedValue("ragg", "agg_png"), agg_args)
+      }
+    },
+    Cairo = {
+      function() {
+        cairo_args <- list(
+          filename = file,
+          width = base_args$width,
+          height = base_args$height,
+          units = "px",
+          dpi = base_args$res,
+          bg = base_args$bg
+        )
+        do.call(getExportedValue("Cairo", "CairoPNG"), cairo_args)
+      }
+    },
+    grDevices = {
+      function() {
+        args <- c(list(filename = file), base_args)
+        if (!is.null(type)) {
+          args$type <- type
+        }
+        do.call(grDevices::png, args)
+      }
+    }
+  )
 
   device_open <- FALSE
   result <- tryCatch({
-    do.call(grDevices::png, args)
+    open_device()
     device_open <<- TRUE
+    try(grDevices::dev.control(displaylist = "enable"), silent = TRUE)
     on.exit({
       if (device_open) {
         try(grDevices::dev.off(), silent = TRUE)
@@ -245,6 +306,7 @@ add_image <- function(
 
 .tp_draw_plot_object <- function(plot_obj) {
   if (inherits(plot_obj, "recordedplot")) {
+    try(graphics::plot.new(), silent = TRUE)
     grDevices::replayPlot(plot_obj)
     return(invisible(NULL))
   }
@@ -259,6 +321,9 @@ add_image <- function(
   }
 
   if (inherits(plot_obj, "ggplot")) {
+    if (requireNamespace("grid", quietly = TRUE)) {
+      grid::grid.newpage()
+    }
     print(plot_obj)
     return(invisible(NULL))
   }
