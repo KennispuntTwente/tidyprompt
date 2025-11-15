@@ -231,7 +231,7 @@ llm_provider_openai <- function(
     # Support both legacy Chat Completions (messages) and modern Responses API (input)
     use_responses_api <- grepl("/responses$", self$url)
     if (use_responses_api) {
-      # Transform messages -> input with part types changed to input_* variants.
+      # Transform messages -> input with part types changed to input_*/output_* variants.
       # For image parts, OpenAI Responses API expects a scalar URL string in `image_url`
       # and (optionally) a separate `detail` field, not an object. The previous implementation
       # forwarded the object `{ url = ..., detail = ... }` which triggers a 400 error:
@@ -240,14 +240,21 @@ llm_provider_openai <- function(
         role <- msg$role
         content <- msg$content
         parts <- list()
+        text_type <- if (identical(role, "assistant")) "output_text" else "input_text"
+        image_type <- if (identical(role, "assistant")) "output_image" else "input_image"
         if (is.character(content)) {
           if (nzchar(content)) {
-            parts[[length(parts) + 1]] <- list(type = "input_text", text = content)
+            parts[[length(parts) + 1]] <- list(type = text_type, text = content)
           }
         } else if (is.list(content)) {
           for (part in content) {
             if (identical(part$type, "text")) {
-              parts[[length(parts) + 1]] <- list(type = "input_text", text = part$text)
+              if (!is.null(part$text) && nzchar(part$text)) {
+                parts[[length(parts) + 1]] <- list(
+                  type = text_type,
+                  text = part$text
+                )
+              }
             } else if (identical(part$type, "image_url")) {
               img <- part$image_url
               if (is.list(img)) {
@@ -255,18 +262,18 @@ llm_provider_openai <- function(
                 detail_val <- img$detail %||% NULL
                 if (!is.null(url_val)) {
                   parts[[length(parts) + 1]] <- compact_list(list(
-                    type = "input_image",
+                    type = image_type,
                     image_url = as.character(url_val),
                     detail = detail_val
                   ))
                 }
               } else if (is.character(img) && length(img) == 1) {
-                parts[[length(parts) + 1]] <- list(type = "input_image", image_url = img)
+                parts[[length(parts) + 1]] <- list(type = image_type, image_url = img)
               }
             } else {
               # Fallback: keep as input_text if unknown
               if (!is.null(part$text)) {
-                parts[[length(parts) + 1]] <- list(type = "input_text", text = part$text)
+                parts[[length(parts) + 1]] <- list(type = text_type, text = part$text)
               }
             }
           }
