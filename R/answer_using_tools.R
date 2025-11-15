@@ -253,7 +253,9 @@ answer_using_tools <- function(
 
       # 4) Iterate over tool calls: parse args, call tool, record result
       for (tool_call in tool_calls) {
-        tool_name <- tool_call[["function"]]$name
+        fn_info <- tool_call[["function"]] %||% list()
+        tool_name <- fn_info$name %||% tool_call$name %||% NA_character_
+        if (is.na(tool_name) || !nzchar(tool_name)) next
         tool <- tp_tools[[tool_name]]
 
         # Parse arguments robustly
@@ -283,10 +285,14 @@ answer_using_tools <- function(
         )
 
         # Call the tool safely
-        result <- tryCatch(
-          do.call(tool, arguments),
-          error = function(e) glue::glue("Error: {e$message}")
-        )
+        if (is.null(tool)) {
+          result <- glue::glue("Error: tool '{tool_name}' not registered")
+        } else {
+          result <- tryCatch(
+            do.call(tool, arguments),
+            error = function(e) glue::glue("Error: {e$message}")
+          )
+        }
 
         # Normalize result to character
         if (length(result) > 0) result <- paste(result, collapse = ", ")
@@ -452,14 +458,14 @@ answer_using_tools <- function(
   # Try to decode raw -> JSON -> list
   if (is.raw(resp_body)) {
     return(tryCatch(
-      jsonlite::fromJSON(rawToChar(resp_body)),
+      jsonlite::fromJSON(rawToChar(resp_body), simplifyVector = FALSE),
       error = function(e) NULL
     ))
   }
   # If it's character JSON, try to parse
   if (is.character(resp_body) && length(resp_body) == 1) {
     return(tryCatch(
-      jsonlite::fromJSON(resp_body),
+      jsonlite::fromJSON(resp_body, simplifyVector = FALSE),
       error = function(e) NULL
     ))
   }
@@ -471,44 +477,119 @@ answer_using_tools <- function(
 .normalize_openai_tool_calls <- function(body) {
   calls <- list()
 
-  # OpenAI Chat Completions-style: body$choices$message$tool_calls
-  if (
-    !is.null(body$choices) &&
-      !is.null(body$choices$message) &&
-      length(body$choices$message$tool_calls) > 0
-  ) {
-    for (tc in body$choices$message$tool_calls) {
-      calls[[length(calls) + 1]] <- list(
-        id = tc$id,
-        type = tc$type,
-        "function" = as.list(tc[["function"]])
-      )
-    }
-    return(calls)
+  format_args <- function(args) {
+    if (is.null(args)) return("{}")
+    if (is.character(args) && length(args) == 1) return(args)
+    safe <- tryCatch(
+      jsonlite::toJSON(args, auto_unbox = TRUE),
+      error = function(e) NULL
+    )
+    if (is.null(safe)) return("{}")
+    as.character(safe)
   }
 
-  # OpenAI Responses API-style: data.frame body$output with type == "function_call"
-  if (
-    !is.null(body$output) &&
-      is.data.frame(body$output) &&
-      nrow(body$output) > 0 &&
-      any(body$output$type == "function_call")
-  ) {
-    fc <- body$output[body$output$type == "function_call", , drop = FALSE]
-    for (i in seq_len(nrow(fc))) {
-      calls[[length(calls) + 1]] <- list(
-        id = fc$id[i],
-        type = fc$type[i],
-        "function" = list(
-          name = fc$name[i],
-          arguments = fc$arguments[i]
-        )
-      )
-    }
-    return(calls)
+  row_to_list <- function(df_row) {
+    if (!is.data.frame(df_row)) return(df_row)
+    lapply(df_row, function(cell) {
+      if (is.list(cell) && length(cell) == 1) return(cell[[1]])
+      cell
+    })
   }
 
-  # Nothing found
+  # --- Chat Completions style -------------------------------------------------
+  if (!is.null(body$choices)) {
+    choices <- body$choices
+    if (is.data.frame(choices)) {
+      choices <- lapply(seq_len(nrow(choices)), function(i) row_to_list(choices[i, , drop = FALSE]))
+    }
+    if (is.list(choices)) {
+      for (choice in choices) {
+        msg <- choice$message %||% choice[["message"]]
+        if (is.null(msg)) next
+        if (is.data.frame(msg)) msg <- row_to_list(msg[1, , drop = FALSE])
+        tcs <- msg$tool_calls %||% msg[["tool_calls"]]
+        if (is.null(tcs) || length(tcs) == 0) next
+
+        if (is.data.frame(tcs)) {
+          tcs <- lapply(seq_len(nrow(tcs)), function(i) row_to_list(tcs[i, , drop = FALSE]))
+        }
+
+        for (tc in tcs) {
+          fn <- tc[["function"]]
+          if (is.null(fn)) next
+          calls[[length(calls) + 1]] <- list(
+            id = tc$id %||% NA_character_,
+            type = tc$type %||% "function",
+            "function" = list(
+              name = fn$name %||% tc$name %||% "",
+              arguments = format_args(fn$arguments %||% tc$arguments %||% fn$args)
+            )
+          )
+        }
+      }
+      if (length(calls) > 0) return(calls)
+    }
+  }
+
+  # --- Responses API style ----------------------------------------------------
+  if (!is.null(body$output)) {
+    output <- body$output
+
+    if (is.data.frame(output)) {
+      output <- lapply(seq_len(nrow(output)), function(i) row_to_list(output[i, , drop = FALSE]))
+    }
+
+    if (is.list(output)) {
+      for (item in output) {
+        if (!is.list(item)) next
+        type <- item$type %||% NULL
+
+        if (identical(type, "function_call")) {
+          fn_obj <- item[["function"]]
+          calls[[length(calls) + 1]] <- list(
+            id = item$call_id %||% item$id %||% NA_character_,
+            type = "function",
+            "function" = list(
+              name = item$name %||% fn_obj$name %||% "",
+              arguments = format_args(
+                item$arguments %||%
+                  fn_obj$arguments %||%
+                  item$args
+              )
+            )
+          )
+        } else if (!is.null(item$content) && length(item$content) > 0) {
+          for (content_part in item$content) {
+            if (is.data.frame(content_part)) {
+              content_part <- row_to_list(content_part[1, , drop = FALSE])
+            }
+            tc <- content_part$tool_calls %||% content_part[["tool_calls"]]
+            if (is.null(tc)) next
+            if (is.data.frame(tc)) {
+              tc <- lapply(seq_len(nrow(tc)), function(i) row_to_list(tc[i, , drop = FALSE]))
+            }
+            for (tool_call in tc) {
+              fn <- tool_call[["function"]]
+              if (is.null(fn)) next
+              calls[[length(calls) + 1]] <- list(
+                id = tool_call$id %||% NA_character_,
+                type = tool_call$type %||% "function",
+                "function" = list(
+                  name = fn$name %||% tool_call$name %||% "",
+                  arguments = format_args(
+                    fn$arguments %||%
+                      tool_call$arguments %||%
+                      fn$args
+                  )
+                )
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+
   calls
 }
 
@@ -518,10 +599,24 @@ answer_using_tools <- function(
     !is.null(body$message) &&
       length(body$message$tool_calls) > 0
   ) {
-    for (i in seq_along(body$message$tool_calls)) {
-      tc <- body$message$tool_calls[i]
+    tc_list <- body$message$tool_calls
+    if (is.data.frame(tc_list)) {
+      tc_list <- lapply(seq_len(nrow(tc_list)), function(i) {
+        row <- tc_list[i, , drop = FALSE]
+        lapply(row, function(x) if (is.list(x) && length(x) == 1) x[[1]] else x)
+      })
+    } else if (!is.list(tc_list)) {
+      tc_list <- list(tc_list)
+    }
+
+    for (tc in tc_list) {
+      fn <- NULL
+      if (is.list(tc)) {
+        fn <- tc[["function"]] %||% tc[["function"]] %||% NULL
+      }
+      if (is.null(fn)) next
       calls[[length(calls) + 1]] <- list(
-        "function" = as.list(tc[["function"]])
+        "function" = as.list(fn)
       )
     }
   }
@@ -540,7 +635,21 @@ answer_using_tools <- function(
 
 .parse_arguments <- function(tool_call, t) {
   if (t == "ollama") {
-    return(as.list(tool_call[["function"]]$arguments))
+    args_raw <- NULL
+    fn <- tool_call[["function"]]
+    if (is.list(fn)) {
+      args_raw <- fn$arguments %||% fn$args %||% NULL
+    }
+    if (is.null(args_raw)) return(list())
+    if (is.character(args_raw) && length(args_raw) == 1) {
+      parsed <- tryCatch(
+        jsonlite::fromJSON(args_raw, simplifyVector = FALSE),
+        error = function(e) NULL
+      )
+      if (!is.null(parsed)) return(parsed)
+    }
+    if (is.list(args_raw)) return(args_raw)
+    return(as.list(args_raw))
   }
   # OpenAI: try "arguments" then "args", both JSON
   args <- NULL

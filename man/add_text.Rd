@@ -32,6 +32,7 @@ prompt |>
 }
 \seealso{
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},
 \code{\link{answer_as_integer}()},
@@ -51,6 +52,7 @@ Other pre_built_prompt_wraps:
 \code{\link{set_system_prompt}()}
 
 Other miscellaneous_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{quit_if}()},
 \code{\link{set_system_prompt}()}
 }

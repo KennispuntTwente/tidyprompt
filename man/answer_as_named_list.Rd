@@ -68,6 +68,7 @@ Get a named list from LLM response with optional item instructions and validatio
 \code{\link[=answer_as_list]{answer_as_list()}} \code{\link[=llm_feedback]{llm_feedback()}}
 
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{add_text}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},

@@ -157,6 +157,7 @@ system; you must use this function with caution.
 \code{\link[=answer_using_tools]{answer_using_tools()}}
 
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{add_text}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},

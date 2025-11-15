@@ -45,7 +45,9 @@ Suggests:
     DBI,
     ellmer (>= 0.3.0),
     coro,
-    mcptools
+    ggplot2,
+    mcptools,
+    grid
 VignetteBuilder: knitr
 Imports: 
     dplyr,
@@ -56,5 +58,7 @@ Imports:
     utils,
     cli,
     R6,
-    rlang
+    rlang,
+    S7,
+    methods
 Config/testthat/edition: 3

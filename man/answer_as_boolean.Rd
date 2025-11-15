@@ -48,6 +48,7 @@ Make LLM answer as a boolean (TRUE or FALSE)
 }
 \seealso{
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{add_text}()},
 \code{\link{answer_as_category}()},
 \code{\link{answer_as_integer}()},
