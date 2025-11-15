@@ -3,15 +3,16 @@ image_prompt <- "What is shown in this image?" |>
   add_image("https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg")
 
 # Create a prompt with a local image (file path)
-# First save an image
+# First save an image to a temporary file
+cat_img_file <- tempfile(fileext = ".jpg")
 download.file(
   "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg",
-  destfile = "cat.jpg",
+  destfile = cat_img_file,
   mode = "wb"
 )
 # Then build prompt with local image
 local_image_prompt <- "What is shown in this image?" |>
-  add_image("cat.jpg")
+  add_image(cat_img_file)
 
 # Create a prompt with a plot (e.g., 'ggplot2' plot)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
