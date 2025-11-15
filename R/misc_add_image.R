@@ -65,6 +65,9 @@ add_image <- function(
   # Pass-through for ellmer content objects (content_image_url/file/plot)
   if (isTRUE(requireNamespace("ellmer", quietly = TRUE))) {
     if (.tp_is_ellmer_content(image)) {
+      if (!isTRUE(requireNamespace("S7", quietly = TRUE))) {
+        stop("The S7 package is required to handle ellmer content image objects, but is not installed.")
+      }
       props <- S7::props(image)
 
       # Retrieve detail, prioritizing props over argument
