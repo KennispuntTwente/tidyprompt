@@ -45,6 +45,7 @@ Suggests:
     DBI,
     ellmer (>= 0.3.0),
     coro,
+    ggplot2,
     mcptools,
     grid
 VignetteBuilder: knitr
@@ -57,5 +58,7 @@ Imports:
     utils,
     cli,
     R6,
-    rlang
+    rlang,
+    S7,
+    methods
 Config/testthat/edition: 3

@@ -256,7 +256,7 @@ add_image <- function(
   # Access helpers: support S4 slots and list/S7 fields
   get_field <- function(o, name) {
     # S4 slot
-    if (methods::isS4(o) && name %in% methods::slotNames(o)) {
+    if (base::isS4(o) && name %in% methods::slotNames(o)) {
       val <- tryCatch(methods::slot(o, name), error = function(e) NULL)
       if (!is.null(val)) return(val)
     }
