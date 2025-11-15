@@ -12,6 +12,8 @@
 #'   - a URL (e.g., "https://.../image.jpg")
 #'   - a base64 string (optionally with data URL prefix)
 #'   - a raw vector of bytes
+#'   - a plot object (e.g., base `recordedplot`, `ggplot`, or grid grob) to be
+#'     rasterized automatically
 #'   - an 'ellmer' content object created by `ellmer::content_image_url()`,
 #'     `ellmer::content_image_file()`, or `ellmer::content_image_plot()`
 #'     (this will work with both regular providers and 'ellmer'-backed providers)
@@ -43,8 +45,9 @@ add_image <- function(
 
   parameter_fn <- function(llm_provider) {
     existing <- llm_provider$parameters$.add_image_parts %||% list()
-    # ensure list append
-    list(.add_image_parts = c(existing, list(part)))
+    new_parts <- c(existing, list(part))
+    llm_provider$parameters$.add_image_parts <- new_parts
+    list(.add_image_parts = new_parts)
   }
 
   prompt_wrap(
@@ -76,6 +79,20 @@ add_image <- function(
         stop("'ellmer' content image must have either '@url' or '@data' property")
       }
     }
+  }
+
+  # Plot objects (base recorded plots, ggplot, grid grobs, etc.)
+  if (.tp_is_plot_object(image)) {
+    plot_raw <- .tp_plot_to_png_raw(image)
+    b64 <- jsonlite::base64_enc(plot_raw)
+    return(list(
+      kind = "image",
+      source = "b64",
+      data = as.character(b64),
+      mime = "image/png",
+      alt = alt,
+      detail = detail
+    ))
   }
 
   # raw vector
@@ -149,6 +166,70 @@ add_image <- function(
   }
 
   stop("Unsupported `image` input; provide a url, file path, base64 string, or raw bytes.")
+}
+
+.tp_is_plot_object <- function(x) {
+  if (is.null(x)) return(FALSE)
+  inherits(x, "recordedplot") ||
+    inherits(x, "ggplot") ||
+    inherits(x, "grob") ||
+    inherits(x, "gTree") ||
+    inherits(x, "gtable") ||
+    inherits(x, "trellis")
+}
+
+.tp_plot_to_png_raw <- function(plot_obj, width = 800, height = 600, res = 96, bg = "white") {
+  file <- tempfile(fileext = ".png")
+  on.exit(unlink(file), add = TRUE)
+
+  device_open <- TRUE
+  grDevices::png(filename = file, width = width, height = height, res = res, units = "px", bg = bg)
+  on.exit({
+    if (device_open) {
+      try(grDevices::dev.off(), silent = TRUE)
+    }
+  }, add = TRUE)
+
+  .tp_draw_plot_object(plot_obj)
+
+  grDevices::dev.off()
+  device_open <- FALSE
+
+  size <- file.info(file)$size
+  if (is.na(size) || size <= 0) {
+    stop("Unable to convert plot to image; rendered file is empty.")
+  }
+
+  readBin(file, what = "raw", n = size)
+}
+
+.tp_draw_plot_object <- function(plot_obj) {
+  if (inherits(plot_obj, "recordedplot")) {
+    grDevices::replayPlot(plot_obj)
+    return(invisible(NULL))
+  }
+
+  if (inherits(plot_obj, "grob") || inherits(plot_obj, "gTree") || inherits(plot_obj, "gtable")) {
+    if (!requireNamespace("grid", quietly = TRUE)) {
+      stop("'grid' package is required to handle 'grob'/'gTree'/'gtable' plot objects; please install it")
+    }
+    grid::grid.newpage()
+    grid::grid.draw(plot_obj)
+    return(invisible(NULL))
+  }
+
+  if (inherits(plot_obj, "ggplot")) {
+    print(plot_obj)
+    return(invisible(NULL))
+  }
+
+  if (inherits(plot_obj, "trellis")) {
+    print(plot_obj)
+    return(invisible(NULL))
+  }
+
+  print(plot_obj)
+  invisible(NULL)
 }
 
 .tp_guess_mime_from_path <- function(path) {

@@ -45,7 +45,8 @@ Suggests:
     DBI,
     ellmer (>= 0.3.0),
     coro,
-    mcptools
+    mcptools,
+    grid
 VignetteBuilder: knitr
 Imports: 
     dplyr,

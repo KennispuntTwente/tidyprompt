@@ -21,8 +21,11 @@ add_image(
 \item a URL (e.g., "https://.../image.jpg")
 \item a base64 string (optionally with data URL prefix)
 \item a raw vector of bytes
-\item an ellmer content object created by \code{content_image_url()},
-\code{content_image_file()}, or \code{content_image_plot()}
+\item a plot object (e.g., base \code{recordedplot}, \code{ggplot}, or grid grob) to be
+rasterized automatically
+\item an 'ellmer' content object created by \code{ellmer::content_image_url()},
+\code{ellmer::content_image_file()}, or \code{ellmer::content_image_plot()}
+(this will work with both regular providers and 'ellmer'-backed providers)
 }
 
 For OpenAI Responses API, URLs must point directly to an image resource (not an HTML
@@ -44,13 +47,8 @@ Attach an image to the last user message by adding a \code{\link[=prompt_wrap]{p
 configures providers to send image content alongside the text prompt.
 }
 \details{
-Supported providers:
-\itemize{
-\item OpenAI-compatible Chat Completions and Responses APIs (uses multimodal content parts)
-\item Ollama chat API (adds base64 images in the last user message)
-\item Ellmer-backed providers (best-effort: uses ellmer Content* image types when available)
-\item You can also pass \code{ellmer::content_image_url()}, \code{ellmer::content_image_file()}, or \code{ellmer::content_image_plot()} objects directly as \code{image}.
-}
+Supports 'ollama', 'openai' (completions & responses) and 'ellmer'-backed providers.
+Can convert from and to 'ellmer' content image objects as needed.
 }
 \seealso{
 Other pre_built_prompt_wraps: 
