@@ -44,6 +44,7 @@ reference:
 - subtitle: Miscellaneous
 - contents:
   - add_text
+  - add_image
   - quit_if
   - user_verify
   - llm_verify
