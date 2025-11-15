@@ -172,6 +172,7 @@ add_image <- function(
   if (is.null(x)) return(FALSE)
   inherits(x, "recordedplot") ||
     inherits(x, "ggplot") ||
+    inherits(x, "gg") ||
     inherits(x, "grob") ||
     inherits(x, "gTree") ||
     inherits(x, "gtable") ||
@@ -179,28 +180,67 @@ add_image <- function(
 }
 
 .tp_plot_to_png_raw <- function(plot_obj, width = 800, height = 600, res = 96, bg = "white") {
+  base_args <- list(width = width, height = height, res = res, units = "px", bg = bg)
+
+  option_type <- getOption("bitmapType")
+  candidate_types <- list(NULL)
+  if (!is.null(option_type)) {
+    candidate_types <- c(candidate_types, list(option_type))
+  }
+  if (isTRUE(capabilities("cairo"))) {
+    candidate_types <- c(candidate_types, list("cairo", "cairo-png"))
+  }
+  # Deduplicate while preserving order
+  candidate_types <- candidate_types[!duplicated(candidate_types)]
+
+  for (type in candidate_types) {
+    raw <- .tp_try_plot_to_png(plot_obj, base_args, type)
+    if (!is.null(raw)) {
+      return(raw)
+    }
+  }
+
+  stop("Unable to convert plot to image; rendered file is empty.")
+}
+
+.tp_try_plot_to_png <- function(plot_obj, base_args, type = NULL) {
   file <- tempfile(fileext = ".png")
   on.exit(unlink(file), add = TRUE)
 
-  device_open <- TRUE
-  grDevices::png(filename = file, width = width, height = height, res = res, units = "px", bg = bg)
-  on.exit({
-    if (device_open) {
-      try(grDevices::dev.off(), silent = TRUE)
-    }
-  }, add = TRUE)
-
-  .tp_draw_plot_object(plot_obj)
-
-  grDevices::dev.off()
-  device_open <- FALSE
-
-  size <- file.info(file)$size
-  if (is.na(size) || size <= 0) {
-    stop("Unable to convert plot to image; rendered file is empty.")
+  args <- c(list(filename = file), base_args)
+  if (!is.null(type)) {
+    args$type <- type
   }
 
-  readBin(file, what = "raw", n = size)
+  device_open <- FALSE
+  result <- tryCatch({
+    do.call(grDevices::png, args)
+    device_open <<- TRUE
+    on.exit({
+      if (device_open) {
+        try(grDevices::dev.off(), silent = TRUE)
+      }
+    }, add = TRUE)
+
+    .tp_draw_plot_object(plot_obj)
+    try(grDevices::dev.flush(), silent = TRUE)
+
+    grDevices::dev.off()
+    device_open <<- FALSE
+
+    if (!file.exists(file)) {
+      return(NULL)
+    }
+
+    size <- file.info(file)$size
+    if (is.na(size) || size <= 0) {
+      return(NULL)
+    }
+
+    readBin(file, what = "raw", n = size)
+  }, error = function(e) NULL)
+
+  result
 }
 
 .tp_draw_plot_object <- function(plot_obj) {
