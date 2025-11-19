@@ -168,7 +168,10 @@ add_image <- function(
     ))
   }
 
-  stop("Unsupported `image` input; provide a url, file path, base64 string, or raw bytes.")
+  stop(sprintf(
+    "Unsupported `image` input (class: %s); provide a url, file path, base64 string, or raw bytes.",
+    paste(class(image), collapse = "/")
+  ))
 }
 
 .tp_is_plot_object <- function(x) {

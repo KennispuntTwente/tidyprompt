@@ -33,6 +33,10 @@ test_that("add_image() converts recordedplot objects to images", {
 
   skip_if(inherits(recorded, "error"), "Current device cannot record plots")
   skip_if_not(inherits(recorded, "recordedplot"))
+  # In headless CI environments, png() might produce empty files or fail to record properly
+  if (file.exists(tmp_img) && file.size(tmp_img) == 0) {
+    skip("png() device produced empty file; skipping plot test")
+  }
 
   tp <- tidyprompt("Describe the chart")
   tp <- add_image(tp, image = recorded)
@@ -58,6 +62,18 @@ test_that("add_image() accepts ggplot objects when available", {
 
   plt <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
     ggplot2::geom_point()
+
+  skip_if_not(inherits(plt, "ggplot"), "ggplot object creation failed to produce 'ggplot' class")
+
+  # Check if png device is working (required for rasterizing ggplot)
+  tmp_check <- tempfile()
+  png_works <- tryCatch({
+    grDevices::png(tmp_check)
+    grDevices::dev.off()
+    file.exists(tmp_check)
+  }, error = function(e) FALSE)
+  unlink(tmp_check)
+  skip_if_not(png_works, "png() device is not available or working")
 
   tp <- tidyprompt("Describe the scatterplot")
   tp <- add_image(tp, image = plt)
