@@ -25,7 +25,7 @@ calc_sum <- tools_add_docs(
       a = list(type = "numeric", description = "First addend"),
       b = list(type = "numeric", description = "Second addend")
     ),
-    return = list(description = "The numeric sum of a and b")
+    'return' = list(description = "The numeric sum of a and b")
   )
 )
 

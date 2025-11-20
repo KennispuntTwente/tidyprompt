@@ -183,7 +183,7 @@ testthat::test_that("tidyprompt_docs_to_ellmer_tool builds a ToolDef that matche
       units = list(type = "match.arg", default_value = c("metric", "imperial")),
       opts = list(type = list(detail = "logical"))
     ),
-    return = list(description = "A short string")
+    'return' = list(description = "A short string")
   )
 
   td <- tidyprompt_docs_to_ellmer_tool(get_weather_like, docs, strict = TRUE)

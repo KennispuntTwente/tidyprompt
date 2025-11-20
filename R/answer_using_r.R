@@ -161,11 +161,11 @@ answer_using_r <- function(
       args = list(pkgs_to_use = pkgs_to_use)
     )
 
-    if (any(installed_pkgs == FALSE)) {
+    if (!all(installed_pkgs)) {
       stop(
         paste0(
           "The following packages are not installed: ",
-          names(installed_pkgs)[installed_pkgs == FALSE]
+          names(installed_pkgs)[!installed_pkgs]
         )
       )
     }
