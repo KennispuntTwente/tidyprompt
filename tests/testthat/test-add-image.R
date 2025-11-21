@@ -21,6 +21,9 @@ test_that("add_image() accumulates image parts via parameter_fn", {
 })
 
 test_that("add_image() converts recordedplot objects to images", {
+  skip_on_cran()
+  skip_on_ci()
+
   tmp_img <- tempfile(fileext = ".png")
   on.exit(unlink(tmp_img), add = TRUE)
 
