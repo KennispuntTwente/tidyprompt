@@ -151,6 +151,7 @@ to your system; you must use this function with caution.
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
 
 Other pre_built_prompt_wraps:
+[`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
 [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`answer_as_boolean()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_boolean.md),
 [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md),

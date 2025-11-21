@@ -49,6 +49,7 @@ which will ensure that the LLM response is a boolean
 ## See also
 
 Other pre_built_prompt_wraps:
+[`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
 [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md),
 [`answer_as_integer()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_integer.md),

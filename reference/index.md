@@ -113,6 +113,8 @@ Functions that give LLMs access to tools (function-calling) and code
 
 - [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md)
   : Add text to a tidyprompt
+- [`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md)
+  **\[experimental\]** : Add an image to a tidyprompt (multimodal)
 - [`quit_if()`](https://kennispunttwente.github.io/tidyprompt/reference/quit_if.md)
   : Make evaluation of a prompt stop if LLM gives a specific response
 - [`user_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/user_verify.md)

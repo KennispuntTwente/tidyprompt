@@ -1,14 +1,25 @@
-# Add text to a tidyprompt
+# Add an image to a tidyprompt (multimodal)
 
-Add text to a prompt by adding a
+**\[experimental\]** Attach an image to the last user message by adding
+a
 [`prompt_wrap()`](https://kennispunttwente.github.io/tidyprompt/reference/prompt_wrap.md)
-which will append the text to the before or after the current prompt
-text.
+that configures providers to send image content alongside the text
+prompt.
+
+Supports 'ollama', 'openai' (completions & responses) and
+'ellmer'-backed providers. Can convert from and to 'ellmer' content
+image objects as needed.
 
 ## Usage
 
 ``` r
-add_text(prompt, text, position = c("after", "before"), sep = "\n\n")
+add_image(
+  prompt,
+  image,
+  alt = NULL,
+  detail = c("auto", "low", "high"),
+  mime = NULL
+)
 ```
 
 ## Arguments
@@ -19,31 +30,58 @@ add_text(prompt, text, position = c("after", "before"), sep = "\n\n")
   [`tidyprompt()`](https://kennispunttwente.github.io/tidyprompt/reference/tidyprompt.md)
   object
 
-- text:
+- image:
 
-  Text to be added to the current prompt text
+  An image reference. One of:
 
-- position:
+  - a local file path (e.g., "path/to/image.png")
 
-  Where to add the text; either "after" or "before".
+  - a URL (e.g., "https://.../image.jpg")
 
-- sep:
+  - a base64 string (optionally with data URL prefix)
 
-  Separator to be used between the current prompt text and the text to
-  be added
+  - a raw vector of bytes
+
+  - a plot object (e.g., base `recordedplot`, `ggplot`, or grid grob) to
+    be rasterized automatically
+
+  - an 'ellmer' content object created by
+    [`ellmer::content_image_url()`](https://ellmer.tidyverse.org/reference/content_image_url.html),
+    [`ellmer::content_image_file()`](https://ellmer.tidyverse.org/reference/content_image_url.html),
+    or
+    [`ellmer::content_image_plot()`](https://ellmer.tidyverse.org/reference/content_image_url.html)
+    (this will work with both regular providers and 'ellmer'-backed
+    providers)#' For OpenAI Responses API, URLs must point directly to
+    an image resource (not an HTML page) and are transmitted as a scalar
+    string `image_url` with optional `detail`. Supplying a webpage URL
+    (e.g. a Wikipedia media viewer link) will result in a provider 400
+    error expecting an image URL string.
+
+- alt:
+
+  Optional alternative text/alt description
+
+- detail:
+
+  Detail hint for some providers (OpenAI): one of "auto", "low", "high"
+
+- mime:
+
+  Optional mime-type if providing raw/base64 without data URL (e.g.,
+  "image/png")
 
 ## Value
 
 A
 [`tidyprompt()`](https://kennispunttwente.github.io/tidyprompt/reference/tidyprompt.md)
-with an added
+with a multimodal
 [`prompt_wrap()`](https://kennispunttwente.github.io/tidyprompt/reference/prompt_wrap.md)
-which will append the text to the end of the current prompt text
+attached
 
 ## See also
 
 Other pre_built_prompt_wraps:
-[`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
+[`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`answer_as_boolean()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_boolean.md),
 [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md),
 [`answer_as_integer()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_integer.md),
@@ -63,26 +101,6 @@ Other pre_built_prompt_wraps:
 [`set_system_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/set_system_prompt.md)
 
 Other miscellaneous_prompt_wraps:
-[`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
+[`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`quit_if()`](https://kennispunttwente.github.io/tidyprompt/reference/quit_if.md),
 [`set_system_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/set_system_prompt.md)
-
-## Examples
-
-``` r
-prompt <- "Hi there!" |>
-  add_text("How is your day?")
-prompt
-#> <tidyprompt>
-#> The base prompt is modified by a prompt wrap, resulting in:
-#> > Hi there!
-#> > 
-#> > How is your day? 
-#> Use 'x$base_prompt' to show the base prompt text.
-#> Use 'x$construct_prompt_text()' to get the full prompt text.
-#> Use 'get_prompt_wraps(x)' to show the prompt wraps.
-#> 
-prompt |>
-  construct_prompt_text()
-#> [1] "Hi there!\n\nHow is your day?"
-```

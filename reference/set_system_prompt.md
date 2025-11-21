@@ -38,6 +38,7 @@ object as '\$system_prompt'.
 ## See also
 
 Other pre_built_prompt_wraps:
+[`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
 [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`answer_as_boolean()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_boolean.md),
 [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md),
@@ -57,6 +58,7 @@ Other pre_built_prompt_wraps:
 [`quit_if()`](https://kennispunttwente.github.io/tidyprompt/reference/quit_if.md)
 
 Other miscellaneous_prompt_wraps:
+[`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
 [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`quit_if()`](https://kennispunttwente.github.io/tidyprompt/reference/quit_if.md)
 

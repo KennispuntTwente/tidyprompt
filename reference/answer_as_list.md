@@ -58,6 +58,7 @@ which will ensure that the LLM response is a list of items
 [`answer_as_named_list()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_named_list.md)
 
 Other pre_built_prompt_wraps:
+[`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
 [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`answer_as_boolean()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_boolean.md),
 [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md),
