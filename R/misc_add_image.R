@@ -1,5 +1,8 @@
+#' @title
 #' Add an image to a tidyprompt (multimodal)
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
 #' Attach an image to the last user message by adding a [prompt_wrap()] that
 #' configures providers to send image content alongside the text prompt.
 #'
@@ -16,12 +19,12 @@
 #'     rasterized automatically
 #'   - an 'ellmer' content object created by `ellmer::content_image_url()`,
 #'     `ellmer::content_image_file()`, or `ellmer::content_image_plot()`
-#'     (this will work with both regular providers and 'ellmer'-backed providers)
-#'
+#'     (this will work with both regular providers and 'ellmer'-backed providers)#'
 #' For OpenAI Responses API, URLs must point directly to an image resource (not an HTML
 #' page) and are transmitted as a scalar string `image_url` with optional `detail`.
 #' Supplying a webpage URL (e.g. a Wikipedia media viewer link) will result in a
 #' provider 400 error expecting an image URL string.
+#'
 #' @param alt Optional alternative text/alt description
 #' @param detail Detail hint for some providers (OpenAI): one of "auto", "low", "high"
 #' @param mime Optional mime-type if providing raw/base64 without data URL (e.g., "image/png")

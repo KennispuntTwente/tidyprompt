@@ -25,13 +25,12 @@ add_image(
 rasterized automatically
 \item an 'ellmer' content object created by \code{ellmer::content_image_url()},
 \code{ellmer::content_image_file()}, or \code{ellmer::content_image_plot()}
-(this will work with both regular providers and 'ellmer'-backed providers)
-}
-
+(this will work with both regular providers and 'ellmer'-backed providers)#'
 For OpenAI Responses API, URLs must point directly to an image resource (not an HTML
 page) and are transmitted as a scalar string \code{image_url} with optional \code{detail}.
 Supplying a webpage URL (e.g. a Wikipedia media viewer link) will result in a
-provider 400 error expecting an image URL string.}
+provider 400 error expecting an image URL string.
+}}
 
 \item{alt}{Optional alternative text/alt description}
 
@@ -43,10 +42,10 @@ provider 400 error expecting an image URL string.}
 A \code{\link[=tidyprompt]{tidyprompt()}} with a multimodal \code{\link[=prompt_wrap]{prompt_wrap()}} attached
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Attach an image to the last user message by adding a \code{\link[=prompt_wrap]{prompt_wrap()}} that
 configures providers to send image content alongside the text prompt.
-}
-\details{
+
 Supports 'ollama', 'openai' (completions & responses) and 'ellmer'-backed providers.
 Can convert from and to 'ellmer' content image objects as needed.
 }
