@@ -21,3 +21,4 @@ vignettes/precompile vignettes.R
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
 revdep/*
+cat.jpg

@@ -94,6 +94,7 @@ ReAct: Synergizing Reasoning and Acting in Language Models.
 \code{\link[=answer_using_tools]{answer_using_tools()}} \code{\link[=answer_using_r]{answer_using_r()}}
 
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{add_text}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},

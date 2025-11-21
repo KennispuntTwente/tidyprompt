@@ -55,6 +55,7 @@ For a single category, see \code{\link[=answer_as_category]{answer_as_category()
 }
 \seealso{
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{add_text}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},

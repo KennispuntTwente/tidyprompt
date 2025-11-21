@@ -38,14 +38,47 @@ llm_provider_ollama <- function(
   num_ctx = NULL
 ) {
   complete_chat <- function(chat_history) {
+    # Build messages, with optional image support for the last user message
+    msgs <- lapply(seq_len(nrow(chat_history)), function(i) {
+      list(role = chat_history$role[i], content = chat_history$content[i])
+    })
+
+    # If images are attached, convert them to Ollama's `images` array (base64)
+    add_parts <- self$parameters$.add_image_parts %||% NULL
+    if (!is.null(add_parts) && length(add_parts) > 0) {
+      last_i <- nrow(chat_history)
+      if (last_i > 0 && identical(chat_history$role[last_i], "user")) {
+        b64s <- list()
+        for (p in add_parts) {
+          src <- p$source %||% NULL
+          if (identical(src, "b64") && !is.null(p$data)) {
+            b64s[[length(b64s) + 1]] <- as.character(p$data)
+          } else if (identical(src, "url") && !is.null(p$data)) {
+            # Download and base64-encode
+            res <- tryCatch({
+              rq <- httr2::request(as.character(p$data))
+              rp <- httr2::req_perform(rq)
+              raw <- httr2::resp_body_raw(rp)
+              jsonlite::base64_enc(raw)
+            }, error = function(e) NULL)
+            if (!is.null(res)) b64s[[length(b64s) + 1]] <- as.character(res)
+          }
+        }
+        if (length(b64s) > 0) {
+          msgs[[last_i]]$images <- unname(b64s)
+        }
+      }
+    }
+
     body <- list(
       model = self$parameters$model,
-      messages = lapply(seq_len(nrow(chat_history)), function(i) {
-        list(role = chat_history$role[i], content = chat_history$content[i])
-      })
+      messages = msgs
     )
 
-    for (name in names(self$parameters)) body[[name]] <- self$parameters[[name]]
+    # Append user-facing parameters only; skip internal helpers (prefixed with '.')
+    for (name in names(self$parameters)) {
+      if (!startsWith(name, ".")) body[[name]] <- self$parameters[[name]]
+    }
 
     request <- httr2::request(self$url) |>
       httr2::req_body_json(body)
@@ -155,13 +188,111 @@ llm_provider_openai <- function(
       "Authorization" = paste("Bearer", self$api_key)
     )
 
-    body <- list(
-      messages = lapply(seq_len(nrow(chat_history)), function(i) {
-        list(role = chat_history$role[i], content = chat_history$content[i])
-      })
-    )
+    # Build messages; support multimodal content for last user message
+    add_parts <- self$parameters$.add_image_parts %||% NULL
+    n <- nrow(chat_history)
+    messages <- lapply(seq_len(n), function(i) {
+      role <- chat_history$role[i]
+      text <- chat_history$content[i]
+      # For the last user message, if images are attached, convert to content parts
+      if (!is.null(add_parts) && i == n && identical(role, "user")) {
+        parts <- list()
+        if (!is.null(text) && nzchar(text)) {
+          parts[[length(parts) + 1]] <- list(type = "text", text = text)
+        }
+        for (p in add_parts) {
+          src <- p$source %||% NULL
+          if (identical(src, "url") && !is.null(p$data)) {
+            parts[[length(parts) + 1]] <- list(
+              type = "image_url",
+              image_url = compact_list(list(
+                url = as.character(p$data),
+                detail = p$detail %||% NULL
+              ))
+            )
+          } else if (identical(src, "b64") && !is.null(p$data)) {
+            mime <- p$mime %||% "image/png"
+            data_url <- paste0("data:", mime, ";base64,", as.character(p$data))
+            parts[[length(parts) + 1]] <- list(
+              type = "image_url",
+              image_url = compact_list(list(
+                url = data_url,
+                detail = p$detail %||% NULL
+              ))
+            )
+          }
+        }
+        return(list(role = role, content = parts))
+      }
+      list(role = role, content = text)
+    })
 
-    for (name in names(self$parameters)) body[[name]] <- self$parameters[[name]]
+    # Decide between Chat Completions style (messages) and Responses API (input)
+    # Support both legacy Chat Completions (messages) and modern Responses API (input)
+    use_responses_api <- grepl("/responses$", self$url)
+    if (use_responses_api) {
+      # Transform messages -> input with part types changed to input_*/output_* variants.
+      # For image parts, OpenAI Responses API expects a scalar URL string in `image_url`
+      # and (optionally) a separate `detail` field, not an object. The previous implementation
+      # forwarded the object `{ url = ..., detail = ... }` which triggers a 400 error:
+      # "Invalid type for 'input[0].content[1].image_url': expected an image URL, but got an object instead.".
+      input <- lapply(messages, function(msg) {
+        role <- msg$role
+        content <- msg$content
+        parts <- list()
+        text_type <- if (identical(role, "assistant")) "output_text" else "input_text"
+        image_type <- if (identical(role, "assistant")) "output_image" else "input_image"
+        if (is.character(content)) {
+          if (nzchar(content)) {
+            parts[[length(parts) + 1]] <- list(type = text_type, text = content)
+          }
+        } else if (is.list(content)) {
+          for (part in content) {
+            if (identical(part$type, "text")) {
+              if (!is.null(part$text) && nzchar(part$text)) {
+                parts[[length(parts) + 1]] <- list(
+                  type = text_type,
+                  text = part$text
+                )
+              }
+            } else if (identical(part$type, "image_url")) {
+              img <- part$image_url
+              if (is.list(img)) {
+                url_val <- img$url %||% NULL
+                detail_val <- img$detail %||% NULL
+                if (!is.null(url_val)) {
+                  parts[[length(parts) + 1]] <- compact_list(list(
+                    type = image_type,
+                    image_url = as.character(url_val),
+                    detail = detail_val
+                  ))
+                }
+              } else if (is.character(img) && length(img) == 1) {
+                parts[[length(parts) + 1]] <- list(type = image_type, image_url = img)
+              }
+            } else {
+              # Fallback: keep as input_text if unknown
+              if (!is.null(part$text)) {
+                parts[[length(parts) + 1]] <- list(type = text_type, text = part$text)
+              }
+            }
+          }
+        }
+        list(role = role, content = parts)
+      })
+      body <- list(input = input)
+    } else {
+      body <- list(messages = messages)
+    }
+
+    # Append user-facing parameters only; skip internal helpers (prefixed with '.')
+    # This prevents sending fields like '.add_image_parts' which cause 400 errors
+    # from OpenAI ("Unknown parameter"). Internal parameters are consumed above.
+    for (name in names(self$parameters)) {
+      if (!startsWith(name, ".")) {
+        body[[name]] <- self$parameters[[name]]
+      }
+    }
 
     request <- httr2::request(self$url) |>
       httr2::req_body_json(body) |>
@@ -784,19 +915,91 @@ llm_provider_ellmer <- function(
       chat_history[0, , drop = FALSE]
     }
 
-    to_turn <- function(role, text) {
-      ellmer::Turn(role = role, contents = list(ellmer::ContentText(text)))
-    }
-    if (nrow(hist)) {
-      ch <- ch$set_turns(lapply(seq_len(nrow(hist)), function(i) {
-        to_turn(hist$role[i], hist$content[i])
-      }))
-    } else {
-      ch <- ch$set_turns(list())
+    ellmer_available <- requireNamespace("ellmer", quietly = TRUE)
+    ellmer_ns <- if (ellmer_available) asNamespace("ellmer") else NULL
+
+    as_content_text <- function(text) {
+      if (is.null(text) || !nzchar(text)) {
+        return(NULL)
+      }
+      if (!is.null(ellmer_ns) && exists("ContentText", envir = ellmer_ns, inherits = FALSE)) {
+        return(ellmer::ContentText(text))
+      }
+      list(type = "text", text = text)
     }
 
-    # Prompt = last message
-    prompt <- chat_history$content[nrow(chat_history)]
+    as_turn <- function(role, contents) {
+      if (!is.null(ellmer_ns) && exists("Turn", envir = ellmer_ns, inherits = FALSE)) {
+        return(ellmer::Turn(role = role, contents = contents))
+      }
+      list(role = role, contents = contents)
+    }
+
+    build_image_content <- function(p) {
+      # URL-based image
+      if (identical(p$source, "url") && !is.null(p$data) &&
+          !is.null(ellmer_ns) &&
+          isTRUE(exists("content_image_url", ellmer_ns, inherits = FALSE))) {
+        return(ellmer::content_image_url(
+          url = as.character(p$data),
+          detail = p$detail %||% "auto"
+        ))
+      }
+
+      # Base64-encoded image -> temp file + content_image_file, when available
+      if (identical(p$source, "b64") && !is.null(p$data) &&
+          !is.null(ellmer_ns) &&
+          isTRUE(exists("content_image_file", ellmer_ns, inherits = FALSE))) {
+        raw_bytes <- tryCatch(
+          jsonlite::base64_dec(as.character(p$data)),
+          error = function(e) raw()
+        )
+        if (length(raw_bytes)) {
+          ext <- ".png"
+          if (!is.null(p$mime) && grepl("jpeg", p$mime)) ext <- ".jpg"
+          if (!is.null(p$mime) && grepl("gif", p$mime)) ext <- ".gif"
+          if (!is.null(p$mime) && grepl("webp", p$mime)) ext <- ".webp"
+          tf <- tempfile(fileext = ext)
+          writeBin(raw_bytes, tf)
+          return(ellmer::content_image_file(
+            path = tf,
+            content_type = p$mime %||% "auto"
+          ))
+        }
+      }
+
+      # Already-constructed ellmer content (e.g., content_image_url/file/plot)
+      if (identical(p$source, "ellmer") && !is.null(p$obj)) {
+        return(p$obj)
+      }
+
+      # Fallback stub when ellmer helpers are unavailable (primarily for tests)
+      if (!is.null(p$source) && !is.null(p$data)) {
+        return(list(source = p$source, data = p$data, mime = p$mime %||% NA_character_))
+      }
+
+      NULL
+    }
+
+    # Prepare historical turns (excluding the latest message)
+    prior_turns <- if (nrow(hist)) {
+      lapply(seq_len(nrow(hist)), function(i) {
+        as_turn(
+          role = hist$role[i],
+          contents = {
+            ct <- as_content_text(hist$content[i])
+            if (is.null(ct)) list() else list(ct)
+          }
+        )
+      })
+    } else {
+      list()
+    }
+
+    # Prompt = last message (may be converted to multimodal contents below)
+    prompt <- chat_history$content[nrow(chat_history)] %||% ""
+    prompt <- if (!is.na(prompt)) as.character(prompt) else ""
+    current_role <- chat_history$role[nrow(chat_history)] %||% "user"
 
     # Register tools
     if (!is.null(params$.ellmer_tools)) {
@@ -813,60 +1016,117 @@ llm_provider_ellmer <- function(
     stream_cb <- self$stream_callback %||%
       getOption("tidyprompt.stream_callback", NULL)
 
+    # Try to detect attached images and use ellmer multimodal helpers if available.
+    # `add_image()` normalizes all inputs into `.add_image_parts`; here we
+    # translate those parts into ellmer content objects.
+    add_parts <- self$parameters$.add_image_parts %||% NULL
+
+    multimodal_contents <- list()
+    use_multimodal <- length(add_parts) > 0
+
+    if (use_multimodal) {
+      text_content <- as_content_text(prompt)
+      if (!is.null(text_content)) {
+        multimodal_contents[[length(multimodal_contents) + 1]] <- text_content
+      }
+
+      for (p in add_parts) {
+        ic <- build_image_content(p)
+        if (!is.null(ic)) {
+          multimodal_contents[[length(multimodal_contents) + 1]] <- ic
+        }
+      }
+
+      if (length(multimodal_contents) == 0L) {
+        use_multimodal <- FALSE
+      }
+    }
+
+    turns_to_send <- prior_turns
+    prompt_for_model <- prompt
+
+    if (use_multimodal) {
+      turns_to_send <- c(
+        turns_to_send,
+        list(as_turn(role = current_role, contents = multimodal_contents))
+      )
+      prompt_for_model <- ""
+    }
+
+    ch <- ch$set_turns(turns_to_send)
+
     if (use_structured) {
-      reply_struct <- ch$chat_structured(prompt, type = structured_type)
+      reply_struct <- ch$chat_structured(prompt_for_model, type = structured_type)
       # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
       assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
         as.character()
     } else if (isTRUE(params$stream) && is.function(ch$stream)) {
       # --- Streaming path (ellmer-style sync streaming) ----------------------
-      stream <- ch$stream(prompt)
+      stream_error <- NULL
+      assistant_text <- NULL
 
-      # Create environment to hold partial response
-      partial_response_env <- new.env()
-      assign("partial_response", "", envir = partial_response_env)
-
-      coro::loop(for (chunk in stream) {
-        if (length(chunk) == 0L || all(is.na(chunk))) next
-
-        chunk_str <- paste0(as.character(chunk), collapse = "")
-        if (!nzchar(chunk_str)) next
-
-        current_response <- get("partial_response", envir = partial_response_env)
-        updated_response <- paste0(current_response, chunk_str)
-        assign("partial_response", updated_response, envir = partial_response_env)
-
-        # If a callback is provided, use it; otherwise, mirror HTTP providers
-        # by cat()ing chunks when verbose = TRUE.
-        if (is.function(stream_cb)) {
-          latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
-
-          meta <- list(
-            llm_provider     = self,
-            chat_history     = chat_history,
-            latest_message   = latest_message,
-            partial_response = updated_response,
-            chunk            = chunk_str,
-            api_type         = "ellmer",
-            endpoint         = "chat",
-            verbose          = self$verbose
-          )
-
-          stream_cb(chunk_str, meta)
-        } else if (isTRUE(self$verbose)) {
-          cat(chunk_str)
+      stream <- tryCatch(
+        ch$stream(prompt_for_model),
+        error = function(e) {
+          stream_error <<- e
+          NULL
         }
-      })
+      )
 
-      # After streaming, use accumulated partial_response as assistant text
-      assistant_text <- get("partial_response", envir = partial_response_env)
-      # If it leads with '\n', strip that
-      assistant_text <- sub("^\n", "", assistant_text)
-      # If it ends with '\n', strip that
-      assistant_text <- sub("\n$", "", assistant_text)
+      if (is.null(stream) && !is.null(stream_error)) {
+        if (use_multimodal) {
+          reply_any <- ch$chat(prompt_for_model)
+          assistant_text <- as.character(reply_any)
+        } else {
+          stop(stream_error)
+        }
+      } else {
+        # Create environment to hold partial response
+        partial_response_env <- new.env()
+        assign("partial_response", "", envir = partial_response_env)
+
+        coro::loop(for (chunk in stream) {
+          if (length(chunk) == 0L || all(is.na(chunk))) next
+
+          chunk_str <- paste0(as.character(chunk), collapse = "")
+          if (!nzchar(chunk_str)) next
+
+          current_response <- get("partial_response", envir = partial_response_env)
+          updated_response <- paste0(current_response, chunk_str)
+          assign("partial_response", updated_response, envir = partial_response_env)
+
+          # If a callback is provided, use it; otherwise, mirror HTTP providers
+          # by cat()ing chunks when verbose = TRUE.
+          if (is.function(stream_cb)) {
+            latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
+
+            meta <- list(
+              llm_provider     = self,
+              chat_history     = chat_history,
+              latest_message   = latest_message,
+              partial_response = updated_response,
+              chunk            = chunk_str,
+              api_type         = "ellmer",
+              endpoint         = "chat",
+              verbose          = self$verbose
+            )
+
+            stream_cb(chunk_str, meta)
+          } else if (isTRUE(self$verbose)) {
+            cat(chunk_str)
+          }
+        })
+
+        # After streaming, use accumulated partial_response as assistant text
+        assistant_text <- get("partial_response", envir = partial_response_env)
+        # If it leads with '\n', strip that
+        assistant_text <- sub("^\n", "", assistant_text)
+        # If it ends with '\n', strip that
+        assistant_text <- sub("\n$", "", assistant_text)
+      }
     } else {
       # Regular, non-streaming chat
-      reply_any <- ch$chat(prompt)
+      reply_any <- ch$chat(prompt_for_model)
       assistant_text <- as.character(reply_any)
     }
 
@@ -926,6 +1186,10 @@ llm_provider_ellmer <- function(
     verbose = verbose,
     api_type = "ellmer"
   )
+
+  if (length(parameters)) {
+    provider$set_parameters(parameters)
+  }
 
   provider$ellmer_chat <- chat
   # Initial sync so $parameters$model reflects the chat's current model

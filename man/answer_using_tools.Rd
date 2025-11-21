@@ -234,6 +234,7 @@ prompt_with_weather_function_ellmer <-
 \code{\link[=answer_using_r]{answer_using_r()}} \code{\link[=tools_get_docs]{tools_get_docs()}}
 
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{add_text}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},

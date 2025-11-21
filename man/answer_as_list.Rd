@@ -78,6 +78,7 @@ Make LLM answer as a list of items
 \code{\link[=answer_as_named_list]{answer_as_named_list()}}
 
 Other pre_built_prompt_wraps: 
+\code{\link{add_image}()},
 \code{\link{add_text}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},
