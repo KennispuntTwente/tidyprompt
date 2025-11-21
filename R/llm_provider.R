@@ -252,7 +252,7 @@ NULL
       http$requests[[1]] <- response$http$request
       http$responses[[1]] <- response$http$response
 
-      while (TRUE) {
+      repeat {
         for (handler_fn in self$handler_fns) {
           response <- handler_fn(response, self)
           http$requests[[length(http$requests) + 1]] <- response$http$request
@@ -295,8 +295,8 @@ NULL
         ) {
           chat_history_new_print <- chat_history_new |>
             dplyr::filter(
-              (is.na(tool_result) | tool_result == FALSE),
-              (is.na(tool_call) | tool_call == FALSE)
+              (is.na(tool_result) | !tool_result),
+              (is.na(tool_call) | !tool_call)
             )
         } else {
           chat_history_new_print <- chat_history_new

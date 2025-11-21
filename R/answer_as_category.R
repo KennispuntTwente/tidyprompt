@@ -171,7 +171,7 @@ answer_as_multi_category <- function(
   stopifnot(
     "'categories' must be a character vector." = is.character(categories),
     "'categories' must not be empty." = length(categories) > 0,
-    "'categories' must not contain duplicates." = !any(duplicated(categories))
+    "'categories' must not contain duplicates." = !anyDuplicated(categories) > 0
   )
 
   if (!is.null(descriptions)) {

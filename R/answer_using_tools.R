@@ -101,7 +101,7 @@ answer_using_tools <- function(
       length(tools) > 0,
       all(vapply(tools, is_toolish, logical(1)))
     )
-    if (is.null(names(tools)) || any(!nzchar(names(tools)))) {
+    if (is.null(names(tools)) || !all(nzchar(names(tools)))) {
       # Try to derive names from the call; else fallback
       call_elems <- tryCatch(
         as.list(substitute(tools))[-1],
@@ -961,7 +961,7 @@ tools_generate_docs <- function(name, func_object = NULL) {
       name = name,
       description = paste0(parsed_help$Title, ": ", parsed_help$Description),
       arguments = args,
-      return = list(description = parsed_help$Value)
+      'return' = list(description = parsed_help$Value)
     )
   )
 }

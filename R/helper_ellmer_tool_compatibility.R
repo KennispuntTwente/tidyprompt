@@ -134,7 +134,7 @@ ellmer_tool_to_tidyprompt_docs <- function(tooldef) {
     name = name %||% "tool",
     description = desc %||% "",
     arguments = args_docs,
-    return = list() # we can't infer reliably; leave empty
+    'return' = list() # we can't infer reliably; leave empty
   ))
 }
 

@@ -23,7 +23,7 @@ user_verify <- function(
   validation_fn <- function(response) {
     # Ask user input via console
 
-    while (TRUE) {
+    repeat {
       cli::cli_h3("Evaluation of tidyprompt resulted in:")
       cat(utils::capture.output(print(response)))
       cat("\n")
