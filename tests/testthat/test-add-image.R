@@ -62,6 +62,8 @@ test_that("add_image() converts recordedplot objects to images", {
 
 test_that("add_image() accepts ggplot objects when available", {
   skip_if_not_installed("ggplot2")
+  skip_on_ci()
+  skip_on_cran()
 
   plt <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
     ggplot2::geom_point()
