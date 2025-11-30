@@ -2,6 +2,8 @@
 
 ## tidyprompt 0.3.0
 
+CRAN release: 2025-11-30
+
 - `llm_provider-class`: can now take a `stream_callback` function, which
   can be used to intercept streamed tokens as they arrive from the LLM
   provider. This may be used to build custom streaming behavior, for
