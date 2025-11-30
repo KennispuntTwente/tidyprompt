@@ -29,25 +29,74 @@ rasterized automatically
 For OpenAI Responses API, URLs must point directly to an image resource (not an HTML
 page) and are transmitted as a scalar string \code{image_url} with optional \code{detail}.
 Supplying a webpage URL (e.g. a Wikipedia media viewer link) will result in a
-provider 400 error expecting an image URL string.
+provider 400 error expecting an image URL string
 }}
 
 \item{alt}{Optional alternative text/alt description}
 
-\item{detail}{Detail hint for some providers (OpenAI): one of "auto", "low", "high"}
+\item{detail}{Detail hint for some providers (OpenAI): one of "auto", "low",
+"high"}
 
-\item{mime}{Optional mime-type if providing raw/base64 without data URL (e.g., "image/png")}
+\item{mime}{Optional mime-type if providing raw/base64 without data URL
+(e.g., "image/png")}
 }
 \value{
-A \code{\link[=tidyprompt]{tidyprompt()}} with a multimodal \code{\link[=prompt_wrap]{prompt_wrap()}} attached
+A \code{\link[=tidyprompt]{tidyprompt()}} with an added \code{\link[=prompt_wrap]{prompt_wrap()}} which will
+attach an image to the prompt for use with multimodal LLMs
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Attach an image to the last user message by adding a \code{\link[=prompt_wrap]{prompt_wrap()}} that
-configures providers to send image content alongside the text prompt.
+
+Attach an image to a \code{\link[=tidyprompt]{tidyprompt()}} for use with multimodal LLMs.
 
 Supports 'ollama', 'openai' (completions & responses) and 'ellmer'-backed providers.
 Can convert from and to 'ellmer' content image objects as needed.
+}
+\examples{
+# Create a prompt with a remote image (web URL)
+image_prompt <- "What is shown in this image?" |>
+  add_image("https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg")
+
+# Create a prompt with a local image (file path)
+# First save an image to a temporary file
+cat_img_file <- tempfile(fileext = ".jpg")
+download.file(
+  "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg",
+  destfile = cat_img_file,
+  mode = "wb"
+)
+# Then build prompt with local image
+local_image_prompt <- "What is shown in this image?" |>
+  add_image(cat_img_file)
+
+# Create a prompt with a plot (e.g., 'ggplot2' plot)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plot <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
+    ggplot2::geom_point()
+  plot_prompt <- "Describe this plot" |>
+    add_image(plot)
+}
+
+# Send prompt to different LLM providers
+# (example is not run because it requires configured LLM providers)
+\dontrun{
+# OpenAI-compatible
+send_prompt(image_prompt, llm_provider_openai(parameters = list(model = "gpt-4o-mini")))
+# --- Sending request to LLM provider (gpt-4o-mini): ---
+# What is shown in this image?
+# --- Receiving response from LLM provider: ---
+# The image shows a close-up of an orange tabby cat, characterized by its
+# striped fur and distinctive golden eyes. The background appears blurred,
+# suggesting a softly focused environment.
+
+# Ollama-compatible
+send_prompt(image_prompt, llm_provider_ollama(parameters = list(model = "qwen3-vl:2b")))
+# ...
+
+# 'ellmer'-compatible
+send_prompt(image_prompt, llm_provider_ellmer(ellmer::chat_openai(model = "gpt-4o-mini")))
+# ...
+}
 }
 \seealso{
 Other pre_built_prompt_wraps: 
