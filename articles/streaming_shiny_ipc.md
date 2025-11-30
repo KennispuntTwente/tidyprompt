@@ -123,7 +123,7 @@ server <- function(input, output, session) {
         user_prompt = user_prompt,
         provider = provider
       )
-    ) %>%
+    ) |>
       then(
         onFulfilled = function(value) {
           # Final response once streaming finishes
