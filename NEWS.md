@@ -1,4 +1,4 @@
-# tidyprompt (development version)
+# tidyprompt 0.3.0
 
 * `llm_provider-class`: can now take a `stream_callback` function, which
 can be used to intercept streamed tokens as they arrive from the LLM provider.
