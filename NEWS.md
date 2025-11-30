@@ -1,5 +1,15 @@
 # tidyprompt (development version)
 
+* `llm_provider-class`: can now take a `stream_callback` function, which
+can be used to intercept streamed tokens as they arrive from the LLM provider.
+This may be used to build custom streaming behavior, for instance to show a live
+response in a Shiny app (see new `vignette("streaming_shiny_ipc")` for an example)
+
+* 'llm_provider_ellmer()`: now supports streaming responses
+
+* `add_image()`: new prompt wrap to add an image to a prompt, for use
+with multimodal LLMs
+
 * `answer_using_r()`: fixed error with unsafe conversion of resulting object
 to character
 
