@@ -52,7 +52,6 @@ testthat::test_that("openai provider - add_image works (file)", {
 
 testthat::test_that("openai provider - add_image works (plot)", {
   skip_test_if_no_openai()
-  skip_on_ci()
 
   result <- send_prompt(
     img_plot_prompt,
@@ -84,7 +83,6 @@ testthat::test_that("ellmer provider - add_image works (plot)", {
   skip_test_if_no_openai()
   skip_if_not_installed("ellmer")
   skip_if_not_installed("magick")
-  skip_on_ci()
 
   result <- send_prompt(
     img_plot_prompt,
@@ -112,7 +110,6 @@ testthat::test_that("ollama provider - add_image works (file)", {
 
 testthat::test_that("ollama provider - add_image works (plot)", {
   skip_test_if_no_ollama()
-  skip_on_ci()
 
   result <- send_prompt(
     img_plot_prompt,

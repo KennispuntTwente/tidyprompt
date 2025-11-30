@@ -110,3 +110,13 @@ test_that("add_image() accepts ggplot objects when available", {
   expect_identical(last_part$source, "b64")
   expect_true(nchar(last_part$data) > 100)
 })
+
+test_that("ggplot objects are not misclassified as ellmer content", {
+  skip_if_not_installed("ggplot2")
+
+  plt <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
+    ggplot2::geom_point()
+
+  expect_false(tidyprompt:::.tp_is_ellmer_content(plt))
+  expect_true(tidyprompt:::.tp_is_plot_object(plt))
+})

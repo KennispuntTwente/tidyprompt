@@ -208,12 +208,35 @@ add_image <- function(
   if (is.null(x)) {
     return(FALSE)
   }
-  inherits(x, "recordedplot") ||
-    inherits(x, "ggplot") ||
+  .tp_is_ggplot_object(x) ||
+    inherits(x, "recordedplot") ||
     inherits(x, "grob") ||
     inherits(x, "gTree") ||
     inherits(x, "gtable") ||
     inherits(x, "trellis")
+}
+
+.tp_is_ggplot_object <- function(x) {
+  inherits(x, "ggplot") ||
+    inherits(x, "ggplot2::ggplot") ||
+    .tp_is_s7_ggplot(x)
+}
+
+.tp_is_s7_ggplot <- function(x) {
+  if (!isTRUE(requireNamespace("ggplot2", quietly = TRUE))) {
+    return(FALSE)
+  }
+
+  ns <- asNamespace("ggplot2")
+  is_ggplot <- get0("is_ggplot", envir = ns, inherits = FALSE)
+  if (is.null(is_ggplot)) {
+    is_ggplot <- get0("is.ggplot", envir = ns, inherits = FALSE)
+  }
+  if (!is.function(is_ggplot)) {
+    return(FALSE)
+  }
+
+  isTRUE(is_ggplot(x))
 }
 
 .tp_plot_to_png_raw <- function(
@@ -319,8 +342,7 @@ add_image <- function(
     return(FALSE)
   }
   any(grepl("^Content", cl)) ||
-    any(grepl("^ellmer", cl)) ||
-    any(grepl("S7_object", cl))
+    any(grepl("^ellmer", cl))
 }
 
 # Try to coerce an ellmer content object (content_image_url/file/plot)
