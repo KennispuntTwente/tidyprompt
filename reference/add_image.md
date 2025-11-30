@@ -125,6 +125,7 @@ local_image_prompt <- "What is shown in this image?" |>
   add_image(cat_img_file)
 
 # Create a prompt with a plot (e.g., 'ggplot2' plot)
+# \donttest{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   plot <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
     ggplot2::geom_point()
@@ -132,6 +133,7 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
     add_image(plot)
 }
 #> Error in .tp_normalize_image_input(image, mime = mime, alt = alt, detail = detail): Unsupported `image` input (class: data.frame); provide a url, file path, base64 string, or raw bytes.
+# }
 
 # Send prompt to different LLM providers
 # (example is not run because it requires configured LLM providers)
