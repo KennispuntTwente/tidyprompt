@@ -145,8 +145,9 @@ NULL
       api_key = NULL,
       api_type = "unspecified"
     ) {
-      if (length(parameters) > 0 && is.null(names(parameters)))
+      if (length(parameters) > 0 && is.null(names(parameters))) {
         stop("parameters must be a named list")
+      }
 
       private$complete_chat_function <- complete_chat_function
       self$parameters <- parameters
@@ -168,7 +169,9 @@ NULL
     #'
     #' @return The modified [llm_provider-class] object
     set_parameters = function(new_parameters) {
-      if (length(new_parameters) == 0) return(self)
+      if (length(new_parameters) == 0) {
+        return(self)
+      }
 
       stopifnot(
         is.list(new_parameters),
@@ -224,7 +227,7 @@ NULL
         message(chat_history$content[nrow(chat_history)])
       }
 
-      if (self$verbose)
+      if (self$verbose) {
         message(
           crayon::bold(
             glue::glue(
@@ -232,6 +235,7 @@ NULL
             )
           )
         )
+      }
 
       environment(private$complete_chat_function) <- environment()
       response <- private$complete_chat_function(chat_history)
@@ -307,14 +311,17 @@ NULL
         }
       }
 
-      if (isTRUE(response$`break`))
+      if (isTRUE(response$`break`)) {
         warning(
           paste0(
             "Chat completion was interrupted by a handler break"
           )
         )
+      }
 
-      if (self$verbose) return(invisible(response))
+      if (self$verbose) {
+        return(invisible(response))
+      }
 
       return(response)
     },
@@ -379,7 +386,9 @@ NULL
         "name"
       )
       missing <- setdiff(needed, names(prompt_wrap))
-      for (nm in missing) prompt_wrap[[nm]] <- NULL
+      for (nm in missing) {
+        prompt_wrap[[nm]] <- NULL
+      }
 
       class(prompt_wrap) <- unique(c(
         "provider_prompt_wrap",

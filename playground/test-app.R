@@ -40,7 +40,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   # Queue to bridge async future back into Shiny
   queue <- shinyQueue()
-  queue$consumer$start(100)  # process queue every 100 ms
+  queue$consumer$start(100) # process queue every 100 ms
 
   # Reactive that holds the accumulated streamed text
   partial_response <- reactiveVal("")

@@ -7,11 +7,15 @@ get_secret_number <- function(input = 12345) {
 
 # Check if a number is present in a string, ignoring commas, dots, or spaces
 number_present_in_string <- function(string, number) {
-  if (is.null(string) || is.null(number)) return(FALSE)
+  if (is.null(string) || is.null(number)) {
+    return(FALSE)
+  }
 
   # extract just the digits from the number
   digits <- gsub("\\D", "", as.character(number))
-  if (digits == "") return(FALSE)
+  if (digits == "") {
+    return(FALSE)
+  }
 
   # build a regex that allows commas, dots, or spaces between digits
   pieces <- strsplit(digits, "")[[1]]

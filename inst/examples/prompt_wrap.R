@@ -27,4 +27,3 @@ prompt <- "Hi there!" |>
 #   pre-built prompt wraps in the tidyprompt package, like
 #   answer_as_boolean, answer_as_integer, add_tools, answer_as_code, etc.
 # Below is the source code for the 'answer_as_integer' prompt wrap function:
-

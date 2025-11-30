@@ -32,8 +32,11 @@ docs_types_only <- function(docs) {
         s <- sub[[sn]]
         if (is.list(s)) {
           # support deeper nesting if present
-          out[[nm]][[sn]] <- if (is.list(s$type)) s$type else
+          out[[nm]][[sn]] <- if (is.list(s$type)) {
+            s$type
+          } else {
             (s$type %||% "unknown")
+          }
         } else {
           out[[nm]][[sn]] <- s %||% "unknown"
         }

@@ -101,7 +101,9 @@ llm_verify <- function(
       answer_by_chain_of_thought() |>
       send_prompt(llm_provider, return_mode = "full")
 
-    if (satisfied$response) return(TRUE)
+    if (satisfied$response) {
+      return(TRUE)
+    }
 
     # Create summary of why the response was declined
     feedback <- glue::glue(

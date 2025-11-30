@@ -25,7 +25,9 @@ df_to_string <- function(df, how = c("wide", "long")) {
   }
 
   # Return empty string if data frame has no rows
-  if (nrow(df) == 0) return("")
+  if (nrow(df) == 0) {
+    return("")
+  }
 
   # Get column names
   column_names <- colnames(df)

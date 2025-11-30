@@ -5,7 +5,10 @@ test_that("OpenAI Responses API maps image_url to scalar string", {
       role = "user",
       content = list(
         list(type = "text", text = "Describe this image"),
-        list(type = "image_url", image_url = list(url = "https://example.org/cat.jpg", detail = "auto"))
+        list(
+          type = "image_url",
+          image_url = list(url = "https://example.org/cat.jpg", detail = "auto")
+        )
       )
     )
   )
@@ -17,12 +20,19 @@ test_that("OpenAI Responses API maps image_url to scalar string", {
     parts <- list()
     for (part in content) {
       if (identical(part$type, "text")) {
-        parts[[length(parts) + 1]] <- list(type = "input_text", text = part$text)
+        parts[[length(parts) + 1]] <- list(
+          type = "input_text",
+          text = part$text
+        )
       } else if (identical(part$type, "image_url")) {
         img <- part$image_url
         url_val <- img$url
         detail_val <- img$detail
-        parts[[length(parts) + 1]] <- compact_list(list(type = "input_image", image_url = url_val, detail = detail_val))
+        parts[[length(parts) + 1]] <- compact_list(list(
+          type = "input_image",
+          image_url = url_val,
+          detail = detail_val
+        ))
       }
     }
     list(role = role, content = parts)

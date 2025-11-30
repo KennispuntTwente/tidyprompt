@@ -11,7 +11,10 @@ test_that("request_llm_provider stream_callback is invoked with metadata", {
 
   # We'll hit a cheap, fast OpenAI endpoint if configured; otherwise skip.
   openai_key <- Sys.getenv("OPENAI_API_KEY", unset = "")
-  skip_if(openai_key == "", "OPENAI_API_KEY not set; skipping stream_callback test")
+  skip_if(
+    openai_key == "",
+    "OPENAI_API_KEY not set; skipping stream_callback test"
+  )
 
   model_chat <- Sys.getenv(
     "TIDYPROMPT_OPENAI_CHAT_MODEL",

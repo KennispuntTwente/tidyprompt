@@ -106,11 +106,14 @@ send_prompt <- function(
 
   # Verify and configure llm_provider
   llm_provider <- llm_provider$clone()
-  if (!is.null(verbose)) llm_provider$verbose <- verbose
+  if (!is.null(verbose)) {
+    llm_provider$verbose <- verbose
+  }
   if (
     !is.null(stream) & !is.null(llm_provider$parameters$stream) # This means the provider supports streaming
-  )
+  ) {
     llm_provider$parameters$stream <- stream
+  }
   # Apply parameter_fn's to the llm_provider
   for (prompt_wrap in get_prompt_wraps(prompt)) {
     if (!is.null(prompt_wrap$parameter_fn)) {
@@ -126,7 +129,9 @@ send_prompt <- function(
   }
 
   # Initialize variables which keep track of the process
-  if (return_mode == "full") start_time <- Sys.time()
+  if (return_mode == "full") {
+    start_time <- Sys.time()
+  }
   http <- list(requests = list(), responses = list())
   # Object which keeps ellmer chat object, turns, structured output;
   #   when using an ellmer LLM provider:
@@ -167,10 +172,12 @@ send_prompt <- function(
       )
     }
 
-    for (http_response in response$http$response)
+    for (http_response in response$http$response) {
       http$responses[[length(http$responses) + 1]] <<- http_response
-    for (http_request in response$http$request)
+    }
+    for (http_request in response$http$request) {
       http$requests[[length(http$requests) + 1]] <<- http_request
+    }
 
     if (!is.null(response$ellmer_chat)) {
       ellmer_chat <<- response$ellmer_chat
@@ -194,7 +201,9 @@ send_prompt <- function(
   while (interactions < max_interactions & !success) {
     interactions <- interactions + 1
 
-    if (length(prompt_wraps) == 0) success <- TRUE
+    if (length(prompt_wraps) == 0) {
+      success <- TRUE
+    }
 
     # Initialize variables for the loop
     any_prompt_wrap_not_done <- FALSE
@@ -334,7 +343,9 @@ send_prompt <- function(
       }
     }
 
-    if (!any_prompt_wrap_not_done) success <- TRUE
+    if (!any_prompt_wrap_not_done) {
+      success <- TRUE
+    }
 
     if (llm_break) break
   }
@@ -352,7 +363,9 @@ send_prompt <- function(
     response <- NULL
   }
 
-  if (return_mode == "only_response") return(response)
+  if (return_mode == "only_response") {
+    return(response)
+  }
 
   if (return_mode == "full") {
     return_list <- list()

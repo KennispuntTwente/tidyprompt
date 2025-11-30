@@ -50,7 +50,12 @@ add_image <- function(
   detail <- match.arg(detail)
   prompt <- tidyprompt(prompt)
 
-  part <- .tp_normalize_image_input(image, mime = mime, alt = alt, detail = detail)
+  part <- .tp_normalize_image_input(
+    image,
+    mime = mime,
+    alt = alt,
+    detail = detail
+  )
 
   parameter_fn <- function(llm_provider) {
     existing <- llm_provider$parameters$.add_image_parts %||% list()
@@ -68,14 +73,21 @@ add_image <- function(
 }
 
 # Internal: normalize input into a provider-agnostic image part
-.tp_normalize_image_input <- function(image, mime = NULL, alt = NULL, detail = "auto") {
+.tp_normalize_image_input <- function(
+  image,
+  mime = NULL,
+  alt = NULL,
+  detail = "auto"
+) {
   stopifnot(!missing(image))
 
   # Pass-through for ellmer content objects (content_image_url/file/plot)
   if (isTRUE(requireNamespace("ellmer", quietly = TRUE))) {
     if (.tp_is_ellmer_content(image)) {
       if (!isTRUE(requireNamespace("S7", quietly = TRUE))) {
-        stop("The S7 package is required to handle ellmer content image objects, but is not installed.")
+        stop(
+          "The S7 package is required to handle ellmer content image objects, but is not installed."
+        )
       }
       props <- S7::props(image)
 
@@ -88,7 +100,9 @@ add_image <- function(
       } else if (!is.null(props[["data"]])) {
         props[["data"]]
       } else {
-        stop("'ellmer' content image must have either '@url' or '@data' property")
+        stop(
+          "'ellmer' content image must have either '@url' or '@data' property"
+        )
       }
     }
   }
@@ -121,7 +135,9 @@ add_image <- function(
   }
 
   # base64 data URL string
-  if (is.character(image) && length(image) == 1 && grepl("^data:image/", image)) {
+  if (
+    is.character(image) && length(image) == 1 && grepl("^data:image/", image)
+  ) {
     # data:image/<type>;base64,<payload>
     parts <- strsplit(image, ",", fixed = TRUE)[[1]]
     header <- parts[1]
@@ -138,7 +154,12 @@ add_image <- function(
   }
 
   # bare base64 (heuristic: contains only base64 chars and is long)
-  if (is.character(image) && length(image) == 1 && grepl("^[A-Za-z0-9+/=\n\r]+$", image) && nchar(image) > 128) {
+  if (
+    is.character(image) &&
+      length(image) == 1 &&
+      grepl("^[A-Za-z0-9+/=\n\r]+$", image) &&
+      nchar(image) > 128
+  ) {
     return(list(
       kind = "image",
       source = "b64",
@@ -184,7 +205,9 @@ add_image <- function(
 }
 
 .tp_is_plot_object <- function(x) {
-  if (is.null(x)) return(FALSE)
+  if (is.null(x)) {
+    return(FALSE)
+  }
   inherits(x, "recordedplot") ||
     inherits(x, "ggplot") ||
     inherits(x, "grob") ||
@@ -193,17 +216,33 @@ add_image <- function(
     inherits(x, "trellis")
 }
 
-.tp_plot_to_png_raw <- function(plot_obj, width = 800, height = 600, res = 96, bg = "white") {
+.tp_plot_to_png_raw <- function(
+  plot_obj,
+  width = 800,
+  height = 600,
+  res = 96,
+  bg = "white"
+) {
   file <- tempfile(fileext = ".png")
   on.exit(unlink(file), add = TRUE)
 
   device_open <- TRUE
-  grDevices::png(filename = file, width = width, height = height, res = res, units = "px", bg = bg)
-  on.exit({
-    if (device_open) {
-      try(grDevices::dev.off(), silent = TRUE)
-    }
-  }, add = TRUE)
+  grDevices::png(
+    filename = file,
+    width = width,
+    height = height,
+    res = res,
+    units = "px",
+    bg = bg
+  )
+  on.exit(
+    {
+      if (device_open) {
+        try(grDevices::dev.off(), silent = TRUE)
+      }
+    },
+    add = TRUE
+  )
 
   .tp_draw_plot_object(plot_obj)
 
@@ -224,9 +263,15 @@ add_image <- function(
     return(invisible(NULL))
   }
 
-  if (inherits(plot_obj, "grob") || inherits(plot_obj, "gTree") || inherits(plot_obj, "gtable")) {
+  if (
+    inherits(plot_obj, "grob") ||
+      inherits(plot_obj, "gTree") ||
+      inherits(plot_obj, "gtable")
+  ) {
     if (!requireNamespace("grid", quietly = TRUE)) {
-      stop("'grid' package is required to handle 'grob'/'gTree'/'gtable' plot objects; please install it")
+      stop(
+        "'grid' package is required to handle 'grob'/'gTree'/'gtable' plot objects; please install it"
+      )
     }
     grid::grid.newpage()
     grid::grid.draw(plot_obj)
@@ -249,19 +294,33 @@ add_image <- function(
 
 .tp_guess_mime_from_path <- function(path) {
   ext <- tolower(tools::file_ext(path))
-  if (identical(ext, "png")) return("image/png")
-  if (identical(ext, "jpg") || identical(ext, "jpeg")) return("image/jpeg")
-  if (identical(ext, "gif")) return("image/gif")
-  if (identical(ext, "webp")) return("image/webp")
-  if (identical(ext, "bmp")) return("image/bmp")
+  if (identical(ext, "png")) {
+    return("image/png")
+  }
+  if (identical(ext, "jpg") || identical(ext, "jpeg")) {
+    return("image/jpeg")
+  }
+  if (identical(ext, "gif")) {
+    return("image/gif")
+  }
+  if (identical(ext, "webp")) {
+    return("image/webp")
+  }
+  if (identical(ext, "bmp")) {
+    return("image/bmp")
+  }
   NULL
 }
 
 # Heuristic: detect ellmer content objects (e.g., content_image_*())
 .tp_is_ellmer_content <- function(x) {
   cl <- class(x)
-  if (length(cl) == 0L) return(FALSE)
-  any(grepl("^Content", cl)) || any(grepl("^ellmer", cl)) || any(grepl("S7_object", cl))
+  if (length(cl) == 0L) {
+    return(FALSE)
+  }
+  any(grepl("^Content", cl)) ||
+    any(grepl("^ellmer", cl)) ||
+    any(grepl("S7_object", cl))
 }
 
 # Try to coerce an ellmer content object (content_image_url/file/plot)
@@ -277,12 +336,18 @@ add_image <- function(
     }
     # list/S3/S7 via [[ or getElement
     val <- tryCatch(o[[name]], error = function(e) NULL)
-    if (!is.null(val)) return(val)
+    if (!is.null(val)) {
+      return(val)
+    }
     val <- tryCatch(getElement(o, name), error = function(e) NULL)
-    if (!is.null(val)) return(val)
+    if (!is.null(val)) {
+      return(val)
+    }
     # Fallback: programmatic `$` access (works for many S3/S7)
     val <- tryCatch(do.call("$", list(o, name)), error = function(e) NULL)
-    if (!is.null(val)) return(val)
+    if (!is.null(val)) {
+      return(val)
+    }
     NULL
   }
 
@@ -303,10 +368,17 @@ add_image <- function(
 
   # Local file image
   path <- get_field(obj, "path")
-  if (!is.null(path) && is.character(path) && length(path) == 1 && file.exists(path)) {
+  if (
+    !is.null(path) &&
+      is.character(path) &&
+      length(path) == 1 &&
+      file.exists(path)
+  ) {
     raw <- readBin(path, what = "raw", n = file.info(path)$size)
     b64 <- jsonlite::base64_enc(raw)
-    mime <- get_field(obj, "content_type") %||% .tp_guess_mime_from_path(path) %||% "image/png"
+    mime <- get_field(obj, "content_type") %||%
+      .tp_guess_mime_from_path(path) %||%
+      "image/png"
     return(list(
       kind = "image",
       source = "b64",

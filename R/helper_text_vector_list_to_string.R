@@ -25,7 +25,9 @@ vector_list_to_string <- function(obj, how = c("inline", "expanded")) {
   }
 
   # Return empty string if object is empty
-  if (length(obj) == 0) return("")
+  if (length(obj) == 0) {
+    return("")
+  }
 
   # Handle named and unnamed cases
   if (!is.null(names(obj)) && any(names(obj) != "")) {

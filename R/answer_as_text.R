@@ -27,17 +27,19 @@ answer_as_text <- function(
 ) {
   instruction <- "You must provide a text response."
 
-  if (!is.null(max_words))
+  if (!is.null(max_words)) {
     instruction <- paste(
       instruction,
       glue::glue("The response must be at most {max_words} words.")
     )
+  }
 
-  if (!is.null(max_characters))
+  if (!is.null(max_characters)) {
     instruction <- paste(
       instruction,
       glue::glue("The response must be at most {max_characters} characters.")
     )
+  }
 
   modify_fn <- function(original_prompt_text) {
     if (!add_instruction_to_prompt) {

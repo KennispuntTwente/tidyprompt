@@ -21,7 +21,9 @@
 })
 
 is_ellmer_tool <- function(x) {
-  if (is.null(.ELLMER_TOOLDEF_CLASS_SIG)) return(FALSE)
+  if (is.null(.ELLMER_TOOLDEF_CLASS_SIG)) {
+    return(FALSE)
+  }
   has_all_classes(x, .ELLMER_TOOLDEF_CLASS_SIG)
 }
 
@@ -29,7 +31,9 @@ is_ellmer_tool <- function(x) {
 .ellmer_tool_properties <- function(tooldef) {
   # Prefer S7 slot if available, then fall back to attributes
   props <- tryCatch(tooldef@arguments@properties, error = function(e) NULL)
-  if (!is.null(props)) return(props)
+  if (!is.null(props)) {
+    return(props)
+  }
 
   # Fallback: robust attribute-based extraction
   at <- attributes(tooldef@arguments) %||% list()
@@ -54,24 +58,44 @@ is_ellmer_tool <- function(x) {
 # - arrays become "vector <type>" where possible
 # - objects become a *named list* of child type descriptors
 .json_schema_to_tidyprompt_type_only <- function(s) {
-  if (is.null(s)) return("unknown")
+  if (is.null(s)) {
+    return("unknown")
+  }
 
   # enums can't be expressed in nested named-lists in tidyprompt's type mini-DSL
-  if (!is.null(s$enum)) return("string")
+  if (!is.null(s$enum)) {
+    return("string")
+  }
 
   t <- s$type %||% NULL
-  if (identical(t, "string")) return("string")
-  if (identical(t, "integer")) return("integer")
-  if (identical(t, "number")) return("numeric")
-  if (identical(t, "boolean")) return("logical")
+  if (identical(t, "string")) {
+    return("string")
+  }
+  if (identical(t, "integer")) {
+    return("integer")
+  }
+  if (identical(t, "number")) {
+    return("numeric")
+  }
+  if (identical(t, "boolean")) {
+    return("logical")
+  }
 
   if (identical(t, "array")) {
     items <- s$items %||% list()
     it <- items$type %||% NULL
-    if (identical(it, "integer")) return("vector integer")
-    if (identical(it, "number")) return("vector numeric")
-    if (identical(it, "boolean")) return("vector logical")
-    if (identical(it, "string")) return("vector string")
+    if (identical(it, "integer")) {
+      return("vector integer")
+    }
+    if (identical(it, "number")) {
+      return("vector numeric")
+    }
+    if (identical(it, "boolean")) {
+      return("vector logical")
+    }
+    if (identical(it, "string")) {
+      return("vector string")
+    }
     return("vector unknown")
   }
 
@@ -93,12 +117,16 @@ is_ellmer_tool <- function(x) {
   if (!is.null(s$enum)) {
     res$type <- "match.arg"
     res$default_value <- s$enum
-    if (!is.null(s$description)) res$description <- s$description
+    if (!is.null(s$description)) {
+      res$description <- s$description
+    }
     return(res)
   }
 
   res$type <- .json_schema_to_tidyprompt_type_only(s)
-  if (!is.null(s$description)) res$description <- s$description
+  if (!is.null(s$description)) {
+    res$description <- s$description
+  }
   res
 }
 
@@ -149,18 +177,21 @@ ellmer_tool_to_tidyprompt <- function(tooldef) {
   get_tool_formals <- function(td) {
     # ToolDef inherits from function, so this usually works:
     fmls <- tryCatch(formals(td), error = function(e) NULL)
-    if (!is.null(fmls) && length(fmls)) return(fmls)
+    if (!is.null(fmls) && length(fmls)) {
+      return(fmls)
+    }
 
     # Fallback: build empty formals from the ToolDef's argument names
     arg_names <- names(.ellmer_tool_properties(td))
-    if (!length(arg_names)) return(alist(... = ))
+    if (!length(arg_names)) {
+      return(alist(... = ))
+    }
     blanks <- rep(list(quote(expr = )), length(arg_names))
     names(blanks) <- arg_names
     as.pairlist(blanks)
   }
 
-  wrapper <- function() {
-  }
+  wrapper <- function() {}
   formals(wrapper) <- get_tool_formals(tooldef)
   body(wrapper) <- quote({
     tool <- attr(sys.function(), "ellmer_tool", exact = TRUE)
@@ -228,7 +259,9 @@ tidyprompt_docs_to_ellmer_tool <- function(
   fn_formals <- names(formals(fun))
   # Fill any missing with permissive strings; drop extras
   missing <- setdiff(fn_formals, names(props))
-  for (nm in missing) props[[nm]] <- ellmer::type_string(required = FALSE)
+  for (nm in missing) {
+    props[[nm]] <- ellmer::type_string(required = FALSE)
+  }
   props <- props[fn_formals]
 
   ellmer::tool(

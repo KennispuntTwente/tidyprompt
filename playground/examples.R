@@ -41,8 +41,9 @@ yes_no_instruction <- "Respond with only 'YES' or 'NO' (use no other characters)
     },
 
     extraction_fn = function(response) {
-      if (!toupper(response) %in% c("YES", "NO"))
+      if (!toupper(response) %in% c("YES", "NO")) {
         return(llm_feedback(yes_no_instruction))
+      }
 
       return(toupper(response) %in% "YES") # Boolean
     }
@@ -99,16 +100,18 @@ persona <- "Create 1 persona of an adult for me" |>
     extraction_fn = function(persona) {
       # Turn age into a number; if not a number, return feedback
       persona$age <- as.numeric(persona$age)
-      if (is.na(persona$age))
+      if (is.na(persona$age)) {
         return(llm_feedback("The age should be a number."))
+      }
 
       return(persona)
     },
 
     validation_fn = function(persona) {
       # Validate that the age is 18 or older
-      if (persona$age < 18)
+      if (persona$age < 18) {
         return(llm_feedback("The age should be 18 or older."))
+      }
 
       return(TRUE)
     }
@@ -172,8 +175,9 @@ model <- paste0(
   ) |>
   prompt_wrap(
     validation_fn = function(x) {
-      if (!inherits(x, "lm"))
+      if (!inherits(x, "lm")) {
         return(llm_feedback("The output should be a linear model object."))
+      }
       return(x)
     }
   ) |>

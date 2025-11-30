@@ -55,12 +55,15 @@ llm_provider_ollama <- function(
             b64s[[length(b64s) + 1]] <- as.character(p$data)
           } else if (identical(src, "url") && !is.null(p$data)) {
             # Download and base64-encode
-            res <- tryCatch({
-              rq <- httr2::request(as.character(p$data))
-              rp <- httr2::req_perform(rq)
-              raw <- httr2::resp_body_raw(rp)
-              jsonlite::base64_enc(raw)
-            }, error = function(e) NULL)
+            res <- tryCatch(
+              {
+                rq <- httr2::request(as.character(p$data))
+                rp <- httr2::req_perform(rq)
+                raw <- httr2::resp_body_raw(rp)
+                jsonlite::base64_enc(raw)
+              },
+              error = function(e) NULL
+            )
             if (!is.null(res)) b64s[[length(b64s) + 1]] <- as.character(res)
           }
         }
@@ -97,8 +100,12 @@ llm_provider_ollama <- function(
     )
   }
 
-  if (is.null(parameters$stream)) parameters$stream <- FALSE
-  if (!is.null(num_ctx)) parameters$options$num_ctx <- num_ctx
+  if (is.null(parameters$stream)) {
+    parameters$stream <- FALSE
+  }
+  if (!is.null(num_ctx)) {
+    parameters$options$num_ctx <- num_ctx
+  }
 
   # Extend llm_provider-class with 'set_option' functions
   class <- R6::R6Class(
@@ -240,8 +247,16 @@ llm_provider_openai <- function(
         role <- msg$role
         content <- msg$content
         parts <- list()
-        text_type <- if (identical(role, "assistant")) "output_text" else "input_text"
-        image_type <- if (identical(role, "assistant")) "output_image" else "input_image"
+        text_type <- if (identical(role, "assistant")) {
+          "output_text"
+        } else {
+          "input_text"
+        }
+        image_type <- if (identical(role, "assistant")) {
+          "output_image"
+        } else {
+          "input_image"
+        }
         if (is.character(content)) {
           if (nzchar(content)) {
             parts[[length(parts) + 1]] <- list(type = text_type, text = content)
@@ -268,12 +283,18 @@ llm_provider_openai <- function(
                   ))
                 }
               } else if (is.character(img) && length(img) == 1) {
-                parts[[length(parts) + 1]] <- list(type = image_type, image_url = img)
+                parts[[length(parts) + 1]] <- list(
+                  type = image_type,
+                  image_url = img
+                )
               }
             } else {
               # Fallback: keep as input_text if unknown
               if (!is.null(part$text)) {
-                parts[[length(parts) + 1]] <- list(type = text_type, text = part$text)
+                parts[[length(parts) + 1]] <- list(
+                  type = text_type,
+                  text = part$text
+                )
               }
             }
           }
@@ -522,7 +543,9 @@ llm_provider_google_gemini <- function(
     )
 
     # Append all other parameters to the body
-    for (name in names(self$parameters)) body[[name]] <- self$parameters[[name]]
+    for (name in names(self$parameters)) {
+      body[[name]] <- self$parameters[[name]]
+    }
 
     # Send the POST request with httr2
     request <- httr2::request(endpoint) |>
@@ -888,10 +911,7 @@ llm_provider_ellmer <- function(
     )
   }
 
-  if (
-    isTRUE(parameters$stream)
-    && !requireNamespace("coro", quietly = TRUE)
-  ) {
+  if (isTRUE(parameters$stream) && !requireNamespace("coro", quietly = TRUE)) {
     stop(paste0(
       "The 'coro' package is required for streaming with `llm_provider_ellmer()`.\n",
       "Please install it first (e.g., `install.packages('coro')`), ",
@@ -922,14 +942,20 @@ llm_provider_ellmer <- function(
       if (is.null(text) || !nzchar(text)) {
         return(NULL)
       }
-      if (!is.null(ellmer_ns) && exists("ContentText", envir = ellmer_ns, inherits = FALSE)) {
+      if (
+        !is.null(ellmer_ns) &&
+          exists("ContentText", envir = ellmer_ns, inherits = FALSE)
+      ) {
         return(ellmer::ContentText(text))
       }
       list(type = "text", text = text)
     }
 
     as_turn <- function(role, contents) {
-      if (!is.null(ellmer_ns) && exists("Turn", envir = ellmer_ns, inherits = FALSE)) {
+      if (
+        !is.null(ellmer_ns) &&
+          exists("Turn", envir = ellmer_ns, inherits = FALSE)
+      ) {
         return(ellmer::Turn(role = role, contents = contents))
       }
       list(role = role, contents = contents)
@@ -937,9 +963,12 @@ llm_provider_ellmer <- function(
 
     build_image_content <- function(p) {
       # URL-based image
-      if (identical(p$source, "url") && !is.null(p$data) &&
+      if (
+        identical(p$source, "url") &&
+          !is.null(p$data) &&
           !is.null(ellmer_ns) &&
-          isTRUE(exists("content_image_url", ellmer_ns, inherits = FALSE))) {
+          isTRUE(exists("content_image_url", ellmer_ns, inherits = FALSE))
+      ) {
         return(ellmer::content_image_url(
           url = as.character(p$data),
           detail = p$detail %||% "auto"
@@ -947,18 +976,27 @@ llm_provider_ellmer <- function(
       }
 
       # Base64-encoded image -> temp file + content_image_file, when available
-      if (identical(p$source, "b64") && !is.null(p$data) &&
+      if (
+        identical(p$source, "b64") &&
+          !is.null(p$data) &&
           !is.null(ellmer_ns) &&
-          isTRUE(exists("content_image_file", ellmer_ns, inherits = FALSE))) {
+          isTRUE(exists("content_image_file", ellmer_ns, inherits = FALSE))
+      ) {
         raw_bytes <- tryCatch(
           jsonlite::base64_dec(as.character(p$data)),
           error = function(e) raw()
         )
         if (length(raw_bytes)) {
           ext <- ".png"
-          if (!is.null(p$mime) && grepl("jpeg", p$mime)) ext <- ".jpg"
-          if (!is.null(p$mime) && grepl("gif", p$mime)) ext <- ".gif"
-          if (!is.null(p$mime) && grepl("webp", p$mime)) ext <- ".webp"
+          if (!is.null(p$mime) && grepl("jpeg", p$mime)) {
+            ext <- ".jpg"
+          }
+          if (!is.null(p$mime) && grepl("gif", p$mime)) {
+            ext <- ".gif"
+          }
+          if (!is.null(p$mime) && grepl("webp", p$mime)) {
+            ext <- ".webp"
+          }
           tf <- tempfile(fileext = ext)
           writeBin(raw_bytes, tf)
           return(ellmer::content_image_file(
@@ -975,7 +1013,11 @@ llm_provider_ellmer <- function(
 
       # Fallback stub when ellmer helpers are unavailable (primarily for tests)
       if (!is.null(p$source) && !is.null(p$data)) {
-        return(list(source = p$source, data = p$data, mime = p$mime %||% NA_character_))
+        return(list(
+          source = p$source,
+          data = p$data,
+          mime = p$mime %||% NA_character_
+        ))
       }
 
       NULL
@@ -1003,7 +1045,9 @@ llm_provider_ellmer <- function(
 
     # Register tools
     if (!is.null(params$.ellmer_tools)) {
-      for (td in params$.ellmer_tools) ch$register_tool(td)
+      for (td in params$.ellmer_tools) {
+        ch$register_tool(td)
+      }
     }
 
     # Check if we are doing structured output
@@ -1056,7 +1100,10 @@ llm_provider_ellmer <- function(
     ch <- ch$set_turns(turns_to_send)
 
     if (use_structured) {
-      reply_struct <- ch$chat_structured(prompt_for_model, type = structured_type)
+      reply_struct <- ch$chat_structured(
+        prompt_for_model,
+        type = structured_type
+      )
       # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
       assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
         as.character()
@@ -1085,37 +1132,50 @@ llm_provider_ellmer <- function(
         partial_response_env <- new.env()
         assign("partial_response", "", envir = partial_response_env)
 
-        coro::loop(for (chunk in stream) {
-          if (length(chunk) == 0L || all(is.na(chunk))) next
+        coro::loop(
+          for (chunk in stream) {
+            if (length(chunk) == 0L || all(is.na(chunk))) {
+              next
+            }
 
-          chunk_str <- paste0(as.character(chunk), collapse = "")
-          if (!nzchar(chunk_str)) next
+            chunk_str <- paste0(as.character(chunk), collapse = "")
+            if (!nzchar(chunk_str)) {
+              next
+            }
 
-          current_response <- get("partial_response", envir = partial_response_env)
-          updated_response <- paste0(current_response, chunk_str)
-          assign("partial_response", updated_response, envir = partial_response_env)
-
-          # If a callback is provided, use it; otherwise, mirror HTTP providers
-          # by cat()ing chunks when verbose = TRUE.
-          if (is.function(stream_cb)) {
-            latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
-
-            meta <- list(
-              llm_provider     = self,
-              chat_history     = chat_history,
-              latest_message   = latest_message,
-              partial_response = updated_response,
-              chunk            = chunk_str,
-              api_type         = "ellmer",
-              endpoint         = "chat",
-              verbose          = self$verbose
+            current_response <- get(
+              "partial_response",
+              envir = partial_response_env
+            )
+            updated_response <- paste0(current_response, chunk_str)
+            assign(
+              "partial_response",
+              updated_response,
+              envir = partial_response_env
             )
 
-            stream_cb(chunk_str, meta)
-          } else if (isTRUE(self$verbose)) {
-            cat(chunk_str)
+            # If a callback is provided, use it; otherwise, mirror HTTP providers
+            # by cat()ing chunks when verbose = TRUE.
+            if (is.function(stream_cb)) {
+              latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
+
+              meta <- list(
+                llm_provider = self,
+                chat_history = chat_history,
+                latest_message = latest_message,
+                partial_response = updated_response,
+                chunk = chunk_str,
+                api_type = "ellmer",
+                endpoint = "chat",
+                verbose = self$verbose
+              )
+
+              stream_cb(chunk_str, meta)
+            } else if (isTRUE(self$verbose)) {
+              cat(chunk_str)
+            }
           }
-        })
+        )
 
         # After streaming, use accumulated partial_response as assistant text
         assistant_text <- get("partial_response", envir = partial_response_env)
@@ -1174,7 +1234,9 @@ llm_provider_ellmer <- function(
           },
           error = function(e) NULL
         )
-        if (!is.null(m)) self$parameters$model <- as.character(m)
+        if (!is.null(m)) {
+          self$parameters$model <- as.character(m)
+        }
         invisible(NULL)
       }
     )

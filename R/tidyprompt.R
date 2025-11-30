@@ -20,22 +20,25 @@ NULL
   private = list(
     # Internal validator
     validate_tidyprompt = function() {
-      if (!is.character(self$base_prompt) || length(self$base_prompt) != 1)
+      if (!is.character(self$base_prompt) || length(self$base_prompt) != 1) {
         stop("The base prompt must be a single string.", call. = FALSE)
+      }
 
-      if (!is.list(private$prompt_wraps))
+      if (!is.list(private$prompt_wraps)) {
         stop("$prompt_wraps must be a list.", call. = FALSE)
+      }
 
       if (
         length(private$prompt_wraps) > 0 &&
           !all(
             sapply(private$prompt_wraps, function(x) inherits(x, "prompt_wrap"))
           )
-      )
+      ) {
         stop(
           "All elements of $prompt_wraps must be of class `prompt_wrap`.",
           call. = FALSE
         )
+      }
 
       if (!is.null(private$chat_history)) {
         tryCatch(
@@ -260,8 +263,12 @@ NULL
       }
       rm(i)
 
-      if (length(wraps) == 0) return(list())
-      if (order == "default") return(wraps)
+      if (length(wraps) == 0) {
+        return(list())
+      }
+      if (order == "default") {
+        return(wraps)
+      }
 
       # Categorize wraps
       t_check <- wraps[sapply(wraps, function(x) x$type == "check")]
@@ -565,8 +572,9 @@ set_system_prompt <- function(prompt, system_prompt) {
   if (
     !is.character(system_prompt) |
       length(system_prompt) != 1
-  )
+  ) {
     stop("system_prompt must be a single character string")
+  }
 
   prompt$system_prompt <- system_prompt
 

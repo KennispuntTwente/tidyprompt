@@ -1,5 +1,7 @@
 openai_provider <- llm_provider_openai(parameters = list(model = "gpt-4o-mini"))
-ellmer_provider <- llm_provider_ellmer(ellmer::chat_openai(model = "gpt-4o-mini"))
+ellmer_provider <- llm_provider_ellmer(ellmer::chat_openai(
+  model = "gpt-4o-mini"
+))
 ollama_provider <- llm_provider_ollama(parameters = list(model = "qwen3-vl:2b"))
 
 if (!testthat:::on_ci()) {
@@ -16,8 +18,13 @@ if (!testthat:::on_ci()) {
 
   cat_plot <- ggplot2::ggplot() +
     ggplot2::annotate(
-      "text", x = 0.5, y = 0.5,
-      label = "cat", size = 50, hjust = 0.5, vjust = 0.5
+      "text",
+      x = 0.5,
+      y = 0.5,
+      label = "cat",
+      size = 50,
+      hjust = 0.5,
+      vjust = 0.5
     ) +
     ggplot2::theme_void()
 

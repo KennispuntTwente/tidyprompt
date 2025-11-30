@@ -42,12 +42,16 @@ is_json_schema_list <- function(x) {
 })
 
 has_all_classes <- function(x, cls) {
-  if (is.null(cls)) return(FALSE)
+  if (is.null(cls)) {
+    return(FALSE)
+  }
   all(cls %in% class(x))
 }
 
 is_ellmer_type <- function(x) {
-  if (is.null(.ELLMER_CLASS_SIGNATURES)) return(FALSE)
+  if (is.null(.ELLMER_CLASS_SIGNATURES)) {
+    return(FALSE)
+  }
   any(vapply(.ELLMER_CLASS_SIGNATURES, has_all_classes, logical(1), x = x))
 }
 
@@ -177,7 +181,9 @@ ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
   enum_vals <- attr(x, "values", exact = TRUE) %||%
     attr(x, "levels", exact = TRUE)
   if (!is.null(enum_vals) || has_all_classes(x, sig$enum)) {
-    if (is.null(enum_vals)) enum_vals <- character()
+    if (is.null(enum_vals)) {
+      enum_vals <- character()
+    }
     return(compact_list(list(enum = enum_vals, description = desc)))
   }
 
@@ -187,16 +193,20 @@ ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
     return(compact_list(list(
       type = "array",
       description = desc, # <-- move before items
-      items = if (!is.null(items))
-        ellmer_type_to_json_schema(items, strict = strict) else NULL
+      items = if (!is.null(items)) {
+        ellmer_type_to_json_schema(items, strict = strict)
+      } else {
+        NULL
+      }
     )))
   }
 
   # --- Object --------------------------------------------------------------
   if (has_all_classes(x, sig$object)) {
     addl_attr <- attr(x, ".additional_properties", exact = TRUE)
-    if (is.null(addl_attr))
+    if (is.null(addl_attr)) {
       addl_attr <- attr(x, "additional_properties", exact = TRUE)
+    }
     addl <- if (is.null(addl_attr)) !isTRUE(strict) else isTRUE(addl_attr)
 
     props <- attr(x, "properties", exact = TRUE)
@@ -255,7 +265,9 @@ compact_list <- function(x) {
 # Returns a list with both representations when possible:
 # $json_schema and $ellmer_type, so callers can pick what they need.
 normalize_schema_dual <- function(schema, strict = FALSE) {
-  if (is.null(schema)) return(list(json_schema = NULL, ellmer_type = NULL))
+  if (is.null(schema)) {
+    return(list(json_schema = NULL, ellmer_type = NULL))
+  }
 
   if (is_ellmer_type(schema)) {
     # ellmer type supplied; attempt reverse conversion for OpenAI/Ollama

@@ -2,8 +2,9 @@
 test_that("llm_provider initializes with parameters", {
   parameters <- list(model = "my-llm-model", api_key = "my-api-key")
   provider <- `llm_provider-class`$new(
-    complete_chat_function = function(chat_history)
-      list(role = "assistant", content = "Hello"),
+    complete_chat_function = function(chat_history) {
+      list(role = "assistant", content = "Hello")
+    },
     parameters = parameters
   )
 
@@ -15,8 +16,9 @@ test_that("llm_provider initializes with parameters", {
 test_that("llm_provider updates parameters correctly", {
   parameters <- list(model = "my-llm-model", api_key = "my-api-key")
   provider <- `llm_provider-class`$new(
-    complete_chat_function = function(chat_history)
-      list(role = "assistant", content = "Hello"),
+    complete_chat_function = function(chat_history) {
+      list(role = "assistant", content = "Hello")
+    },
     parameters = parameters
   )
 
@@ -72,8 +74,9 @@ test_that("llm_provider_fake returns expected response for known prompt", {
 test_that("llm_provider errors on invalid parameters", {
   expect_error(
     `llm_provider-class`$new(
-      complete_chat_function = function(chat_history)
-        list(role = "assistant", content = "Hello"),
+      complete_chat_function = function(chat_history) {
+        list(role = "assistant", content = "Hello")
+      },
       parameters = list("unnamed")
     ),
     "parameters must be a named list"

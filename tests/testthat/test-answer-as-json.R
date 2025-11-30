@@ -220,17 +220,26 @@ test_that("answer_as_json (compatability with ellmer) works", {
 
   # Persona validation function
   is_valid_persona <- function(persona) {
-    if (!is.list(persona)) return(FALSE)
+    if (!is.list(persona)) {
+      return(FALSE)
+    }
 
     required_fields <- c("name", "age", "hobbies")
-    if (!all(required_fields %in% names(persona))) return(FALSE)
+    if (!all(required_fields %in% names(persona))) {
+      return(FALSE)
+    }
 
-    if (!is.character(persona$name) || length(persona$name) != 1) return(FALSE)
-    if (!is.numeric(persona$age) || length(persona$age) != 1) return(FALSE)
+    if (!is.character(persona$name) || length(persona$name) != 1) {
+      return(FALSE)
+    }
+    if (!is.numeric(persona$age) || length(persona$age) != 1) {
+      return(FALSE)
+    }
     if (
       !is.vector(persona$hobbies) || !all(sapply(persona$hobbies, is.character))
-    )
+    ) {
       return(FALSE)
+    }
 
     TRUE
   }
@@ -362,7 +371,9 @@ test_that("answer_as_json + llm_provider_ellmer: arrays of scalars", {
     answer_as_json(ellmer::type_array(ellmer::type_enum(allowed))) |>
     send_prompt(ellmer_openai)
   expect_true(is.character(res_enum_vec) || is.factor(res_enum_vec))
-  if (is.factor(res_enum_vec)) res_enum_vec <- as.character(res_enum_vec)
+  if (is.factor(res_enum_vec)) {
+    res_enum_vec <- as.character(res_enum_vec)
+  }
   expect_equal(res_enum_vec, allowed)
 })
 
@@ -456,12 +467,17 @@ test_that("answer_as_json + llm_provider_ellmer: arrays of enums and objects com
     send_prompt(ellmer_openai)
 
   expect_true(is.list(res_pref))
-  primary <- if (is.factor(res_pref$primary))
-    as.character(res_pref$primary) else res_pref$primary
+  primary <- if (is.factor(res_pref$primary)) {
+    as.character(res_pref$primary)
+  } else {
+    res_pref$primary
+  }
   expect_true(primary %in% c("red", "green", "blue"))
 
   fallbacks <- res_pref$fallback
-  if (is.factor(fallbacks)) fallbacks <- as.character(fallbacks)
+  if (is.factor(fallbacks)) {
+    fallbacks <- as.character(fallbacks)
+  }
   expect_true(is.character(fallbacks))
   expect_true(all(fallbacks %in% c("red", "green", "blue")))
 })

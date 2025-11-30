@@ -25,7 +25,9 @@ extraction_fn_finish <- function(llm_response, lenience = TRUE) {
   )
 
   # Check if FINISH is mentioned in the response.
-  if (!stringr::str_detect(llm_response, "(?si)FINISH")) return(error_feedback)
+  if (!stringr::str_detect(llm_response, "(?si)FINISH")) {
+    return(error_feedback)
+  }
 
   # First attempt: Extract text between FINISH[...]
   extracted_response <- stringr::str_extract(
@@ -104,7 +106,9 @@ extraction_fn_json <- function(llm_response) {
     char <- matches[i]
     pos <- positions[i]
 
-    if (is.na(char)) next
+    if (is.na(char)) {
+      next
+    }
 
     if (char == "{") {
       if (length(stack) == 0) {

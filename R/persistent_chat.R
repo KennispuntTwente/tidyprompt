@@ -85,7 +85,9 @@ NULL
       response <- llm_provider$complete_chat(self$chat_history)
       self$chat_history <- response$completed
 
-      if (verbose) return(invisible(response))
+      if (verbose) {
+        return(invisible(response))
+      }
 
       return(response)
     },

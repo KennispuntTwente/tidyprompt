@@ -14,8 +14,9 @@
 #'
 #' @family text_helpers
 skim_with_labels_and_levels <- function(data) {
-  if (!requireNamespace("skimr", quietly = TRUE))
+  if (!requireNamespace("skimr", quietly = TRUE)) {
     stop("The 'skimr' package is required to use skim_with_labels_and_levels()")
+  }
   stopifnot(is.data.frame(data))
 
   # Extract labels and levels from data

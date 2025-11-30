@@ -136,7 +136,9 @@ answer_as_json <- function(
   }
 
   determine_type <- function(llm_provider = NULL) {
-    if (type != "auto") return(type)
+    if (type != "auto") {
+      return(type)
+    }
     valid_types <- c(
       "text-based",
       "openai",
@@ -154,9 +156,15 @@ answer_as_json <- function(
       return(provider_json_type)
     }
     provider_api_type <- llm_provider[["api_type"]]
-    if (isTRUE(provider_api_type == "openai")) return("openai")
-    if (isTRUE(provider_api_type == "ollama")) return("ollama")
-    if (isTRUE(provider_api_type == "ellmer")) return("ellmer")
+    if (isTRUE(provider_api_type == "openai")) {
+      return("openai")
+    }
+    if (isTRUE(provider_api_type == "ollama")) {
+      return("ollama")
+    }
+    if (isTRUE(provider_api_type == "ellmer")) {
+      return("ellmer")
+    }
     "text-based"
   }
 
@@ -185,7 +193,9 @@ answer_as_json <- function(
 
     if (t == "ollama") {
       # Native JSON mode; include JSON Schema if we have it
-      if (is.null(schema)) return(list(format = "json"))
+      if (is.null(schema)) {
+        return(list(format = "json"))
+      }
       if (!is.null(sch$json_schema)) {
         js <- sch$json_schema
         js$strict <- schema_strict
@@ -196,8 +206,9 @@ answer_as_json <- function(
 
     if (t == "openai") {
       # Native JSON mode; include JSON Schema if we have it
-      if (is.null(schema))
+      if (is.null(schema)) {
         return(list(response_format = list(type = "json_object")))
+      }
       if (!is.null(sch$json_schema)) {
         json_schema <- list(
           name = "schema",
@@ -214,9 +225,12 @@ answer_as_json <- function(
       return(list(response_format = list(type = "json_object")))
     }
 
-    if (t == "ollama_oo") return(list(format = "json"))
-    if (t == "openai_oo")
+    if (t == "ollama_oo") {
+      return(list(format = "json"))
+    }
+    if (t == "openai_oo") {
       return(list(response_format = list(type = "json_object")))
+    }
 
     NULL
   }
@@ -227,8 +241,12 @@ answer_as_json <- function(
     # If native schema support is in use AND we actually have the right form,
     # don't inject schema into the prompt.
     if (!is.null(schema)) {
-      if (t == "ellmer" && !is.null(sch$ellmer_type)) return(prompt_text)
-      if (t == "openai" && !is.null(sch$json_schema)) return(prompt_text)
+      if (t == "ellmer" && !is.null(sch$ellmer_type)) {
+        return(prompt_text)
+      }
+      if (t == "openai" && !is.null(sch$json_schema)) {
+        return(prompt_text)
+      }
       if (t == "ollama" && !is.null(sch$json_schema)) return(prompt_text)
     }
 
@@ -275,7 +293,9 @@ answer_as_json <- function(
     if (length(jsons) == 0) {
       return(llm_feedback("You must respond as a valid JSON object."))
     }
-    if (length(jsons) == 1) jsons <- jsons[[1]]
+    if (length(jsons) == 1) {
+      jsons <- jsons[[1]]
+    }
 
     # If we're not using provider-side schema enforcement, and we have a JSON Schema,
     # validate locally.
@@ -306,8 +326,11 @@ answer_as_json <- function(
             paste0(
               "Your response did not match the expected JSON schema.\n\n",
               df_to_string(error_details),
-              if (!is.null(schema_instruction))
-                paste0("\n\n", schema_instruction) else ""
+              if (!is.null(schema_instruction)) {
+                paste0("\n\n", schema_instruction)
+              } else {
+                ""
+              }
             )
           )
         )
@@ -348,7 +371,9 @@ jsonvalidate_installed <- function() {
 
 # Unwrap common JSON schema wrappers (OpenAI/our own)
 unwrap_json_schema <- function(x) {
-  if (!is.list(x)) return(x)
+  if (!is.list(x)) {
+    return(x)
+  }
 
   # Case 1: OpenAI-style response_format wrapper
   if (

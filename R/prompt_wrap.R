@@ -232,16 +232,19 @@ prompt_wrap_internal <- function(
         is.null
       )
     )
-  )
+  ) {
     stop(
       paste0(
         "At least one of modify_fn, extraction_fn, validation_fn, handler_fn, or parameter_fn",
         " must be provided"
       )
     )
+  }
 
   ensure_three_arguments <- function(func) {
-    if (is.null(func)) return(NULL)
+    if (is.null(func)) {
+      return(NULL)
+    }
 
     # Get the original arguments of the function
     original_args <- formals(func)
@@ -341,15 +344,17 @@ provider_prompt_wrap <- function(
   )
 
   if (type == "check") {
-    if (is.null(validation_fn))
+    if (is.null(validation_fn)) {
       stop("When using type 'check', validation_fn is required")
+    }
     if (
       !all(sapply(
         list(modify_fn, extraction_fn, handler_fn, parameter_fn),
         is.null
       ))
-    )
+    ) {
       stop("When using type 'check', only validation_fn is allowed")
+    }
   }
 
   if (
@@ -357,13 +362,15 @@ provider_prompt_wrap <- function(
       list(modify_fn, extraction_fn, validation_fn, handler_fn, parameter_fn),
       is.null
     ))
-  )
+  ) {
     stop(
       "At least one of modify_fn, extraction_fn, validation_fn, handler_fn, or parameter_fn must be provided"
     )
+  }
 
-  if (!is.null(parameter_fn) && length(formals(parameter_fn)) != 1)
+  if (!is.null(parameter_fn) && length(formals(parameter_fn)) != 1) {
     stop("parameter_fn must take one argument: llm_provider")
+  }
 
   structure(
     list(

@@ -87,7 +87,9 @@ answer_using_tools <- function(
   sanitize_name <- function(x) {
     x <- as.character(x)
     x <- gsub("[^A-Za-z0-9_]", "_", x)
-    if (!nzchar(x)) x <- "tool"
+    if (!nzchar(x)) {
+      x <- "tool"
+    }
     x
   }
 
@@ -129,12 +131,16 @@ answer_using_tools <- function(
   ellmer_tools <- list()
   for (nm in names(tools)) {
     dual <- normalize_tool_dual(tools[[nm]])
-    if (!is.null(dual$tidyprompt_tool)) tp_tools[[nm]] <- dual$tidyprompt_tool
+    if (!is.null(dual$tidyprompt_tool)) {
+      tp_tools[[nm]] <- dual$tidyprompt_tool
+    }
     if (!is.null(dual$ellmer_tool)) ellmer_tools[[nm]] <- dual$ellmer_tool
   }
 
   determine_type <- function(llm_provider = NULL) {
-    if (type != "auto") return(type)
+    if (type != "auto") {
+      return(type)
+    }
     valid_types <- c(
       "text-based",
       "openai",
@@ -149,9 +155,15 @@ answer_using_tools <- function(
     ) {
       return(provider_json_type)
     }
-    if (isTRUE(llm_provider$api_type == "openai")) return("openai")
-    if (isTRUE(llm_provider$api_type == "ollama")) return("ollama")
-    if (isTRUE(llm_provider$api_type == "ellmer")) return("ellmer")
+    if (isTRUE(llm_provider$api_type == "openai")) {
+      return("openai")
+    }
+    if (isTRUE(llm_provider$api_type == "ollama")) {
+      return("ollama")
+    }
+    if (isTRUE(llm_provider$api_type == "ellmer")) {
+      return("ellmer")
+    }
     "text-based"
   }
 
@@ -222,17 +234,25 @@ answer_using_tools <- function(
   handler_fn <- function(response, llm_provider) {
     t <- determine_type(llm_provider)
     # Native tool handling is done by the provider/model itself
-    if (t == "ellmer") return(response)
-    if (!(t %in% c("openai", "ollama"))) return(response)
+    if (t == "ellmer") {
+      return(response)
+    }
+    if (!(t %in% c("openai", "ollama"))) {
+      return(response)
+    }
 
     repeat {
       # 1) Normalize body
       body <- .parse_http_body(response$http$response$body)
-      if (is.null(body)) break
+      if (is.null(body)) {
+        break
+      }
 
       # 2) Extract tool calls for this provider type
       tool_calls <- .get_tool_calls(body, t)
-      if (length(tool_calls) == 0) break
+      if (length(tool_calls) == 0) {
+        break
+      }
 
       # 3) Rebuild messages from completed chat history, then add assistant tool_calls
       chat_history <- response$completed
@@ -255,7 +275,9 @@ answer_using_tools <- function(
       for (tool_call in tool_calls) {
         fn_info <- tool_call[["function"]] %||% list()
         tool_name <- fn_info$name %||% tool_call$name %||% NA_character_
-        if (is.na(tool_name) || !nzchar(tool_name)) next
+        if (is.na(tool_name) || !nzchar(tool_name)) {
+          next
+        }
         tool <- tp_tools[[tool_name]]
 
         # Parse arguments robustly
@@ -295,13 +317,19 @@ answer_using_tools <- function(
         }
 
         # Normalize result to character
-        if (length(result) > 0) result <- paste(result, collapse = ", ")
-        if (length(result) == 0) result <- ""
+        if (length(result) > 0) {
+          result <- paste(result, collapse = ", ")
+        }
+        if (length(result) == 0) {
+          result <- ""
+        }
         result <- as.character(result)
 
         # Add tool result to next request messages
         message_addition <- list(role = "tool", content = result)
-        if (t == "openai") message_addition$tool_call_id <- tool_call$id
+        if (t == "openai") {
+          message_addition$tool_call_id <- tool_call$id
+        }
         messages[[length(messages) + 1]] <- message_addition
 
         # Record result in chat history
@@ -334,7 +362,9 @@ answer_using_tools <- function(
 
   modify_fn <- function(original_prompt_text, llm_provider) {
     t <- determine_type(llm_provider)
-    if (t %in% c("openai", "ollama", "ellmer")) return(original_prompt_text)
+    if (t %in% c("openai", "ollama", "ellmer")) {
+      return(original_prompt_text)
+    }
 
     new_prompt <- glue::glue(
       "{original_prompt_text}\n\n",
@@ -379,12 +409,16 @@ answer_using_tools <- function(
 
   extraction_fn <- function(llm_response, llm_provider) {
     t <- determine_type(llm_provider)
-    if (t %in% c("openai", "ollama", "ellmer")) return(llm_response)
+    if (t %in% c("openai", "ollama", "ellmer")) {
+      return(llm_response)
+    }
 
     jsons <- extraction_fn_json(llm_response)
 
     fn_results <- lapply(jsons, function(json) {
-      if (is.null(json[["function"]])) return(NULL)
+      if (is.null(json[["function"]])) {
+        return(NULL)
+      }
 
       if (json[["function"]] %in% names(tp_tools)) {
         tool_function <- tp_tools[[json[["function"]]]]
@@ -399,8 +433,12 @@ answer_using_tools <- function(
           }
         )
 
-        if (length(result) > 0) result <- paste(result, collapse = ", ")
-        if (length(result) == 0) result <- ""
+        if (length(result) > 0) {
+          result <- paste(result, collapse = ", ")
+        }
+        if (length(result) == 0) {
+          result <- ""
+        }
 
         string_of_named_arguments <-
           paste(names(arguments), arguments, sep = " = ") |>
@@ -417,7 +455,9 @@ answer_using_tools <- function(
     })
     fn_results <- fn_results[!vapply(fn_results, is.null, logical(1))]
 
-    if (length(fn_results) == 0) return(llm_response)
+    if (length(fn_results) == 0) {
+      return(llm_response)
+    }
 
     llm_feedback(paste(fn_results, collapse = "\n\n"), tool_result = TRUE)
   }
@@ -470,7 +510,9 @@ answer_using_tools <- function(
     ))
   }
   # If it's already a list but without tool_calls, just return it
-  if (is.list(resp_body)) return(resp_body)
+  if (is.list(resp_body)) {
+    return(resp_body)
+  }
   NULL
 }
 
@@ -478,20 +520,30 @@ answer_using_tools <- function(
   calls <- list()
 
   format_args <- function(args) {
-    if (is.null(args)) return("{}")
-    if (is.character(args) && length(args) == 1) return(args)
+    if (is.null(args)) {
+      return("{}")
+    }
+    if (is.character(args) && length(args) == 1) {
+      return(args)
+    }
     safe <- tryCatch(
       jsonlite::toJSON(args, auto_unbox = TRUE),
       error = function(e) NULL
     )
-    if (is.null(safe)) return("{}")
+    if (is.null(safe)) {
+      return("{}")
+    }
     as.character(safe)
   }
 
   row_to_list <- function(df_row) {
-    if (!is.data.frame(df_row)) return(df_row)
+    if (!is.data.frame(df_row)) {
+      return(df_row)
+    }
     lapply(df_row, function(cell) {
-      if (is.list(cell) && length(cell) == 1) return(cell[[1]])
+      if (is.list(cell) && length(cell) == 1) {
+        return(cell[[1]])
+      }
       cell
     })
   }
@@ -500,29 +552,43 @@ answer_using_tools <- function(
   if (!is.null(body$choices)) {
     choices <- body$choices
     if (is.data.frame(choices)) {
-      choices <- lapply(seq_len(nrow(choices)), function(i) row_to_list(choices[i, , drop = FALSE]))
+      choices <- lapply(seq_len(nrow(choices)), function(i) {
+        row_to_list(choices[i, , drop = FALSE])
+      })
     }
     if (is.list(choices)) {
       for (choice in choices) {
         msg <- choice$message %||% choice[["message"]]
-        if (is.null(msg)) next
-        if (is.data.frame(msg)) msg <- row_to_list(msg[1, , drop = FALSE])
+        if (is.null(msg)) {
+          next
+        }
+        if (is.data.frame(msg)) {
+          msg <- row_to_list(msg[1, , drop = FALSE])
+        }
         tcs <- msg$tool_calls %||% msg[["tool_calls"]]
-        if (is.null(tcs) || length(tcs) == 0) next
+        if (is.null(tcs) || length(tcs) == 0) {
+          next
+        }
 
         if (is.data.frame(tcs)) {
-          tcs <- lapply(seq_len(nrow(tcs)), function(i) row_to_list(tcs[i, , drop = FALSE]))
+          tcs <- lapply(seq_len(nrow(tcs)), function(i) {
+            row_to_list(tcs[i, , drop = FALSE])
+          })
         }
 
         for (tc in tcs) {
           fn <- tc[["function"]]
-          if (is.null(fn)) next
+          if (is.null(fn)) {
+            next
+          }
           calls[[length(calls) + 1]] <- list(
             id = tc$id %||% NA_character_,
             type = tc$type %||% "function",
             "function" = list(
               name = fn$name %||% tc$name %||% "",
-              arguments = format_args(fn$arguments %||% tc$arguments %||% fn$args)
+              arguments = format_args(
+                fn$arguments %||% tc$arguments %||% fn$args
+              )
             )
           )
         }
@@ -536,12 +602,16 @@ answer_using_tools <- function(
     output <- body$output
 
     if (is.data.frame(output)) {
-      output <- lapply(seq_len(nrow(output)), function(i) row_to_list(output[i, , drop = FALSE]))
+      output <- lapply(seq_len(nrow(output)), function(i) {
+        row_to_list(output[i, , drop = FALSE])
+      })
     }
 
     if (is.list(output)) {
       for (item in output) {
-        if (!is.list(item)) next
+        if (!is.list(item)) {
+          next
+        }
         type <- item$type %||% NULL
 
         if (identical(type, "function_call")) {
@@ -564,13 +634,19 @@ answer_using_tools <- function(
               content_part <- row_to_list(content_part[1, , drop = FALSE])
             }
             tc <- content_part$tool_calls %||% content_part[["tool_calls"]]
-            if (is.null(tc)) next
+            if (is.null(tc)) {
+              next
+            }
             if (is.data.frame(tc)) {
-              tc <- lapply(seq_len(nrow(tc)), function(i) row_to_list(tc[i, , drop = FALSE]))
+              tc <- lapply(seq_len(nrow(tc)), function(i) {
+                row_to_list(tc[i, , drop = FALSE])
+              })
             }
             for (tool_call in tc) {
               fn <- tool_call[["function"]]
-              if (is.null(fn)) next
+              if (is.null(fn)) {
+                next
+              }
               calls[[length(calls) + 1]] <- list(
                 id = tool_call$id %||% NA_character_,
                 type = tool_call$type %||% "function",
@@ -614,7 +690,9 @@ answer_using_tools <- function(
       if (is.list(tc)) {
         fn <- tc[["function"]] %||% tc[["function"]] %||% NULL
       }
-      if (is.null(fn)) next
+      if (is.null(fn)) {
+        next
+      }
       calls[[length(calls) + 1]] <- list(
         "function" = as.list(fn)
       )
@@ -628,8 +706,12 @@ answer_using_tools <- function(
   if (!is.null(body$tool_calls) && length(body$tool_calls) > 0) {
     return(body$tool_calls)
   }
-  if (t == "openai") return(.normalize_openai_tool_calls(body))
-  if (t == "ollama") return(.normalize_ollama_tool_calls(body))
+  if (t == "openai") {
+    return(.normalize_openai_tool_calls(body))
+  }
+  if (t == "ollama") {
+    return(.normalize_ollama_tool_calls(body))
+  }
   list()
 }
 
@@ -640,7 +722,9 @@ answer_using_tools <- function(
     if (is.list(fn)) {
       args_raw <- fn$arguments %||% fn$args %||% NULL
     }
-    if (is.null(args_raw)) return(list())
+    if (is.null(args_raw)) {
+      return(list())
+    }
     if (is.character(args_raw) && length(args_raw) == 1) {
       parsed <- tryCatch(
         jsonlite::fromJSON(args_raw, simplifyVector = FALSE),
@@ -648,7 +732,9 @@ answer_using_tools <- function(
       )
       if (!is.null(parsed)) return(parsed)
     }
-    if (is.list(args_raw)) return(args_raw)
+    if (is.list(args_raw)) {
+      return(args_raw)
+    }
     return(as.list(args_raw))
   }
   # OpenAI: try "arguments" then "args", both JSON
@@ -783,7 +869,9 @@ tools_add_docs <- function(
         length(docs$return$description) == 1
   )
 
-  if (is.null(docs$name)) docs$name <- deparse(substitute(func))
+  if (is.null(docs$name)) {
+    docs$name <- deparse(substitute(func))
+  }
 
   attr(func, "tidyprompt_tool_docs") <- docs
 
@@ -826,7 +914,9 @@ tools_get_docs <- function(func, name = NULL) {
   )
 
   docs <- list()
-  if (is.null(name)) name <- deparse(substitute(func))
+  if (is.null(name)) {
+    name <- deparse(substitute(func))
+  }
 
   if (!is.null(attr(func, "tidyprompt_tool_docs"))) {
     docs <- attr(func, "tidyprompt_tool_docs")
@@ -1030,11 +1120,12 @@ gd_get_args_defaults_types <- function(func) {
 #' @noRd
 #' @keywords internal
 gd_infer_type_from_default <- function(default_value) {
-  is_whole_number <- function(x)
+  is_whole_number <- function(x) {
     tryCatch(
       x %% 1 == 0,
       error = function(e) FALSE
     )
+  }
 
   infer_list_types <- function(lst) {
     # Recursively infer types for each element in a named list
@@ -1062,7 +1153,9 @@ gd_infer_type_from_default <- function(default_value) {
       # Treat list like c only if it has no names
       values <- default_value[-1]
 
-      if (length(values) == 0) return("vector unknown")
+      if (length(values) == 0) {
+        return("vector unknown")
+      }
 
       if (length(values) > 1 && all(sapply(values, is.character))) {
         # Assuming it's a match.arg-type vector
@@ -1118,16 +1211,17 @@ gd_get_help_file <- function(file) {
   path <- dirname(file)
   dirpath <- dirname(path)
 
-  if (!file.exists(dirpath))
+  if (!file.exists(dirpath)) {
     stop(
       gettextf("invalid %s argument", sQuote("file")),
       domain = NA
     )
+  }
 
   pkgname <- basename(dirpath)
   RdDB <- file.path(path, pkgname)
 
-  if (!file.exists(paste0(RdDB, ".rdx")))
+  if (!file.exists(paste0(RdDB, ".rdx"))) {
     stop(
       gettextf(
         "package %s exists but was not installed under R >= 2.10.0 so help cannot be accessed",
@@ -1135,6 +1229,7 @@ gd_get_help_file <- function(file) {
       ),
       domain = NA
     )
+  }
 
   # internal function from tools
   fetchRdDB <- function(filebase, key = NULL) {
@@ -1150,7 +1245,7 @@ gd_get_help_file <- function(file) {
       }
 
       if (length(key)) {
-        if (!key %in% vars)
+        if (!key %in% vars) {
           stop(
             gettextf(
               "No help on %s found in RdDB %s",
@@ -1159,6 +1254,7 @@ gd_get_help_file <- function(file) {
             ),
             domain = NA
           )
+        }
 
         fetch(key)
       } else {
@@ -1194,7 +1290,9 @@ gd_parse_help_text <- function(help_text) {
     repeat {
       # Replace overstruck sequences
       new_text <- gsub("(.)(\\x08)(.)", "\\3", text, perl = TRUE)
-      if (identical(new_text, text)) break
+      if (identical(new_text, text)) {
+        break
+      }
       text <- new_text
     }
     return(text)
@@ -1315,7 +1413,9 @@ tools_docs_to_r_json_schema <- function(
     r_type <- arg$type
 
     normalize_r_type <- function(x) {
-      if (is.list(x) || is.null(x)) return(x)
+      if (is.list(x) || is.null(x)) {
+        return(x)
+      }
       x <- tolower(trimws(as.character(x)))
       switch(
         x,
@@ -1339,8 +1439,11 @@ tools_docs_to_r_json_schema <- function(
       for (name in names(r_type)) {
         sub_arg <- list(
           type = r_type[[name]],
-          default_value = if (!is.null(arg$default_value[[name]]))
-            arg$default_value[[name]] else NULL
+          default_value = if (!is.null(arg$default_value[[name]])) {
+            arg$default_value[[name]]
+          } else {
+            NULL
+          }
         )
         prop$properties[[name]] <- process_argument(sub_arg)
       }
@@ -1459,7 +1562,9 @@ tools_docs_to_r_json_schema <- function(
     properties[[arg_name]] <- prop
   }
 
-  if (all_required) required_args <- names(args)
+  if (all_required) {
+    required_args <- names(args)
+  }
 
   list(
     type = "object",
@@ -1606,11 +1711,12 @@ tools_docs_to_text <- function(docs, with_arguments = TRUE) {
     "  function name: {docs$name}",
     .trim = FALSE
   )
-  if (length(docs$description) > 0)
+  if (length(docs$description) > 0) {
     tool_llm_text <- glue::glue(
       "{tool_llm_text}\n  description: {docs$description}",
       .trim = FALSE
     )
+  }
   if (length(docs$arguments) > 0 & with_arguments) {
     tool_llm_text <- glue::glue(
       "{tool_llm_text}\n  arguments:",
@@ -1619,11 +1725,12 @@ tools_docs_to_text <- function(docs, with_arguments = TRUE) {
       .trim = FALSE
     )
   }
-  if (length(docs$return$description) > 0)
+  if (length(docs$return$description) > 0) {
     tool_llm_text <- glue::glue(
       "{tool_llm_text}\n  return value: {docs$return$description}",
       .trim = FALSE
     )
+  }
 
   return(tool_llm_text)
 }

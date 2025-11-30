@@ -113,7 +113,9 @@ req_llm_stream <- function(
   partial_response <- ""
 
   emit_chunk <- function(text) {
-    if (is.null(text) || !nzchar(text)) return(invisible(NULL))
+    if (is.null(text) || !nzchar(text)) {
+      return(invisible(NULL))
+    }
 
     partial_response <<- paste0(partial_response, as.character(text))
 
@@ -149,14 +151,21 @@ req_llm_stream <- function(
   if (api_type == "ollama") {
     while (!httr2::resp_stream_is_complete(resp)) {
       lines <- httr2::resp_stream_lines(resp, lines = 1, warn = FALSE)
-      if (length(lines) == 0) next
+      if (length(lines) == 0) {
+        next
+      }
       for (line in lines) {
-        if (!nzchar(line)) next
+        if (!nzchar(line)) {
+          next
+        }
         data <- tryCatch(jsonlite::fromJSON(line), error = function(e) NULL)
-        if (is.null(data)) next
+        if (is.null(data)) {
+          next
+        }
 
-        if (is.null(role) && !is.null(data$message$role))
+        if (is.null(role) && !is.null(data$message$role)) {
           role <- data$message$role
+        }
         if (!is.null(data$message$content)) {
           message_accumulator <- paste0(
             message_accumulator,
@@ -169,18 +178,24 @@ req_llm_stream <- function(
     emit_chunk("\n")
   } else if (!using_responses) {
     # OpenAI Chat Completions (SSE) — use resp_stream_sse for robust parsing
-    if (is.null(role)) role <- "assistant"
+    if (is.null(role)) {
+      role <- "assistant"
+    }
 
     repeat {
       ev <- httr2::resp_stream_sse(resp)
-      if (!nzchar(ev$data)) next # keepalive / empty
+      if (!nzchar(ev$data)) {
+        next
+      } # keepalive / empty
       if (identical(ev$data, "[DONE]")) {
         cat("\n")
         break
       }
 
       payload <- tryCatch(jsonlite::fromJSON(ev$data), error = function(e) NULL)
-      if (is.null(payload)) next
+      if (is.null(payload)) {
+        next
+      }
 
       # tool calls (function calling) support
       tc <- payload$choices[1, ]$delta$tool_calls
@@ -197,9 +212,13 @@ req_llm_stream <- function(
         payload$choices[1, ]$delta,
         error = function(e) NULL
       )
-      if (is.null(d)) next
+      if (is.null(d)) {
+        next
+      }
 
-      if (!is.null(d$role) && is.null(role)) role <- d$role
+      if (!is.null(d$role) && is.null(role)) {
+        role <- d$role
+      }
 
       # text tokens
       if (!is.null(d$content)) {
@@ -212,7 +231,9 @@ req_llm_stream <- function(
     }
   } else {
     # OpenAI Responses API (SSE)
-    if (is.null(role)) role <- "assistant"
+    if (is.null(role)) {
+      role <- "assistant"
+    }
 
     response_id <- NULL
     tool_calls <- list()
@@ -224,19 +245,24 @@ req_llm_stream <- function(
         emit_chunk("\n")
         break
       }
-      if (!nzchar(ev$data) || identical(ev$data, "[DONE]")) next
+      if (!nzchar(ev$data) || identical(ev$data, "[DONE]")) {
+        next
+      }
 
       payload <- tryCatch(
         jsonlite::fromJSON(ev$data, simplifyVector = FALSE),
         error = function(e) NULL
       )
-      if (is.null(payload)) next
+      if (is.null(payload)) {
+        next
+      }
 
       tp <- payload$type %||% ""
 
       # capture id once
-      if (is.null(response_id) && !is.null(payload$id))
+      if (is.null(response_id) && !is.null(payload$id)) {
         response_id <- payload$id
+      }
 
       # 1) normal text deltas
       if (
@@ -284,7 +310,9 @@ req_llm_stream <- function(
   }
 
   # attach tool_calls and response_id so the caller can act
-  if (!is.list(resp$body)) resp$body <- list()
+  if (!is.list(resp$body)) {
+    resp$body <- list()
+  }
   resp$body$tool_calls <- tool_calls
   if (exists("response_id")) {
     resp$body$response_id <- response_id
@@ -356,8 +384,11 @@ append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
   tool_call <- new_tool_calls[[1]]
   id <- tool_call$id
 
-  last_id <- if (length(tool_calls) > 0)
-    tool_calls[[length(tool_calls)]]$id else NULL
+  last_id <- if (length(tool_calls) > 0) {
+    tool_calls[[length(tool_calls)]]$id
+  } else {
+    NULL
+  }
 
   if (!is.null(id) & (is.null(last_id) || (id != last_id))) {
     tool_calls <- append(
@@ -397,11 +428,17 @@ is_openai_responses_endpoint <- function(req) {
 }
 
 normalize_openai_request <- function(req, api_type) {
-  if (api_type != "openai") return(req)
-  if (!is_openai_responses_endpoint(req)) return(req)
+  if (api_type != "openai") {
+    return(req)
+  }
+  if (!is_openai_responses_endpoint(req)) {
+    return(req)
+  }
 
   body_obj <- tryCatch(req$body$data, error = function(e) NULL)
-  if (!is.list(body_obj)) return(req)
+  if (!is.list(body_obj)) {
+    return(req)
+  }
 
   # Chat Completions -> Responses rename
   if (!is.null(body_obj$messages)) {
@@ -411,7 +448,9 @@ normalize_openai_request <- function(req, api_type) {
       m$tool_calls <- NULL
       m$function_call <- NULL
       m$name <- NULL
-      if (is.null(m$content)) m$content <- ""
+      if (is.null(m$content)) {
+        m$content <- ""
+      }
 
       # Convert CC tool-role messages to typed items for Responses
       if (identical(m$role, "tool") && !is.null(m$tool_call_id)) {
@@ -432,10 +471,11 @@ normalize_openai_request <- function(req, api_type) {
     has_fc_for <- function(call_id, items) {
       any(vapply(
         items,
-        function(x)
+        function(x) {
           is.list(x) &&
             identical(x$type, "function_call") &&
-            identical(x$call_id, call_id),
+            identical(x$call_id, call_id)
+        },
         logical(1)
       ))
     }
@@ -460,7 +500,9 @@ normalize_openai_request <- function(req, api_type) {
   # response_format -> text.format  (Responses API)
   if (!is.null(body_obj$response_format) && is.null(body_obj$text$format)) {
     rf <- body_obj$response_format
-    if (is.character(rf)) rf <- list(type = rf)
+    if (is.character(rf)) {
+      rf <- list(type = rf)
+    }
 
     fmt <- NULL
     if (identical(rf$type, "json_object")) {
@@ -490,7 +532,9 @@ normalize_openai_request <- function(req, api_type) {
       item <- body_obj$input[[i]]
 
       # skip non-lists (e.g., atomic strings) or items without a role
-      if (!(is.list(item) && !is.null(item$role))) next
+      if (!(is.list(item) && !is.null(item$role))) {
+        next
+      }
 
       # If any lingering tool-role items slipped through, degrade to "system"
       # (You already convert tool messages above; this is just a fallback.)
@@ -511,13 +555,18 @@ normalize_openai_request <- function(req, api_type) {
   # Tools normalization for Responses API
   if (!is.null(body_obj$tools) && is.list(body_obj$tools)) {
     body_obj$tools <- lapply(body_obj$tools, function(t) {
-      if (is.null(t$type) && !is.null(t$`function`)) t$type <- "function"
-      if (is.null(t$name) && !is.null(t$`function`$name))
+      if (is.null(t$type) && !is.null(t$`function`)) {
+        t$type <- "function"
+      }
+      if (is.null(t$name) && !is.null(t$`function`$name)) {
         t$name <- t$`function`$name
-      if (is.null(t$description) && !is.null(t$`function`$description))
+      }
+      if (is.null(t$description) && !is.null(t$`function`$description)) {
         t$description <- t$`function`$description
-      if (is.null(t$parameters) && !is.null(t$`function`$parameters))
+      }
+      if (is.null(t$parameters) && !is.null(t$`function`$parameters)) {
         t$parameters <- t$`function`$parameters
+      }
       t
     })
   }

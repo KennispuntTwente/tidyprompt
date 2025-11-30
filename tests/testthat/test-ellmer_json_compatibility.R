@@ -21,7 +21,9 @@ strip_nulls <- function(x) {
 # - sort `properties` by name at every depth
 # - sort `required` character vectors
 canonicalize_schema <- function(x) {
-  if (!is.list(x)) return(x)
+  if (!is.list(x)) {
+    return(x)
+  }
 
   x <- strip_nulls(x)
 
@@ -47,7 +49,9 @@ canonicalize_schema <- function(x) {
 
   # Recurse over any other nested lists
   for (nm in names(x)) {
-    if (nm %in% c("properties", "items")) next
+    if (nm %in% c("properties", "items")) {
+      next
+    }
     if (is.list(x[[nm]])) x[[nm]] <- canonicalize_schema(x[[nm]])
   }
   x

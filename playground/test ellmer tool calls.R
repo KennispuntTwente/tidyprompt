@@ -10,7 +10,10 @@ get_current_time <- ellmer::tool(
   name = "get_current_time",
   description = "Returns the current time.",
   arguments = list(
-    tz = ellmer::type_string("IANA time zone, e.g. 'Europe/Amsterdam'.", required = FALSE)
+    tz = ellmer::type_string(
+      "IANA time zone, e.g. 'Europe/Amsterdam'.",
+      required = FALSE
+    )
   )
 )
 
@@ -33,17 +36,19 @@ calc_sum <- tools_add_docs(
 lp <- llm_provider_ellmer(ellmer::chat_openai(model = "gpt-4o-mini"))
 
 ## 3) Build prompt with tool calling -----------------------------------------
-p <- tidyprompt("
+p <- tidyprompt(
+  "
   You can call tools if needed.
   1) Get the current time for Europe/Amsterdam (use get_current_time).
   2) Add 2 and 3 (use calc_sum).
   Then reply with a single short sentence mentioning both results.
-")
+"
+)
 
 p_tools <- answer_using_tools(
   p,
   tools = list(get_current_time, calc_sum), # mix of ToolDef + function
-  type  = "auto"                            # will resolve to 'ellmer' for your provider
+  type = "auto" # will resolve to 'ellmer' for your provider
 )
 
 ## 4) Send it -----------------------------------------------------------------

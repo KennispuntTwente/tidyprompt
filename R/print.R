@@ -67,16 +67,22 @@ print.Tidyprompt <- function(x, ...) {
 }
 
 col_blue <- function(text) {
-  if (requireNamespace("cli", quietly = TRUE)) return(cli::col_blue(text))
+  if (requireNamespace("cli", quietly = TRUE)) {
+    return(cli::col_blue(text))
+  }
   text
 }
 
 col_green <- function(text) {
-  if (requireNamespace("cli", quietly = TRUE)) return(cli::col_green(text))
+  if (requireNamespace("cli", quietly = TRUE)) {
+    return(cli::col_green(text))
+  }
   text
 }
 
 col_silver <- function(text) {
-  if (requireNamespace("cli", quietly = TRUE)) return(cli::col_silver(text))
+  if (requireNamespace("cli", quietly = TRUE)) {
+    return(cli::col_silver(text))
+  }
   text
 }

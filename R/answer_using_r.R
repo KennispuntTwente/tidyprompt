@@ -124,16 +124,22 @@ answer_using_r <- function(
     is.list(r_session_options)
   )
 
-  if (evaluate_code & !requireNamespace("callr", quietly = TRUE))
+  if (evaluate_code & !requireNamespace("callr", quietly = TRUE)) {
     stop("The 'callr' package is required to evaluate R code.")
-  if (!evaluate_code & output_as_tool) output_as_tool <- FALSE
-  if (output_as_tool) return_mode <- "llm_answer"
+  }
+  if (!evaluate_code & output_as_tool) {
+    output_as_tool <- FALSE
+  }
+  if (output_as_tool) {
+    return_mode <- "llm_answer"
+  }
   if (
     !evaluate_code & return_mode %in% c("console", "object", "formatted_output")
-  )
+  ) {
     stop(
       "The return mode must be 'full', 'code', or 'llm_answer' if 'evaluate_code' is FALSE"
     )
+  }
 
   ## Validate evaluation_session & load packages
 
@@ -354,8 +360,12 @@ answer_using_r <- function(
     return_list$code <- parsed_code
 
     if (!evaluate_code) {
-      if (return_mode == "code") return(parsed_code)
-      if (return_mode == "llm_answer") return(x)
+      if (return_mode == "code") {
+        return(parsed_code)
+      }
+      if (return_mode == "llm_answer") {
+        return(x)
+      }
       return(return_list)
     }
 
@@ -441,12 +451,24 @@ answer_using_r <- function(
       return(llm_feedback(return_list$formatted_output, tool_result = TRUE))
     }
 
-    if (return_mode == "full") return(return_list)
-    if (return_mode == "code") return(return_list$code)
-    if (return_mode == "console") return(return_list$output$stdout)
-    if (return_mode == "object") return(return_list$output$result)
-    if (return_mode == "formatted_output") return(return_list$formatted_output)
-    if (return_mode == "llm_answer") return(x)
+    if (return_mode == "full") {
+      return(return_list)
+    }
+    if (return_mode == "code") {
+      return(return_list$code)
+    }
+    if (return_mode == "console") {
+      return(return_list$output$stdout)
+    }
+    if (return_mode == "object") {
+      return(return_list$output$result)
+    }
+    if (return_mode == "formatted_output") {
+      return(return_list$formatted_output)
+    }
+    if (return_mode == "llm_answer") {
+      return(x)
+    }
 
     return(output$stdout)
   }

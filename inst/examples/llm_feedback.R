@@ -1,6 +1,7 @@
 # Example usage within a validation function similar to the one in 'answer_as_integer()':
 validation_fn <- function(x, min = 0, max = 100) {
-  if (x != floor(x)) { # Not a whole number
+  if (x != floor(x)) {
+    # Not a whole number
     return(llm_feedback(
       "You must answer with only an integer (use no other characters)."
     ))

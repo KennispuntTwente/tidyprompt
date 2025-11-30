@@ -15,7 +15,11 @@ test_that("llm_provider_ellmer forwards add_image URL parts via ellmer helpers",
   )
 
   chat <- fake_ellmer_chat()
-  prov <- llm_provider_ellmer(chat, parameters = list(stream = FALSE), verbose = FALSE)
+  prov <- llm_provider_ellmer(
+    chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
 
   tp <- tidyprompt("Describe the image") |>
     add_image("https://example.com/cat.jpg")
@@ -24,17 +28,26 @@ test_that("llm_provider_ellmer forwards add_image URL parts via ellmer helpers",
   expect_true("https://example.com/cat.jpg" %in% rec_env$urls)
 
   turn <- chat$last_method$turns[[length(chat$last_method$turns)]]
-  turn_contents <- tryCatch({
-    if (base::isS4(turn) && "contents" %in% methods::slotNames(turn)) {
-      methods::slot(turn, "contents")
-    } else if (inherits(turn, "S7_object") && requireNamespace("S7", quietly = TRUE)) {
-      props <- S7::props(turn)
-      props[["contents"]] %||% list()
-    } else if (!inherits(turn, "S7_object") && !base::isS4(turn) && !is.null(turn[["contents"]])) {
-      turn[["contents"]]
-    } else {
-      list()
-    }
-  }, error = function(e) list())
+  turn_contents <- tryCatch(
+    {
+      if (base::isS4(turn) && "contents" %in% methods::slotNames(turn)) {
+        methods::slot(turn, "contents")
+      } else if (
+        inherits(turn, "S7_object") && requireNamespace("S7", quietly = TRUE)
+      ) {
+        props <- S7::props(turn)
+        props[["contents"]] %||% list()
+      } else if (
+        !inherits(turn, "S7_object") &&
+          !base::isS4(turn) &&
+          !is.null(turn[["contents"]])
+      ) {
+        turn[["contents"]]
+      } else {
+        list()
+      }
+    },
+    error = function(e) list()
+  )
   expect_true(length(turn_contents) >= 2)
 })

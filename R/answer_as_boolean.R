@@ -26,16 +26,18 @@ answer_as_boolean <- function(
   add_instruction_to_prompt = TRUE
 ) {
   instruction <- "You must answer with only TRUE or FALSE (use no other characters)."
-  if (!is.null(true_definition))
+  if (!is.null(true_definition)) {
     instruction <- paste(
       instruction,
       glue::glue("TRUE means: {true_definition}.")
     )
-  if (!is.null(false_definition))
+  }
+  if (!is.null(false_definition)) {
     instruction <- paste(
       instruction,
       glue::glue("FALSE means: {false_definition}.")
     )
+  }
 
   modify_fn <- function(original_prompt_text) {
     if (!add_instruction_to_prompt) {

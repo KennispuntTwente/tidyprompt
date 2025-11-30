@@ -79,19 +79,25 @@ answer_using_sql <- function(
     is.logical(output_as_tool)
   )
 
-  if (!requireNamespace("DBI", quietly = TRUE))
+  if (!requireNamespace("DBI", quietly = TRUE)) {
     stop(
       "'DBI' package is required; please install it using 'install.packages(\"DBI\")"
     )
+  }
 
-  if (!evaluate_code & output_as_tool) output_as_tool <- FALSE
-  if (output_as_tool) return_mode <- "llm_answer"
+  if (!evaluate_code & output_as_tool) {
+    output_as_tool <- FALSE
+  }
+  if (output_as_tool) {
+    return_mode <- "llm_answer"
+  }
   if (
     !evaluate_code & return_mode %in% c("console", "object", "formatted_output")
-  )
+  ) {
     stop(
       "The return mode must be 'full', 'code', or 'llm_answer' if 'evaluate_code' is FALSE"
     )
+  }
 
   # Retrieve list of tables if needed
   tables <- character(0)
@@ -190,10 +196,16 @@ answer_using_sql <- function(
 
     if (!evaluate_code) {
       # Just return the code or final answer
-      if (return_mode == "code") return(sql_code)
-      if (return_mode == "llm_answer") return(x)
+      if (return_mode == "code") {
+        return(sql_code)
+      }
+      if (return_mode == "llm_answer") {
+        return(x)
+      }
       # 'full' without evaluation just returns code + llm_answer
-      if (return_mode == "full") return(return_list)
+      if (return_mode == "full") {
+        return(return_list)
+      }
       return(sql_code)
     }
 
@@ -232,13 +244,24 @@ answer_using_sql <- function(
     }
 
     # Return according to return_mode
-    if (return_mode == "full") return(return_list)
-    if (return_mode == "code") return(sql_code)
-    if (return_mode == "console")
+    if (return_mode == "full") {
+      return(return_list)
+    }
+    if (return_mode == "code") {
+      return(sql_code)
+    }
+    if (return_mode == "console") {
       return(utils::capture.output(print(query_res)) |> paste(collapse = "\n"))
-    if (return_mode == "object") return(query_res)
-    if (return_mode == "formatted_output") return(formatted_output)
-    if (return_mode == "llm_answer") return(x)
+    }
+    if (return_mode == "object") {
+      return(query_res)
+    }
+    if (return_mode == "formatted_output") {
+      return(formatted_output)
+    }
+    if (return_mode == "llm_answer") {
+      return(x)
+    }
 
     return(return_list)
   }

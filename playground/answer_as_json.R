@@ -70,7 +70,9 @@ answer_as_json <- function(
     }
   }
 
-  if (type == "ollama") prompt$parameters$format <- "json"
+  if (type == "ollama") {
+    prompt$parameters$format <- "json"
+  }
 
   schema_instruction <- NULL
   if (type %in% c("text-based", "ollama") & !is.null(schema)) {
@@ -103,15 +105,18 @@ answer_as_json <- function(
   }
 
   modify_fn <- function(prompt_text) {
-    if (type == "openai" & !is.null(schema)) return(prompt_text)
+    if (type == "openai" & !is.null(schema)) {
+      return(prompt_text)
+    }
 
     prompt_text <- glue::glue(
       "{prompt_text}\n\n",
       "Your must format your response as a JSON object."
     )
 
-    if ((type %in% c("text-based", "ollama")) & !is.null(schema_instruction))
+    if ((type %in% c("text-based", "ollama")) & !is.null(schema_instruction)) {
       prompt_text <- paste0(prompt_text, "\n\n", schema_instruction)
+    }
 
     return(prompt_text)
   }
@@ -119,14 +124,17 @@ answer_as_json <- function(
   extraction_fn <- function(llm_response) {
     jsons <- extraction_fn_json(llm_response)
 
-    if (length(jsons) == 0)
+    if (length(jsons) == 0) {
       return(
         llm_feedback(
           "You must respond as a valid JSON object."
         )
       )
+    }
 
-    if (length(jsons) == 1) jsons <- jsons[[1]]
+    if (length(jsons) == 1) {
+      jsons <- jsons[[1]]
+    }
 
     if (
       !is.null(schema) &

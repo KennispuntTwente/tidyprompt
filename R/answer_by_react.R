@@ -69,7 +69,9 @@ answer_by_react <- function(
   }
 
   extraction_fn <- function(llm_response) {
-    if (!extract_from_finish_brackets) return(llm_response)
+    if (!extract_from_finish_brackets) {
+      return(llm_response)
+    }
     extraction_fn_finish(llm_response, extraction_lenience)
   }
 
