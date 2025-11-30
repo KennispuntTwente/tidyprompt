@@ -15,3 +15,10 @@ tidyprompt.Rproj
 /revdep
 tests/testthat/Rplots.pdf
 cat.jpg
+vignettes/streaming_shiny_ipc.R
+vignettes/creating_prompt_wraps.html
+vignettes/creating_prompt_wraps.R
+vignettes/getting_started.html
+vignettes/getting_started.R
+vignettes/sentiment_analysis.html
+vignettes/streaming_shiny_ipc.html
