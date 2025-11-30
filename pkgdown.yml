@@ -6,7 +6,7 @@ articles:
   getting_started: getting_started.html
   sentiment_analysis: sentiment_analysis.html
   streaming_shiny_ipc: streaming_shiny_ipc.html
-last_built: 2025-11-30T15:41Z
+last_built: 2025-11-30T16:16Z
 urls:
   reference: https://kennispunttwente.github.io/tidyprompt/reference
   article: https://kennispunttwente.github.io/tidyprompt/articles
