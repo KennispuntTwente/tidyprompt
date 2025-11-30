@@ -1,10 +1,10 @@
 # Add an image to a tidyprompt (multimodal)
 
-**\[experimental\]** Attach an image to the last user message by adding
-a
-[`prompt_wrap()`](https://kennispunttwente.github.io/tidyprompt/reference/prompt_wrap.md)
-that configures providers to send image content alongside the text
-prompt.
+**\[experimental\]**
+
+Attach an image to a
+[`tidyprompt()`](https://kennispunttwente.github.io/tidyprompt/reference/tidyprompt.md)
+for use with multimodal LLMs.
 
 Supports 'ollama', 'openai' (completions & responses) and
 'ellmer'-backed providers. Can convert from and to 'ellmer' content
@@ -55,7 +55,7 @@ add_image(
     an image resource (not an HTML page) and are transmitted as a scalar
     string `image_url` with optional `detail`. Supplying a webpage URL
     (e.g. a Wikipedia media viewer link) will result in a provider 400
-    error expecting an image URL string.
+    error expecting an image URL string
 
 - alt:
 
@@ -74,9 +74,9 @@ add_image(
 
 A
 [`tidyprompt()`](https://kennispunttwente.github.io/tidyprompt/reference/tidyprompt.md)
-with a multimodal
+with an added
 [`prompt_wrap()`](https://kennispunttwente.github.io/tidyprompt/reference/prompt_wrap.md)
-attached
+which will attach an image to the prompt for use with multimodal LLMs
 
 ## See also
 
@@ -104,3 +104,53 @@ Other miscellaneous_prompt_wraps:
 [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`quit_if()`](https://kennispunttwente.github.io/tidyprompt/reference/quit_if.md),
 [`set_system_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/set_system_prompt.md)
+
+## Examples
+
+``` r
+# Create a prompt with a remote image (web URL)
+image_prompt <- "What is shown in this image?" |>
+  add_image("https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg")
+
+# Create a prompt with a local image (file path)
+# First save an image to a temporary file
+cat_img_file <- tempfile(fileext = ".jpg")
+download.file(
+  "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg",
+  destfile = cat_img_file,
+  mode = "wb"
+)
+# Then build prompt with local image
+local_image_prompt <- "What is shown in this image?" |>
+  add_image(cat_img_file)
+
+# Create a prompt with a plot (e.g., 'ggplot2' plot)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plot <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
+    ggplot2::geom_point()
+  plot_prompt <- "Describe this plot" |>
+    add_image(plot)
+}
+#> Error in .tp_normalize_image_input(image, mime = mime, alt = alt, detail = detail): Unsupported `image` input (class: data.frame); provide a url, file path, base64 string, or raw bytes.
+
+# Send prompt to different LLM providers
+# (example is not run because it requires configured LLM providers)
+if (FALSE) { # \dontrun{
+# OpenAI-compatible
+send_prompt(image_prompt, llm_provider_openai(parameters = list(model = "gpt-4o-mini")))
+# --- Sending request to LLM provider (gpt-4o-mini): ---
+# What is shown in this image?
+# --- Receiving response from LLM provider: ---
+# The image shows a close-up of an orange tabby cat, characterized by its
+# striped fur and distinctive golden eyes. The background appears blurred,
+# suggesting a softly focused environment.
+
+# Ollama-compatible
+send_prompt(image_prompt, llm_provider_ollama(parameters = list(model = "qwen3-vl:2b")))
+# ...
+
+# 'ellmer'-compatible
+send_prompt(image_prompt, llm_provider_ellmer(ellmer::chat_openai(model = "gpt-4o-mini")))
+# ...
+} # }
+```
