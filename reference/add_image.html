@@ -153,36 +153,44 @@ attach an image to the prompt for use with multimodal LLMs</p>
 <span class="r-in"><span><span class="va">local_image_prompt</span> <span class="op">&lt;-</span> <span class="st">"What is shown in this image?"</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">add_image</span><span class="op">(</span><span class="va">cat_img_file</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Create a prompt with a plot (e.g., 'ggplot2' plot)</span></span></span>
-<span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">mpg</span>, <span class="va">disp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">plot_prompt</span> <span class="op">&lt;-</span> <span class="st">"Describe this plot"</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>    <span class="fu">add_image</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in .tp_normalize_image_input(image, mime = mime, alt = alt, detail = detail):</span> Unsupported `image` input (class: data.frame); provide a url, file path, base64 string, or raw bytes.</span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Send prompt to different LLM providers</span></span></span>
 <span class="r-in"><span><span class="co"># (example is not run because it requires configured LLM providers)</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># OpenAI-compatible</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">image_prompt</span>, <span class="fu"><a href="llm_provider_openai.html">llm_provider_openai</a></span><span class="op">(</span>parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"gpt-4o-mini"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># --- Sending request to LLM provider (gpt-4o-mini): ---</span></span></span>
-<span class="r-in"><span><span class="co"># What is shown in this image?</span></span></span>
-<span class="r-in"><span><span class="co"># --- Receiving response from LLM provider: ---</span></span></span>
-<span class="r-in"><span><span class="co"># The image shows a close-up of an orange tabby cat, characterized by its</span></span></span>
-<span class="r-in"><span><span class="co"># striped fur and distinctive golden eyes. The background appears blurred,</span></span></span>
-<span class="r-in"><span><span class="co"># suggesting a softly focused environment.</span></span></span>
+<span class="r-in"><span>  <span class="co"># OpenAI-compatible</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">image_prompt</span>, <span class="fu"><a href="llm_provider_openai.html">llm_provider_openai</a></span><span class="op">(</span>parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"gpt-4o-mini"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># --- Sending request to LLM provider (gpt-4o-mini): ---</span></span></span>
+<span class="r-in"><span>  <span class="co"># What is shown in this image?</span></span></span>
+<span class="r-in"><span>  <span class="co"># --- Receiving response from LLM provider: ---</span></span></span>
+<span class="r-in"><span>  <span class="co"># The image shows a close-up of an orange tabby cat, characterized by its</span></span></span>
+<span class="r-in"><span>  <span class="co"># striped fur and distinctive golden eyes. The background appears blurred,</span></span></span>
+<span class="r-in"><span>  <span class="co"># suggesting a softly focused environment.</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Ollama-compatible</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">image_prompt</span>, <span class="fu"><a href="llm_provider_ollama.html">llm_provider_ollama</a></span><span class="op">(</span>parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"qwen3-vl:2b"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># ...</span></span></span>
+<span class="r-in"><span>  <span class="co"># Ollama-compatible</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">image_prompt</span>, <span class="fu"><a href="llm_provider_ollama.html">llm_provider_ollama</a></span><span class="op">(</span>parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"qwen3-vl:2b"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># ...</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># 'ellmer'-compatible</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">image_prompt</span>, <span class="fu"><a href="llm_provider_ellmer.html">llm_provider_ellmer</a></span><span class="op">(</span><span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/chat_openai.html" class="external-link">chat_openai</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"gpt-4o-mini"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># ...</span></span></span>
+<span class="r-in"><span>  <span class="co"># 'ellmer'-compatible</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">image_prompt</span>, <span class="fu"><a href="llm_provider_ellmer.html">llm_provider_ellmer</a></span><span class="op">(</span><span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/chat_openai.html" class="external-link">chat_openai</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"gpt-4o-mini"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># ...</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a prompt with a plot (e.g., 'ggplot2' plot)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">mpg</span>, <span class="va">disp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="va">plot_prompt</span> <span class="op">&lt;-</span> <span class="st">"Describe this plot"</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_image</span><span class="op">(</span><span class="va">plot</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">plot_prompt</span>, <span class="fu"><a href="llm_provider_openai.html">llm_provider_openai</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># --- Sending request to LLM provider (gpt-4o-mini): ---</span></span></span>
+<span class="r-in"><span>  <span class="co"># Describe this plot</span></span></span>
+<span class="r-in"><span>  <span class="co"># --- Receiving response from LLM provider: ---</span></span></span>
+<span class="r-in"><span>  <span class="co"># The plot is a scatter plot depicting the relationship between two variables:</span></span></span>
+<span class="r-in"><span>  <span class="co"># "mpg" (miles per gallon) on the x-axis and "disp" (displacement) on</span></span></span>
+<span class="r-in"><span>  <span class="co"># the y-axis. (...)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
