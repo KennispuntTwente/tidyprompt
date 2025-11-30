@@ -27,6 +27,8 @@ process (where the UI runs). Each time a new output token arrives, the
 `stream_callback` can push then push the token into a reactive value in
 the main Shiny process.
 
+## Example
+
 Below is a minimal example which shows how to achieve this. We will:
 
 - create an `llm_provider` with streaming enabled;
@@ -38,23 +40,15 @@ Below is a minimal example which shows how to achieve this. We will:
 - consume the queue from the Shiny main process to update the UI,
   showing a live stream of LLM output.
 
-## Example
-
 ``` r
-# Install required packages if not already installed
-packages <- c("shiny", "ipc", "future", "tidyprompt")
+# Install & load required packages
+packages <- c("shiny", "ipc", "future", "promises", "tidyprompt")
 for (pkg in packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     install.packages(pkg)
   }
+  library(pkg, character.only = TRUE)
 }
-
-# Load required packages
-library(shiny)
-library(ipc)
-library(future)
-library(promises)
-library(tidyprompt)
 
 # Enable asynchronous processing
 future::plan(future::multisession)

@@ -91,6 +91,9 @@ LLM call runs) and the main Shiny R process (where the UI runs). Each
 time a new output token arrives, the <code>stream_callback</code> can
 push then push the token into a reactive value in the main Shiny
 process.</p>
+<div class="section level2">
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+</h2>
 <p>Below is a minimal example which shows how to achieve this. We
 will:</p>
 <ul>
@@ -103,24 +106,15 @@ will:</p>
 <li>consume the queue from the Shiny main process to update the UI,
 showing a live stream of LLM output.</li>
 </ul>
-<div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
-</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Install required packages if not already installed</span></span>
-<span><span class="va">packages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shiny"</span>, <span class="st">"ipc"</span>, <span class="st">"future"</span>, <span class="st">"tidyprompt"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Install &amp; load required packages</span></span>
+<span><span class="va">packages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"shiny"</span>, <span class="st">"ipc"</span>, <span class="st">"future"</span>, <span class="st">"promises"</span>, <span class="st">"tidyprompt"</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">pkg</span> <span class="kw">in</span> <span class="va">packages</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="va">pkg</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="va">pkg</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pkg</span>, character.only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Load required packages</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://shiny.posit.co/" class="external-link">shiny</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/fellstat/ipc" class="external-link">ipc</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://future.futureverse.org" class="external-link">future</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rstudio.github.io/promises/" class="external-link">promises</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/KennispuntTwente/tidyprompt" class="external-link">tidyprompt</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Enable asynchronous processing</span></span>
 <span><span class="fu">future</span><span class="fu">::</span><span class="fu">plan</span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va">multisession</span><span class="op">)</span></span>
@@ -183,7 +177,7 @@ showing a live stream of LLM output.</li>
 <span></span>
 <span>    <span class="va">user_prompt</span> <span class="op">&lt;-</span> <span class="va">input</span><span class="op">$</span><span class="va">prompt</span></span>
 <span></span>
-<span>    <span class="fu"><a href="https://rstudio.github.io/promises/reference/future_promise.html" class="external-link">future_promise</a></span><span class="op">(</span></span>
+<span>    <span class="fu">future_promise</span><span class="op">(</span></span>
 <span>      <span class="op">{</span></span>
 <span>        <span class="fu">tidyprompt</span><span class="fu">::</span><span class="fu"><a href="../reference/send_prompt.html">send_prompt</a></span><span class="op">(</span></span>
 <span>          prompt <span class="op">=</span> <span class="va">user_prompt</span>,</span>
@@ -196,7 +190,7 @@ showing a live stream of LLM output.</li>
 <span>        provider <span class="op">=</span> <span class="va">provider</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>      <span class="fu"><a href="https://rstudio.github.io/promises/reference/then.html" class="external-link">then</a></span><span class="op">(</span></span>
+<span>      <span class="fu">then</span><span class="op">(</span></span>
 <span>        onFulfilled <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">value</span><span class="op">)</span> <span class="op">{</span></span>
 <span>          <span class="co"># Final response once streaming finishes</span></span>
 <span>          <span class="fu">partial_response</span><span class="op">(</span><span class="va">value</span><span class="op">)</span></span>
