@@ -2,6 +2,19 @@
 
 ## tidyprompt (development version)
 
+- `llm_provider-class`: can now take a `stream_callback` function, which
+  can be used to intercept streamed tokens as they arrive from the LLM
+  provider. This may be used to build custom streaming behavior, for
+  instance to show a live response in a Shiny app (see new
+  [`vignette("streaming_shiny_ipc")`](https://kennispunttwente.github.io/tidyprompt/articles/streaming_shiny_ipc.md)
+  for an example)
+
+- ’llm_provider_ellmer()\`: now supports streaming responses
+
+- [`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md):
+  new prompt wrap to add an image to a prompt, for use with multimodal
+  LLMs
+
 - [`answer_using_r()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_r.md):
   fixed error with unsafe conversion of resulting object to character
 
