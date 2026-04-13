@@ -30,6 +30,12 @@ is_json_schema_list <- function(x) {
           array = class(ellmer::type_array(ellmer::type_string())),
           object = class(ellmer::type_object(x = ellmer::type_string()))
         )
+        # type_from_schema() available in ellmer >= 0.4.0
+        if (exists("type_from_schema", envir = asNamespace("ellmer"))) {
+          sig$json_schema <- class(ellmer::type_from_schema(
+            list(type = "string")
+          ))
+        }
       },
       silent = TRUE
     )
@@ -145,7 +151,13 @@ json_schema_to_ellmer_type <- function(
     return(do.call(ellmer::type_object, args))
   }
 
-  # Fallback: permissive object
+  # Fallback: use type_from_schema() if available, else permissive object
+  if (
+    ellmer_available() &&
+      exists("type_from_schema", envir = asNamespace("ellmer"))
+  ) {
+    return(ellmer::type_from_schema(schema))
+  }
   ellmer::type_object(
     .description = schema$description %||% NULL,
     .additional_properties = TRUE,
@@ -162,6 +174,14 @@ ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
 
   sig <- .ELLMER_CLASS_SIGNATURES
   desc <- description %||% attr(x, "description", exact = TRUE)
+
+  # --- type_from_schema: already carries a JSON schema, extract it --------
+  if (!is.null(sig$json_schema) && has_all_classes(x, sig$json_schema)) {
+    schema <- attr(x, "schema", exact = TRUE)
+    if (is.list(schema)) {
+      return(schema)
+    }
+  }
 
   # --- Basic scalars: prefer S7 'type' property over class signatures ----
   basic_type <- attr(x, "type", exact = TRUE)
