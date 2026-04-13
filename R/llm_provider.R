@@ -247,6 +247,12 @@ NULL
         self$ellmer_chat <- response$ellmer_chat
       }
 
+      # Store native structured output (from ellmer chat_structured) if present,
+      # so extraction functions can use it without JSON round-tripping
+      if (!is.null(response$native_structured_result)) {
+        self$parameters$.native_structured_result <- response$native_structured_result
+      }
+
       # Filter content with empty string ("") (Ollama tool call)
       response$completed <- response$completed[
         response$completed$content != "",

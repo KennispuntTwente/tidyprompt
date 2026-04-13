@@ -1120,6 +1120,10 @@ llm_provider_ellmer <- function(
 
     ch <- ch$set_turns(turns_to_send)
 
+    # Store the native structured result (if any) so downstream extraction
+    # can use it directly without lossy JSON round-tripping.
+    native_structured_result <- NULL
+
     if (use_structured) {
       if (!is.null(multimodal_args)) {
         reply_struct <- do.call(
@@ -1132,6 +1136,7 @@ llm_provider_ellmer <- function(
           type = structured_type
         )
       }
+      native_structured_result <- reply_struct
       # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
       assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
         as.character()
@@ -1238,7 +1243,8 @@ llm_provider_ellmer <- function(
     list(
       completed = completed,
       http = list(request = NULL, response = NULL),
-      ellmer_chat = ch
+      ellmer_chat = ch,
+      native_structured_result = native_structured_result
     )
   }
 

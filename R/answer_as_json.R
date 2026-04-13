@@ -284,8 +284,16 @@ answer_as_json <- function(
   extraction_fn <- function(llm_response, llm_provider) {
     t <- determine_type(llm_provider)
 
-    # In ellmer structured mode, we already get an R object matching the type.
+    # In ellmer structured mode, use the native result directly if available,
+    # avoiding lossy JSON round-tripping.
     if (isTRUE(t == "ellmer") && !is.null(schema)) {
+      native <- llm_provider$parameters$.native_structured_result
+      if (!is.null(native)) {
+        # Clear it so it's not reused on retries
+        llm_provider$parameters$.native_structured_result <- NULL
+        return(native)
+      }
+      # Fallback: parse from the transcript text
       return(llm_response |> jsonlite::fromJSON())
     }
 
