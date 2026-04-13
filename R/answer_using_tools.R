@@ -81,8 +81,8 @@ answer_using_tools <- function(
     )
   }
 
-  # -- Accept function, ellmer ToolDef, or list of either/mixed ---------------
-  is_toolish <- function(x) is.function(x) || is_ellmer_tool(x)
+  # -- Accept function, ellmer ToolDef, ToolBuiltIn, or list of mixed ---------
+  is_toolish <- function(x) is.function(x) || is_ellmer_any_tool(x)
 
   sanitize_name <- function(x) {
     x <- as.character(x)

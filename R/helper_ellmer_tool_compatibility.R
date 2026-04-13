@@ -20,11 +20,45 @@
   sig
 })
 
+# Cache class signature for ellmer ToolBuiltIn (provider-specific tools
+# like web search); available in ellmer >= 0.4.0.
+.ELLMER_TOOLBUILTIN_CLASS_SIG <- local({
+  sig <- NULL
+  if (ellmer_available()) {
+    try(
+      {
+        ellmer_ns <- asNamespace("ellmer")
+        if (exists("ToolBuiltIn", envir = ellmer_ns, inherits = FALSE)) {
+          # ToolBuiltIn is an S7 class; get signature from a dummy instance
+          tbi <- ellmer_ns$ToolBuiltIn(
+            name = "dummy",
+            description = "dummy"
+          )
+          sig <- class(tbi)
+        }
+      },
+      silent = TRUE
+    )
+  }
+  sig
+})
+
 is_ellmer_tool <- function(x) {
   if (is.null(.ELLMER_TOOLDEF_CLASS_SIG)) {
     return(FALSE)
   }
   has_all_classes(x, .ELLMER_TOOLDEF_CLASS_SIG)
+}
+
+is_ellmer_builtin_tool <- function(x) {
+  if (is.null(.ELLMER_TOOLBUILTIN_CLASS_SIG)) {
+    return(FALSE)
+  }
+  has_all_classes(x, .ELLMER_TOOLBUILTIN_CLASS_SIG)
+}
+
+is_ellmer_any_tool <- function(x) {
+  is_ellmer_tool(x) || is_ellmer_builtin_tool(x)
 }
 
 # Internal: pull the list of <Type>s from a ToolDef's argument object
@@ -322,9 +356,14 @@ normalize_tool_dual <- function(
   }
 
   if (is_ellmer_tool(tool)) {
-    # From ellmer -> tidyprompt
+    # From ellmer ToolDef -> tidyprompt
     tp_fn <- ellmer_tool_to_tidyprompt(tool)
     return(list(tidyprompt_tool = tp_fn, ellmer_tool = tool))
+  }
+
+  if (is_ellmer_builtin_tool(tool)) {
+    # ToolBuiltIn can only be used in native ellmer mode; no tidyprompt equivalent
+    return(list(tidyprompt_tool = NULL, ellmer_tool = tool))
   }
 
   if (is.function(tool)) {
@@ -342,6 +381,6 @@ normalize_tool_dual <- function(
   }
 
   stop(
-    "`tool` must be either an ellmer ToolDef or a function (tidyprompt tool)."
+    "`tool` must be a function, ellmer ToolDef, or ellmer ToolBuiltIn."
   )
 }
