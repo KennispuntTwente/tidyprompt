@@ -10,7 +10,7 @@ llm_providers <- list(
   fake = create_fake_llm_provider()
 )
 
-for (i in 1:length(llm_providers)) {
+for (i in seq_along(llm_providers)) {
   name <- names(llm_providers)[[i]]
   provider <- llm_providers[[i]]
 
