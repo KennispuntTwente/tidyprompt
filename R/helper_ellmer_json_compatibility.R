@@ -4,10 +4,6 @@ ellmer_available <- function() {
   requireNamespace("ellmer", quietly = TRUE)
 }
 
-if (!ellmer_available()) {
-  install.packages("ellmer", repos = "https://cran.rstudio.com")
-}
-
 # --- Detectors --------------------------------------------------------------
 
 is_json_schema_list <- function(x) {
