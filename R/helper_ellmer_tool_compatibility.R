@@ -31,8 +31,7 @@
         if (exists("ToolBuiltIn", envir = ellmer_ns, inherits = FALSE)) {
           # ToolBuiltIn is an S7 class; get signature from a dummy instance
           tbi <- ellmer_ns$ToolBuiltIn(
-            name = "dummy",
-            description = "dummy"
+            name = "dummy"
           )
           sig <- class(tbi)
         }

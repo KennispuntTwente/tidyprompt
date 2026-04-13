@@ -27,7 +27,16 @@ fake_ellmer_chat <- function() {
     )
     paste0(
       "chat-response:",
-      paste(vapply(args, as.character, character(1)), collapse = "")
+      paste(
+        vapply(
+          args,
+          function(a) {
+            tryCatch(as.character(a), error = function(e) class(a)[1])
+          },
+          character(1)
+        ),
+        collapse = ""
+      )
     )
   }
 
@@ -39,7 +48,7 @@ fake_ellmer_chat <- function() {
       type = type,
       turns = env$turns
     )
-    list(result = "ok", type = type)
+    list(result = "ok")
   }
 
   if (requireNamespace("coro", quietly = TRUE)) {

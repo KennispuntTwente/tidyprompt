@@ -7,7 +7,7 @@ testthat::test_that("is_ellmer_type detects type_from_schema objects", {
   )
 
   schema <- list(type = "object", properties = list(x = list(type = "string")))
-  tfs <- ellmer::type_from_schema(schema)
+  tfs <- ellmer::type_from_schema(jsonlite::toJSON(schema, auto_unbox = TRUE))
   testthat::expect_true(is_ellmer_type(tfs))
 })
 
@@ -27,7 +27,7 @@ testthat::test_that("ellmer_type_to_json_schema handles type_from_schema", {
     ),
     required = c("name")
   )
-  tfs <- ellmer::type_from_schema(schema)
+  tfs <- ellmer::type_from_schema(jsonlite::toJSON(schema, auto_unbox = TRUE))
   result <- ellmer_type_to_json_schema(tfs)
 
   testthat::expect_equal(result$type, "object")
@@ -43,7 +43,7 @@ testthat::test_that("normalize_schema_dual works with type_from_schema", {
   )
 
   schema <- list(type = "string")
-  tfs <- ellmer::type_from_schema(schema)
+  tfs <- ellmer::type_from_schema(jsonlite::toJSON(schema, auto_unbox = TRUE))
   dual <- normalize_schema_dual(tfs)
 
   testthat::expect_true(!is.null(dual$json_schema))

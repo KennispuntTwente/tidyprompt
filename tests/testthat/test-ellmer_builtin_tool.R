@@ -7,8 +7,7 @@ testthat::test_that("is_ellmer_builtin_tool detects ToolBuiltIn objects", {
   )
 
   tbi <- ellmer_ns$ToolBuiltIn(
-    name = "web_search",
-    description = "Search the web"
+    name = "web_search"
   )
   testthat::expect_true(is_ellmer_builtin_tool(tbi))
   testthat::expect_true(is_ellmer_any_tool(tbi))
@@ -24,8 +23,7 @@ testthat::test_that("normalize_tool_dual handles ToolBuiltIn", {
   )
 
   tbi <- ellmer_ns$ToolBuiltIn(
-    name = "web_search",
-    description = "Search the web"
+    name = "web_search"
   )
   dual <- normalize_tool_dual(tbi)
 
@@ -54,8 +52,7 @@ testthat::test_that("answer_using_tools accepts ToolBuiltIn in tool list", {
   )
 
   tbi <- ellmer_ns$ToolBuiltIn(
-    name = "web_search",
-    description = "Search the web"
+    name = "web_search"
   )
 
   # Should not error when mixed ToolDef/ToolBuiltIn/function tools are passed

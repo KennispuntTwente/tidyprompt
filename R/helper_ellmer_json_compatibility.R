@@ -33,7 +33,7 @@ is_json_schema_list <- function(x) {
         # type_from_schema() available in ellmer >= 0.4.0
         if (exists("type_from_schema", envir = asNamespace("ellmer"))) {
           sig$json_schema <- class(ellmer::type_from_schema(
-            list(type = "string")
+            '{"type": "string"}'
           ))
         }
       },
@@ -156,7 +156,8 @@ json_schema_to_ellmer_type <- function(
     ellmer_available() &&
       exists("type_from_schema", envir = asNamespace("ellmer"))
   ) {
-    return(ellmer::type_from_schema(schema))
+    json_str <- jsonlite::toJSON(schema, auto_unbox = TRUE)
+    return(ellmer::type_from_schema(json_str))
   }
   ellmer::type_object(
     .description = schema$description %||% NULL,
@@ -177,7 +178,8 @@ ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
 
   # --- type_from_schema: already carries a JSON schema, extract it --------
   if (!is.null(sig$json_schema) && has_all_classes(x, sig$json_schema)) {
-    schema <- attr(x, "schema", exact = TRUE)
+    schema <- attr(x, "json", exact = TRUE) %||%
+      attr(x, "schema", exact = TRUE)
     if (is.list(schema)) {
       return(schema)
     }

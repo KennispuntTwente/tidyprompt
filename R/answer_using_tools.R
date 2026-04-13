@@ -87,9 +87,7 @@ answer_using_tools <- function(
   sanitize_name <- function(x) {
     x <- as.character(x)
     x <- gsub("[^A-Za-z0-9_]", "_", x)
-    if (!nzchar(x)) {
-      x <- "tool"
-    }
+    x[!nzchar(x)] <- "tool"
     x
   }
 
