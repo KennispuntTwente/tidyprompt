@@ -18,30 +18,36 @@ fake_ellmer_chat <- function() {
     copy
   }
 
-  env$chat <- function(prompt, ...) {
+  env$chat <- function(...) {
+    args <- list(...)
     env$last_method <- list(
       method = "chat",
-      prompt = prompt,
+      args = args,
       turns = env$turns
     )
-    paste0("chat-response:", prompt)
+    paste0(
+      "chat-response:",
+      paste(vapply(args, as.character, character(1)), collapse = "")
+    )
   }
 
-  env$chat_structured <- function(prompt, type, ...) {
+  env$chat_structured <- function(..., type) {
+    args <- list(...)
     env$last_method <- list(
       method = "chat_structured",
-      prompt = prompt,
+      args = args,
       type = type,
       turns = env$turns
     )
-    list(result = "ok", prompt = prompt, type = type)
+    list(result = "ok", type = type)
   }
 
   if (requireNamespace("coro", quietly = TRUE)) {
-    env$stream <- function(prompt, ...) {
+    env$stream <- function(...) {
+      args <- list(...)
       env$last_method <- list(
         method = "stream",
-        prompt = prompt,
+        args = args,
         turns = env$turns
       )
       coro::generator(function() {

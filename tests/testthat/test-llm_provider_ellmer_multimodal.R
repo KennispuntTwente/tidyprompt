@@ -21,10 +21,10 @@ testthat::test_that("llm_provider_ellmer supports multimodal structured output",
   fake_chat <- provider$ellmer_chat
 
   testthat::expect_equal(fake_chat$last_method$method, "chat_structured")
-  testthat::expect_equal(fake_chat$last_method$prompt, "")
-  testthat::expect_length(fake_chat$last_method$turns, 1)
-  turn <- fake_chat$last_method$turns[[1]]
-  testthat::expect_equal(length(turn@contents), 2)
+  # Content objects passed directly (not pre-seeded as turns + empty prompt)
+  testthat::expect_true(length(fake_chat$last_method$args) >= 2)
+  # No prior turns should be pre-seeded (single-message history)
+  testthat::expect_length(fake_chat$last_method$turns, 0)
   testthat::expect_match(
     tail(result$completed$content, 1),
     '"result":"ok"'
@@ -64,7 +64,8 @@ testthat::test_that("llm_provider_ellmer streams multimodal prompts when support
   fake_chat <- provider$ellmer_chat
 
   testthat::expect_equal(fake_chat$last_method$method, "stream")
-  testthat::expect_equal(fake_chat$last_method$prompt, "")
+  # Content objects passed directly (not pre-seeded + empty prompt)
+  testthat::expect_true(length(fake_chat$last_method$args) >= 2)
   testthat::expect_equal(
     result$completed$content[nrow(result$completed)],
     "chunk-end"

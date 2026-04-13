@@ -1110,21 +1110,28 @@ llm_provider_ellmer <- function(
     turns_to_send <- prior_turns
     prompt_for_model <- prompt
 
+    # For multimodal, pass content objects directly to the chat method
+    # instead of pre-seeding the current turn and calling with empty prompt
+    # (which would create a duplicate empty user turn).
+    multimodal_args <- NULL
     if (use_multimodal) {
-      turns_to_send <- c(
-        turns_to_send,
-        list(as_turn(role = current_role, contents = multimodal_contents))
-      )
-      prompt_for_model <- ""
+      multimodal_args <- multimodal_contents
     }
 
     ch <- ch$set_turns(turns_to_send)
 
     if (use_structured) {
-      reply_struct <- ch$chat_structured(
-        prompt_for_model,
-        type = structured_type
-      )
+      if (!is.null(multimodal_args)) {
+        reply_struct <- do.call(
+          ch$chat_structured,
+          c(multimodal_args, list(type = structured_type))
+        )
+      } else {
+        reply_struct <- ch$chat_structured(
+          prompt_for_model,
+          type = structured_type
+        )
+      }
       # Store a JSON string in the transcript (so downstream plain JSON extractors still work)
       assistant_text <- jsonlite::toJSON(reply_struct, auto_unbox = TRUE) |>
         as.character()
@@ -1134,7 +1141,11 @@ llm_provider_ellmer <- function(
       assistant_text <- NULL
 
       stream <- tryCatch(
-        ch$stream(prompt_for_model),
+        if (!is.null(multimodal_args)) {
+          do.call(ch$stream, multimodal_args)
+        } else {
+          ch$stream(prompt_for_model)
+        },
         error = function(e) {
           stream_error <<- e
           NULL
@@ -1143,7 +1154,7 @@ llm_provider_ellmer <- function(
 
       if (is.null(stream) && !is.null(stream_error)) {
         if (use_multimodal) {
-          reply_any <- ch$chat(prompt_for_model)
+          reply_any <- do.call(ch$chat, multimodal_args)
           assistant_text <- as.character(reply_any)
         } else {
           stop(stream_error)
@@ -1207,7 +1218,11 @@ llm_provider_ellmer <- function(
       }
     } else {
       # Regular, non-streaming chat
-      reply_any <- ch$chat(prompt_for_model)
+      reply_any <- if (!is.null(multimodal_args)) {
+        do.call(ch$chat, multimodal_args)
+      } else {
+        ch$chat(prompt_for_model)
+      }
       assistant_text <- as.character(reply_any)
     }
 

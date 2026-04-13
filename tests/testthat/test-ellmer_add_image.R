@@ -24,30 +24,11 @@ test_that("llm_provider_ellmer forwards add_image URL parts via ellmer helpers",
   tp <- tidyprompt("Describe the image") |>
     add_image("https://example.com/cat.jpg")
 
-  expect_no_error(send_prompt(tp, prov))
+  result <- send_prompt(tp, prov, return_mode = "full", verbose = FALSE)
   expect_true("https://example.com/cat.jpg" %in% rec_env$urls)
 
-  turn <- chat$last_method$turns[[length(chat$last_method$turns)]]
-  turn_contents <- tryCatch(
-    {
-      if (base::isS4(turn) && "contents" %in% methods::slotNames(turn)) {
-        methods::slot(turn, "contents")
-      } else if (
-        inherits(turn, "S7_object") && requireNamespace("S7", quietly = TRUE)
-      ) {
-        props <- S7::props(turn)
-        props[["contents"]] %||% list()
-      } else if (
-        !inherits(turn, "S7_object") &&
-          !base::isS4(turn) &&
-          !is.null(turn[["contents"]])
-      ) {
-        turn[["contents"]]
-      } else {
-        list()
-      }
-    },
-    error = function(e) list()
-  )
-  expect_true(length(turn_contents) >= 2)
+  # After multimodal fix, content objects are passed as args to chat(), not pre-seeded as turns.
+  # Access the cloned chat's last_method via the returned ellmer_chat.
+  used_chat <- result$ellmer_chat
+  expect_true(length(used_chat$last_method$args) >= 2)
 })
