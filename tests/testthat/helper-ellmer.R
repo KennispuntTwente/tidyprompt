@@ -11,6 +11,13 @@ fake_ellmer_chat <- function() {
   env$get_model <- function() "fake-model"
   env$register_tool <- function(tool) invisible(NULL)
 
+  env$clone <- function() {
+    copy <- fake_ellmer_chat()
+    copy$turns <- env$turns
+    copy$last_method <- env$last_method
+    copy
+  }
+
   env$chat <- function(prompt, ...) {
     env$last_method <- list(
       method = "chat",

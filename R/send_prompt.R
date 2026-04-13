@@ -106,6 +106,14 @@ send_prompt <- function(
 
   # Verify and configure llm_provider
   llm_provider <- llm_provider$clone()
+  # Deep-clone the ellmer chat object so mutations (register_tool, set_turns)
+  # don't affect the caller's original provider
+  if (
+    !is.null(llm_provider[["ellmer_chat"]]) &&
+      is.function(llm_provider$ellmer_chat$clone)
+  ) {
+    llm_provider$ellmer_chat <- llm_provider$ellmer_chat$clone()
+  }
   if (!is.null(verbose)) {
     llm_provider$verbose <- verbose
   }
