@@ -952,11 +952,32 @@ llm_provider_ellmer <- function(
     }
 
     as_turn <- function(role, contents) {
-      if (
-        !is.null(ellmer_ns) &&
-          exists("Turn", envir = ellmer_ns, inherits = FALSE)
-      ) {
-        return(ellmer::Turn(role = role, contents = contents))
+      if (!is.null(ellmer_ns)) {
+        # Prefer role-specific constructors (ellmer >= 0.4.0)
+        ctor <- switch(
+          role,
+          user = if (exists("UserTurn", envir = ellmer_ns, inherits = FALSE)) {
+            ellmer_ns$UserTurn
+          },
+          assistant = if (
+            exists("AssistantTurn", envir = ellmer_ns, inherits = FALSE)
+          ) {
+            ellmer_ns$AssistantTurn
+          },
+          system = if (
+            exists("SystemTurn", envir = ellmer_ns, inherits = FALSE)
+          ) {
+            ellmer_ns$SystemTurn
+          },
+          NULL
+        )
+        if (!is.null(ctor)) {
+          return(ctor(contents = contents))
+        }
+        # Fall back to Turn(role=...) for ellmer < 0.4.0
+        if (exists("Turn", envir = ellmer_ns, inherits = FALSE)) {
+          return(ellmer::Turn(role = role, contents = contents))
+        }
       }
       list(role = role, contents = contents)
     }
