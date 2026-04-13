@@ -1,0 +1,2 @@
+[lint]
+ignore = ["internal_function", "unreachable_code"]
