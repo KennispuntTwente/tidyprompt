@@ -38,7 +38,7 @@ llm_break <- function(
   if (!is.logical(success)) {
     stop("The 'success' argument must be of type logical.")
   }
-  if (!success & !is.null(object_to_return)) {
+  if (!success && !is.null(object_to_return)) {
     object_to_return <- NULL
     warning("If 'success' is FALSE, 'object_to_return' is set to NULL")
   }

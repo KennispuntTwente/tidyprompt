@@ -124,17 +124,17 @@ answer_using_r <- function(
     is.list(r_session_options)
   )
 
-  if (evaluate_code & !requireNamespace("callr", quietly = TRUE)) {
+  if (evaluate_code && !requireNamespace("callr", quietly = TRUE)) {
     stop("The 'callr' package is required to evaluate R code.")
   }
-  if (!evaluate_code & output_as_tool) {
+  if (!evaluate_code && output_as_tool) {
     output_as_tool <- FALSE
   }
   if (output_as_tool) {
     return_mode <- "llm_answer"
   }
   if (
-    !evaluate_code & return_mode %in% c("console", "object", "formatted_output")
+    !evaluate_code && return_mode %in% c("console", "object", "formatted_output")
   ) {
     stop(
       "The return mode must be 'full', 'code', or 'llm_answer' if 'evaluate_code' is FALSE"
@@ -231,7 +231,7 @@ answer_using_r <- function(
       "{add_text}"
     )
 
-    if (list_packages & length(loaded_pkgs) > 0) {
+    if (list_packages && length(loaded_pkgs) > 0) {
       new_text <- glue::glue(
         "{new_text}\n",
         "You can use functions from these packages: ",
@@ -292,13 +292,13 @@ answer_using_r <- function(
       }
     }
 
-    if (evaluate_code & return_mode == "console") {
+    if (evaluate_code && return_mode == "console") {
       new_text <- glue::glue(
         "{new_text}\n",
         "The R code should produce console output that answers the prompt."
       )
     }
-    if (evaluate_code & return_mode == "object") {
+    if (evaluate_code && return_mode == "object") {
       new_text <- glue::glue(
         "{new_text}\n",
         "The R code should produce an object that answers the prompt."
@@ -390,7 +390,7 @@ answer_using_r <- function(
     }
 
     # Check if the code produced any relevant output
-    if (output$stdout == "" & return_mode == "console") {
+    if (output$stdout == "" && return_mode == "console") {
       return(
         llm_feedback(
           glue::glue(
@@ -400,7 +400,7 @@ answer_using_r <- function(
         )
       )
     }
-    if (is.null(output$result) & return_mode == "object") {
+    if (is.null(output$result) && return_mode == "object") {
       return(
         llm_feedback(
           glue::glue(
@@ -410,7 +410,7 @@ answer_using_r <- function(
         )
       )
     }
-    if (is.null(output$stdout) & is.null(output$result)) {
+    if (is.null(output$stdout) && is.null(output$result)) {
       return(
         llm_feedback(
           glue::glue(

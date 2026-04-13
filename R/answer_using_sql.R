@@ -85,14 +85,14 @@ answer_using_sql <- function(
     )
   }
 
-  if (!evaluate_code & output_as_tool) {
+  if (!evaluate_code && output_as_tool) {
     output_as_tool <- FALSE
   }
   if (output_as_tool) {
     return_mode <- "llm_answer"
   }
   if (
-    !evaluate_code & return_mode %in% c("console", "object", "formatted_output")
+    !evaluate_code && return_mode %in% c("console", "object", "formatted_output")
   ) {
     stop(
       "The return mode must be 'full', 'code', or 'llm_answer' if 'evaluate_code' is FALSE"

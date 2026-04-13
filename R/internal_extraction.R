@@ -36,7 +36,7 @@ extraction_fn_finish <- function(llm_response, lenience = TRUE) {
   )
 
   # If extraction fails, try alternative method
-  if (is.na(extracted_response) & lenience) {
+  if (is.na(extracted_response) && lenience) {
     # Use regex to match 'FINISH' variants and capture text between brackets/braces or spaces
     # start with capturing everything after finish:
     extracted_response <- stringr::str_extract(

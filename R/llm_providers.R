@@ -660,8 +660,8 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
     }
 
     if (
-      grepl("What is 2 + 2?", last_msg, fixed = TRUE) &
-        grepl(answer_as_integer_input, last_msg, fixed = TRUE) &
+      grepl("What is 2 + 2?", last_msg, fixed = TRUE) &&
+        grepl(answer_as_integer_input, last_msg, fixed = TRUE) &&
         !grepl(chain_of_thought_input, last_msg, fixed = TRUE)
     ) {
       return(
@@ -678,7 +678,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
     }
 
     if (
-      grepl("What is 2 + 2?", last_msg, fixed = TRUE) &
+      grepl("What is 2 + 2?", last_msg, fixed = TRUE) &&
         !grepl(answer_as_integer_input, last_msg, fixed = TRUE)
     ) {
       return(
@@ -713,8 +713,8 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
           chat_history$content[chat_history$role == "user"],
           fixed = TRUE
         )
-      ) &
-        grepl(answer_as_integer_input, last_msg, fixed = TRUE) &
+      ) &&
+        grepl(answer_as_integer_input, last_msg, fixed = TRUE) &&
         !grepl(chain_of_thought_input, last_msg, fixed = TRUE)
     ) {
       return(
@@ -731,8 +731,8 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
     }
 
     if (
-      grepl("What is 2 + 2?", last_msg, fixed = TRUE) &
-        grepl(chain_of_thought_input, last_msg, fixed = TRUE) &
+      grepl("What is 2 + 2?", last_msg, fixed = TRUE) &&
+        grepl(chain_of_thought_input, last_msg, fixed = TRUE) &&
         grepl(answer_as_integer_input, last_msg, fixed = TRUE)
     ) {
       return(
@@ -791,7 +791,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
         "function called: temperature_in_location",
         last_msg,
         fixed = TRUE
-      ) &
+      ) &&
         grepl("arguments used: location = Enschede", last_msg, fixed = TRUE)
     ) {
       return(
@@ -814,7 +814,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
           chat_history$content[chat_history$role == "assistant"],
           fixed = TRUE
         )
-      ) &
+      ) &&
         grepl(last_msg, answer_as_integer_input, fixed = TRUE)
     ) {
       return(

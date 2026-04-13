@@ -84,7 +84,7 @@ openai_available <- function(
 ) {
   models_endpoint <- paste0(url, "/v1/models")
 
-  if (is.null(api_key) | api_key == "") {
+  if (is.null(api_key) || api_key == "") {
     return(testthat::skip("skip test: OpenAI API key not found"))
   }
 

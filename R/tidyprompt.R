@@ -116,7 +116,7 @@ NULL
       }
 
       # Take chat_history from list input
-      if (is.list(input) & !is.data.frame(input)) {
+      if (is.list(input) && !is.data.frame(input)) {
         if (is.null(input$chat_history)) {
           stop(input_must_be)
         }
@@ -303,7 +303,7 @@ NULL
 
       # Add provider-specific pre/post prompt wraps
       if (
-        isTRUE(is.function(llm_provider$apply_prompt_wraps)) &
+        isTRUE(is.function(llm_provider$apply_prompt_wraps)) &&
           isTRUE(apply_provider_prompt_wraps)
       ) {
         modified_self <- llm_provider$apply_prompt_wraps(self)
@@ -570,7 +570,7 @@ set_system_prompt <- function(prompt, system_prompt) {
   prompt <- tidyprompt(prompt)
 
   if (
-    !is.character(system_prompt) |
+    !is.character(system_prompt) ||
       length(system_prompt) != 1
   ) {
     stop("system_prompt must be a single character string")

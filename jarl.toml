@@ -1,2 +1,3 @@
 [lint]
 ignore = ["internal_function", "unreachable_code"]
+exclude = ["inst/examples"]

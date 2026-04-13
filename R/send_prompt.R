@@ -118,7 +118,7 @@ send_prompt <- function(
     llm_provider$verbose <- verbose
   }
   if (
-    !is.null(stream) & !is.null(llm_provider$parameters$stream) # This means the provider supports streaming
+    !is.null(stream) && !is.null(llm_provider$parameters$stream) # This means the provider supports streaming
   ) {
     llm_provider$parameters$stream <- stream
   }
@@ -206,7 +206,7 @@ send_prompt <- function(
 
   interactions <- 1
   success <- FALSE
-  while (interactions < max_interactions & !success) {
+  while (interactions < max_interactions && !success) {
     interactions <- interactions + 1
 
     if (length(prompt_wraps) == 0) {

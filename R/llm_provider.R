@@ -193,7 +193,7 @@ NULL
     #'
     #' @return The response from the LLM provider
     complete_chat = function(input) {
-      if (length(input) == 1 & is.character(input)) {
+      if (length(input) == 1 && is.character(input)) {
         chat_history <- chat_history(input)
         input <- list(chat_history = chat_history)
       } else if (is.data.frame(input)) {
@@ -278,7 +278,7 @@ NULL
           if (isTRUE(response$`break`)) break
         }
 
-        if (!isFALSE(response$done) | isTRUE(response$`break`)) {
+        if (!isFALSE(response$done) || isTRUE(response$`break`)) {
           break
         }
       }
@@ -300,7 +300,7 @@ NULL
         #   `answer_using_tools()`
         if (
           "tool_result" %in%
-            names(chat_history_new) &
+            names(chat_history_new) &&
             "tool_call" %in% names(chat_history_new)
         ) {
           chat_history_new_print <- chat_history_new |>

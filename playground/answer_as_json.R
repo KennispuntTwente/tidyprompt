@@ -75,7 +75,7 @@ answer_as_json <- function(
   }
 
   schema_instruction <- NULL
-  if (type %in% c("text-based", "ollama") & !is.null(schema)) {
+  if (type %in% c("text-based", "ollama") && !is.null(schema)) {
     if (!requireNamespace("jsonvalidate", quietly = TRUE)) {
       warning(
         paste0(
@@ -105,7 +105,7 @@ answer_as_json <- function(
   }
 
   modify_fn <- function(prompt_text) {
-    if (type == "openai" & !is.null(schema)) {
+    if (type == "openai" && !is.null(schema)) {
       return(prompt_text)
     }
 
@@ -114,7 +114,7 @@ answer_as_json <- function(
       "Your must format your response as a JSON object."
     )
 
-    if ((type %in% c("text-based", "ollama")) & !is.null(schema_instruction)) {
+    if ((type %in% c("text-based", "ollama")) && !is.null(schema_instruction)) {
       prompt_text <- paste0(prompt_text, "\n\n", schema_instruction)
     }
 
@@ -137,8 +137,8 @@ answer_as_json <- function(
     }
 
     if (
-      !is.null(schema) &
-        type %in% c("text-based", "ollama") &
+      !is.null(schema) &&
+        type %in% c("text-based", "ollama") &&
         requireNamespace("jsonvalidate", quietly = TRUE)
     ) {
       # Convert to JSON

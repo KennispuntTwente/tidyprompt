@@ -390,7 +390,7 @@ append_or_update_tool_calls <- function(tool_calls, new_tool_calls, verbose) {
     NULL
   }
 
-  if (!is.null(id) & (is.null(last_id) || (id != last_id))) {
+  if (!is.null(id) && (is.null(last_id) || (id != last_id))) {
     tool_calls <- append(
       tool_calls,
       list(

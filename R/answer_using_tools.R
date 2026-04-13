@@ -68,7 +68,7 @@ answer_using_tools <- function(
   prompt <- tidyprompt(prompt)
   type <- match.arg(type)
 
-  if (type == "auto" & getOption("tidyprompt.warn.auto.tools", TRUE)) {
+  if (type == "auto" && getOption("tidyprompt.warn.auto.tools", TRUE)) {
     cli::cli_alert_warning(
       paste0(
         "{.strong `answer_using_tools()`}:\n",
@@ -193,7 +193,7 @@ answer_using_tools <- function(
       parameters$tools <- tools_openai
     }
 
-    if (t == "ollama" & isTRUE(llm_provider$parameters$stream)) {
+    if (t == "ollama" && isTRUE(llm_provider$parameters$stream)) {
       cli::cli_alert_warning(
         paste0(
           "{.strong `answer_using_tools()`}:\n",
@@ -1004,7 +1004,7 @@ tools_generate_docs <- function(name, func_object = NULL) {
       NULL
     }
   )
-  if (is.null(func) & !is.null(func_object)) {
+  if (is.null(func) && !is.null(func_object)) {
     func <- func_object
   }
   package_env <- environment(func)
@@ -1013,7 +1013,7 @@ tools_generate_docs <- function(name, func_object = NULL) {
   # Get arguments, defaults, and likely types based on formals
   args <- gd_get_args_defaults_types(func)
 
-  if (package_name == "R_GlobalEnv" | package_name == "") {
+  if (package_name == "R_GlobalEnv" || package_name == "") {
     help_file <- NULL
   } else {
     # Get the function's help file
@@ -1135,14 +1135,14 @@ gd_infer_type_from_default <- function(default_value) {
   if (is.null(default_value)) {
     return("unknown")
   }
-  if (is.numeric(default_value) & length(default_value) == 1) {
+  if (is.numeric(default_value) && length(default_value) == 1) {
     if (is_whole_number(default_value)) {
       return("integer")
     }
     return("numeric")
-  } else if (is.logical(default_value) & length(default_value) == 1) {
+  } else if (is.logical(default_value) && length(default_value) == 1) {
     return("logical")
-  } else if (is.character(default_value) & length(default_value) == 1) {
+  } else if (is.character(default_value) && length(default_value) == 1) {
     return("string")
   } else if (is.call(default_value)) {
     func_name <- as.character(default_value[[1]])
@@ -1717,7 +1717,7 @@ tools_docs_to_text <- function(docs, with_arguments = TRUE) {
       .trim = FALSE
     )
   }
-  if (length(docs$arguments) > 0 & with_arguments) {
+  if (length(docs$arguments) > 0 && with_arguments) {
     tool_llm_text <- glue::glue(
       "{tool_llm_text}\n  arguments:",
       "\n",

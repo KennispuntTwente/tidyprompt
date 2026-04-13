@@ -77,7 +77,7 @@ llm_verify <- function(
       #   have been properly validated by these functions;
       #   adding them to the prompt text here would lead to
       #   redundant validation by the LLM
-      if (!is.null(wrap$extraction_fn) | !is.null(wrap$validation_fn)) {
+      if (!is.null(wrap$extraction_fn) || !is.null(wrap$validation_fn)) {
         next
       }
 

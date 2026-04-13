@@ -69,7 +69,7 @@ quit_if <- function(
     stop("The 'success' argument must be of type logical.")
   }
   response_result <- match.arg(response_result)
-  if (!success & response_result != "null") {
+  if (!success && response_result != "null") {
     stop("If 'success' is FALSE, 'response_result' must be of type 'null'")
   }
 

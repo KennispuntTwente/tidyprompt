@@ -175,8 +175,8 @@ add_msg_to_chat_history <- function(
   } else if (inherits(chat_history, "Tidyprompt")) {
     chat_history <- chat_history$get_chat_history()
   } else if (
-    is.list(chat_history) &
-      !is.data.frame(chat_history) &
+    is.list(chat_history) &&
+      !is.data.frame(chat_history) &&
       "chat_history" %in% names(chat_history)
   ) {
     chat_history <- chat_history$chat_history |> chat_history()
