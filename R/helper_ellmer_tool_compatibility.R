@@ -223,12 +223,27 @@ tidyprompt_docs_to_ellmer_tool <- function(
     )
   }
 
-  # Build JSON Schema for the argument object using your helper
+  # Build JSON Schema for the argument object using your helper.
+  # Respect which formals have defaults: only formals without defaults are required.
+  fn_formals <- formals(fun)
+  has_default <- vapply(
+    fn_formals,
+    function(x) !identical(x, quote(expr = )),
+    logical(1)
+  )
+  required_args <- names(fn_formals)[!has_default]
+
   js <- tools_docs_to_r_json_schema(
     docs,
-    all_required = TRUE, # OpenAI-style; ellmer supports required flags but tool() also checks names
+    all_required = FALSE,
     additional_properties = FALSE
   )
+  # Override the required list based on formals analysis
+  if (length(required_args) > 0) {
+    js$required <- intersect(required_args, names(js$properties %||% list()))
+  } else {
+    js$required <- NULL
+  }
 
   # Convert to a single ellmer Type (object)
   etype <- json_schema_to_ellmer_type(
