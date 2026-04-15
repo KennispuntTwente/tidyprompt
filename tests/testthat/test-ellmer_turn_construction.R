@@ -2,7 +2,11 @@ testthat::test_that("ellmer provider prefers role-specific Turn constructors", {
   testthat::skip_if_not_installed("ellmer")
 
   fake_chat <- fake_ellmer_chat()
-  provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
 
   chat_history <- data.frame(
     role = c("system", "user"),
@@ -23,7 +27,11 @@ testthat::test_that("ellmer provider builds Turn objects with correct contents",
   testthat::skip_if_not_installed("ellmer")
 
   fake_chat <- fake_ellmer_chat()
-  provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
 
   chat_history <- data.frame(
     role = c("user", "assistant", "user"),
@@ -75,4 +83,96 @@ testthat::test_that("ellmer provider handles tool-role rows without crashing", {
   testthat::expect_length(turns, 4)
   # The third turn (originally "tool") should now be a user turn
   testthat::expect_equal(turns[[3]]@role, "user")
+})
+
+testthat::test_that("ellmer provider preserves native tool history in completed rows", {
+  testthat::skip_if_not_installed("ellmer")
+
+  fake_chat <- fake_ellmer_chat()
+  fake_chat$chat <- function(...) {
+    request <- ellmer::ContentToolRequest(
+      id = "call-1",
+      name = "get_secret_number",
+      arguments = list(input = 123)
+    )
+
+    fake_chat$turns <- c(
+      fake_chat$turns,
+      list(
+        ellmer::UserTurn(list(ellmer::ContentText("Call the function"))),
+        ellmer::AssistantTurn(list(request)),
+        ellmer::UserTurn(list(
+          ellmer::ContentToolResult(value = "42", request = request)
+        )),
+        ellmer::AssistantTurn(list(ellmer::ContentText("The result is 42.")))
+      )
+    )
+
+    "The result is 42."
+  }
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  result <- provider$complete_chat(data.frame(
+    role = "user",
+    content = "Call the function",
+    stringsAsFactors = FALSE
+  ))
+
+  testthat::expect_equal(
+    result$completed$role,
+    c("user", "assistant", "tool", "assistant")
+  )
+  testthat::expect_true(isTRUE(result$completed$tool_call[2]))
+  testthat::expect_equal(result$completed$tool_call_id[2], "call-1")
+  testthat::expect_true(isTRUE(result$completed$tool_result[3]))
+  testthat::expect_match(
+    result$completed$content[2],
+    "Calling function 'get_secret_number'"
+  )
+  testthat::expect_match(result$completed$content[3], "~>> Result")
+  testthat::expect_equal(result$completed$content[4], "The result is 42.")
+})
+
+testthat::test_that("ellmer provider preserves native thinking content in completed rows", {
+  testthat::skip_if_not_installed("ellmer")
+
+  fake_chat <- fake_ellmer_chat()
+  fake_chat$chat <- function(...) {
+    fake_chat$turns <- c(
+      fake_chat$turns,
+      list(
+        ellmer::UserTurn(list(ellmer::ContentText("Think through this"))),
+        ellmer::AssistantTurn(list(
+          ellmer::ContentThinking("Reasoning step"),
+          ellmer::ContentText("Final answer")
+        ))
+      )
+    )
+
+    "Final answer"
+  }
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  result <- provider$complete_chat(data.frame(
+    role = "user",
+    content = "Think through this",
+    stringsAsFactors = FALSE
+  ))
+
+  testthat::expect_equal(
+    result$completed$role,
+    c("user", "assistant", "assistant")
+  )
+  testthat::expect_match(result$completed$content[2], "Reasoning step")
+  testthat::expect_equal(result$completed$content[3], "Final answer")
 })

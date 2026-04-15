@@ -989,6 +989,168 @@ llm_provider_ellmer <- function(
       list(role = role, contents = contents)
     }
 
+    ellmer_object_props <- function(x) {
+      if (is.null(x)) {
+        return(list())
+      }
+
+      props <- tryCatch(
+        S7::props(x),
+        error = function(e) NULL
+      )
+      if (is.list(props) && length(props)) {
+        return(props)
+      }
+
+      attributes(x) %||% list()
+    }
+
+    append_native_history <- function(
+      history,
+      role,
+      content,
+      tool_call_id = NA_character_,
+      tool_call = FALSE,
+      tool_result = FALSE
+    ) {
+      dplyr::bind_rows(
+        history,
+        data.frame(
+          role = as.character(role %||% "assistant"),
+          content = as.character(content %||% ""),
+          tool_call = tool_call,
+          tool_call_id = ifelse(is.null(tool_call_id), NA, tool_call_id),
+          tool_result = tool_result,
+          stringsAsFactors = FALSE
+        )
+      )
+    }
+
+    stringify_tool_result <- function(x) {
+      if (is.null(x)) {
+        return("")
+      }
+      if (is.character(x) && length(x) == 1) {
+        return(as.character(x))
+      }
+      if (is.atomic(x)) {
+        return(paste(as.character(x), collapse = ", "))
+      }
+
+      json <- tryCatch(
+        jsonlite::toJSON(x, auto_unbox = TRUE),
+        error = function(e) NULL
+      )
+      if (!is.null(json)) {
+        return(as.character(json))
+      }
+
+      paste(as.character(x), collapse = ", ")
+    }
+
+    native_turns_to_history <- function(turns) {
+      history <- data.frame(
+        role = character(),
+        content = character(),
+        tool_call = logical(),
+        tool_call_id = character(),
+        tool_result = logical(),
+        stringsAsFactors = FALSE
+      )
+
+      for (turn in turns) {
+        turn_props <- ellmer_object_props(turn)
+        role <- turn_props$role %||% "assistant"
+        contents <- turn_props$contents %||% list()
+
+        for (content_obj in contents) {
+          props <- ellmer_object_props(content_obj)
+          classes <- class(content_obj) %||% character()
+
+          if (
+            any(grepl("ContentText", classes)) ||
+              !is.null(props$text)
+          ) {
+            text <- as.character(props$text %||% "")
+            if (nzchar(text)) {
+              history <- append_native_history(history, role, text)
+            }
+            next
+          }
+
+          if (
+            any(grepl("ContentThinking", classes)) ||
+              !is.null(props$thinking)
+          ) {
+            thinking <- as.character(props$thinking %||% "")
+            if (nzchar(thinking)) {
+              history <- append_native_history(history, role, thinking)
+            }
+            next
+          }
+
+          if (
+            any(grepl("ContentToolRequest", classes)) ||
+              (!is.null(props$id) &&
+                !is.null(props$name) &&
+                !is.null(props$arguments))
+          ) {
+            pretty_args <- tryCatch(
+              jsonlite::toJSON(
+                props$arguments %||% list(),
+                auto_unbox = FALSE,
+                pretty = TRUE
+              ),
+              error = function(e) "null"
+            )
+            history <- append_native_history(
+              history,
+              role = "assistant",
+              content = paste0(
+                "~>> Calling function '",
+                as.character(props$name %||% "tool"),
+                "' with arguments:\n",
+                pretty_args
+              ),
+              tool_call_id = as.character(props$id %||% NA_character_),
+              tool_call = TRUE,
+              tool_result = FALSE
+            )
+            next
+          }
+
+          if (
+            any(grepl("ContentToolResult", classes)) ||
+              (!is.null(props$request) &&
+                ("value" %in% names(props) || "error" %in% names(props)))
+          ) {
+            request_props <- ellmer_object_props(props$request %||% NULL)
+            result_text <- if (!is.null(props$error)) {
+              paste0("Error: ", stringify_tool_result(props$error))
+            } else {
+              stringify_tool_result(props$value)
+            }
+
+            history <- append_native_history(
+              history,
+              role = "tool",
+              content = paste0("~>> Result:\n", result_text),
+              tool_call_id = as.character(request_props$id %||% NA_character_),
+              tool_call = FALSE,
+              tool_result = TRUE
+            )
+            next
+          }
+        }
+      }
+
+      if (!nrow(history)) {
+        return(NULL)
+      }
+
+      history
+    }
+
     build_image_content <- function(p) {
       # URL-based image
       if (
@@ -1070,8 +1232,6 @@ llm_provider_ellmer <- function(
     # Prompt = last message (may be converted to multimodal contents below)
     prompt <- chat_history$content[nrow(chat_history)] %||% ""
     prompt <- if (!is.na(prompt)) as.character(prompt) else ""
-    current_role <- chat_history$role[nrow(chat_history)] %||% "user"
-
     # Register tools
     if (!is.null(params$.ellmer_tools)) {
       for (td in params$.ellmer_tools) {
@@ -1254,14 +1414,36 @@ llm_provider_ellmer <- function(
       assistant_text <- as.character(reply_any)
     }
 
-    completed <- dplyr::bind_rows(
-      chat_history,
-      data.frame(
-        role = "assistant",
-        content = assistant_text,
-        stringsAsFactors = FALSE
-      )
+    completed <- NULL
+
+    native_turns <- tryCatch(
+      {
+        gt <- ch$get_turns
+        if (is.function(gt)) gt() else NULL
+      },
+      error = function(e) NULL
     )
+
+    first_new_turn <- length(prior_turns) + 2L
+    if (length(native_turns) >= first_new_turn) {
+      native_rows <- native_turns_to_history(native_turns[
+        first_new_turn:length(native_turns)
+      ])
+      if (!is.null(native_rows) && nrow(native_rows)) {
+        completed <- dplyr::bind_rows(chat_history, native_rows)
+      }
+    }
+
+    if (is.null(completed)) {
+      completed <- dplyr::bind_rows(
+        chat_history,
+        data.frame(
+          role = "assistant",
+          content = assistant_text,
+          stringsAsFactors = FALSE
+        )
+      )
+    }
 
     list(
       completed = completed,
