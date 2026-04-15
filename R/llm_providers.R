@@ -905,7 +905,7 @@ llm_provider_ellmer <- function(
   if (missing(chat) || is.null(chat)) {
     stop("`chat` must be an ellmer chat object (e.g., ellmer::chat_openai()).")
   }
-  if (!is.environment(chat) || !is.function(chat$chat)) {
+  if (!is_ellmer_chat(chat)) {
     stop(
       "`chat` doesn't look like an ellmer chat object (no `$chat()` method)."
     )

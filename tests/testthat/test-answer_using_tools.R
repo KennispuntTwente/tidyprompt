@@ -172,6 +172,20 @@ test_that("function calling works with ellmer llm provider", {
   expect_true(number_present_in_string(result, secret_number))
 })
 
+test_that("function calling works with direct ellmer chat", {
+  skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
+
+  ellmer_chat <- ellmer::chat_openai(model = "gpt-4.1-mini")
+
+  result <- base_prompt |>
+    answer_using_tools(get_secret_number) |>
+    send_prompt(ellmer_chat)
+
+  expect_true(number_present_in_string(result, secret_number))
+  expect_length(ellmer_chat$get_turns(), 0)
+})
+
 test_that("function calling works with ellmer tool definition", {
   skip_test_if_no_openai()
   skip_if_not_installed("ellmer")

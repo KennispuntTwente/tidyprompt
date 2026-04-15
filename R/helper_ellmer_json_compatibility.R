@@ -57,6 +57,60 @@ is_ellmer_type <- function(x) {
   any(vapply(.ELLMER_CLASS_SIGNATURES, has_all_classes, logical(1), x = x))
 }
 
+is_ellmer_chat <- function(x) {
+  is.environment(x) &&
+    is.function(x$chat)
+}
+
+ellmer_chat_clone_reset <- function(
+  chat,
+  context = "This ellmer chat object"
+) {
+  if (!is_ellmer_chat(chat)) {
+    stop(
+      paste0(
+        context,
+        " doesn't look like an ellmer chat object (no `$chat()` method)."
+      )
+    )
+  }
+  if (!is.function(chat$clone)) {
+    stop(paste0(context, " must support `$clone()`."))
+  }
+  if (!is.function(chat$set_turns)) {
+    stop(paste0(context, " must support `$set_turns()`."))
+  }
+
+  chat <- chat$clone()
+  if (!is_ellmer_chat(chat)) {
+    stop(paste0(context, " `$clone()` did not return a valid ellmer chat."))
+  }
+
+  chat$set_turns(list())
+}
+
+as_send_prompt_llm_provider <- function(
+  llm_provider,
+  verbose = NULL,
+  stream = NULL
+) {
+  if (inherits(llm_provider, "LlmProvider") || !is_ellmer_chat(llm_provider)) {
+    return(llm_provider)
+  }
+
+  provider <- llm_provider_ellmer(
+    llm_provider,
+    verbose = verbose %||% getOption("tidyprompt.verbose", TRUE)
+  )
+
+  provider$parameters$.reset_ellmer_chat <- TRUE
+  if (!is.null(stream)) {
+    provider$parameters$stream <- stream
+  }
+
+  provider
+}
+
 # --- JSON Schema -> ellmer::type_* -----------------------------------------
 
 json_schema_to_ellmer_type <- function(

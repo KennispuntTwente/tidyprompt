@@ -37,3 +37,29 @@ test_that("full return mode works", {
   )
   expect_true(is.double(response$duration_seconds))
 })
+
+test_that("send_prompt accepts raw ellmer chats directly", {
+  withr::local_options(list(tidyprompt.stream = FALSE))
+
+  raw_chat <- fake_ellmer_chat(turns = list("old-turn"))
+
+  result <- "Hello" |>
+    send_prompt(raw_chat, return_mode = "full", verbose = FALSE)
+
+  expect_equal(result$response, "chat-response:Hello")
+  expect_identical(raw_chat$turns, list("old-turn"))
+  expect_false(identical(result$ellmer_chat, raw_chat))
+  expect_length(result$ellmer_chat$last_method$turns, 0)
+})
+
+test_that("send_prompt keeps llm_provider_ellmer stream defaults for raw chats", {
+  skip_if_not_installed("coro")
+  withr::local_options(list(tidyprompt.stream = TRUE))
+
+  raw_chat <- fake_ellmer_chat()
+
+  result <- "Hello" |>
+    send_prompt(raw_chat, return_mode = "full", verbose = FALSE)
+
+  expect_identical(result$ellmer_chat$last_method$method, "stream")
+})

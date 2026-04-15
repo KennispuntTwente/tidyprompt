@@ -341,6 +341,21 @@ test_that("answer_as_json + llm_provider_ellmer: scalar types", {
   expect_true(is.character(enum_val) && enum_val %in% allowed)
 })
 
+test_that("answer_as_json works with direct ellmer chat", {
+  skip_test_if_no_openai()
+  skip_if_not_installed("ellmer")
+
+  ellmer_chat <- ellmer::chat_openai(model = "gpt-4.1-mini")
+
+  result <- "Return the integer 7 only." |>
+    answer_as_json(ellmer::type_integer()) |>
+    send_prompt(ellmer_chat)
+
+  expect_true(is.numeric(result) && length(result) == 1)
+  expect_equal(as.integer(result), 7L)
+  expect_length(ellmer_chat$get_turns(), 0)
+})
+
 test_that("answer_as_json + llm_provider_ellmer: arrays of scalars", {
   skip_test_if_no_openai()
   skip_if_not_installed("ellmer")

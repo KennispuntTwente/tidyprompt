@@ -229,6 +229,16 @@ which can be built from an ‘ellmer’ chat object (see:
 provider that can be configured with ‘ellmer’, including the respective
 configuration and features from the ‘ellmer’ package.
 
+You can also pass an ‘ellmer’ chat object directly to `send_prompt()`.
+In that case, ‘tidyprompt’ clones the chat, clears any existing turns,
+and wraps the clean clone automatically:
+
+``` r
+"What is 2 + 2?" |>
+  answer_as_integer() |>
+  send_prompt(ellmer::chat_openai(model = "gpt-4.1-mini"))
+```
+
 Furthermore, `answer_as_json()` and `answer_using_tools()` support
 'ellmer' definitions for structured output and tools. When using an
 ‘ellmer’ LLM provider, these functions will also call the native

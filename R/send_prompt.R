@@ -13,6 +13,9 @@
 #' @param llm_provider [llm_provider-class] object
 #'  (default is [llm_provider_ollama()]).
 #' This object and its settings will be used to evaluate the prompt.
+#' You may also pass an `ellmer::chat()` object directly; in that case,
+#' [send_prompt()] will clone it, clear any existing turns, and wrap the clean
+#' clone with [llm_provider_ellmer()] before evaluation.
 #' Note that the 'verbose' and 'stream' settings in the LLM provider will be
 #'  overruled by the 'verbose' and 'stream' arguments in this function
 #'  when those are not NULL.
@@ -57,7 +60,8 @@
 #'    \item 'duration_seconds' (the duration of the function in seconds),
 #'    \item 'http_list' (a list with all HTTP responses made during the interactions;
 #'    as returned by `llm_provider$complete_chat()`),
-#'    \item 'ellmer_chat' (if [llm_provider_ellmer()] was used, this will be
+#'    \item 'ellmer_chat' (if [llm_provider_ellmer()] or a raw `ellmer::chat()`
+#'    object was used, this will be
 #'    the updated 'ellmer' chat object, containing for instance
 #'    the turns and possible tool calls. (As this function
 #'    uses a clone of the provided LLM provider, the 'ellmer' chat object in the
@@ -68,8 +72,8 @@
 #'  }
 #' }
 #'
-#' @export
 #'
+#' @export
 #' @example inst/examples/send_prompt.R
 #'
 #' @seealso [tidyprompt-class], [prompt_wrap()], [llm_provider-class], [llm_provider_ollama()],
@@ -90,6 +94,7 @@ send_prompt <- function(
   # Basic validation
   prompt <- tidyprompt(prompt)
   return_mode <- match.arg(return_mode)
+  llm_provider <- as_send_prompt_llm_provider(llm_provider, verbose, stream)
   stopifnot(
     inherits(llm_provider, "LlmProvider"),
     max_interactions > 0,
@@ -107,12 +112,20 @@ send_prompt <- function(
   # Verify and configure llm_provider
   llm_provider <- llm_provider$clone()
   # Deep-clone the ellmer chat object so mutations (register_tool, set_turns)
-  # don't affect the caller's original provider
-  if (
-    !is.null(llm_provider[["ellmer_chat"]]) &&
-      is.function(llm_provider$ellmer_chat$clone)
-  ) {
-    llm_provider$ellmer_chat <- llm_provider$ellmer_chat$clone()
+  # don't affect the caller's original provider. When send_prompt() received a
+  # raw ellmer chat directly, reset the working clone before evaluation.
+  if (!is.null(llm_provider[["ellmer_chat"]])) {
+    if (isTRUE(llm_provider$parameters$.reset_ellmer_chat)) {
+      llm_provider$ellmer_chat <- ellmer_chat_clone_reset(
+        llm_provider$ellmer_chat,
+        context = paste0(
+          "When passing an ellmer chat directly to `send_prompt()`, `llm_provider`"
+        )
+      )
+      llm_provider$parameters$.reset_ellmer_chat <- NULL
+    } else if (is.function(llm_provider$ellmer_chat$clone)) {
+      llm_provider$ellmer_chat <- llm_provider$ellmer_chat$clone()
+    }
   }
   if (!is.null(verbose)) {
     llm_provider$verbose <- verbose

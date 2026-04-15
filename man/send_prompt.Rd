@@ -20,6 +20,9 @@ send_prompt(
 \item{llm_provider}{\linkS4class{llm_provider} object
 (default is \code{\link[=llm_provider_ollama]{llm_provider_ollama()}}).
 This object and its settings will be used to evaluate the prompt.
+You may also pass an \code{ellmer::chat()} object directly; in that case,
+\code{\link[=send_prompt]{send_prompt()}} will clone it, clear any existing turns, and wrap the clean
+clone with \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}} before evaluation.
 Note that the 'verbose' and 'stream' settings in the LLM provider will be
 overruled by the 'verbose' and 'stream' arguments in this function
 when those are not NULL.
@@ -70,7 +73,8 @@ last message from the assistant, and all messages from the system are kept),
 \item 'duration_seconds' (the duration of the function in seconds),
 \item 'http_list' (a list with all HTTP responses made during the interactions;
 as returned by \code{llm_provider$complete_chat()}),
-\item 'ellmer_chat' (if \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}} was used, this will be
+\item 'ellmer_chat' (if \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}} or a raw \code{ellmer::chat()}
+object was used, this will be
 the updated 'ellmer' chat object, containing for instance
 the turns and possible tool calls. (As this function
 uses a clone of the provided LLM provider, the 'ellmer' chat object in the
