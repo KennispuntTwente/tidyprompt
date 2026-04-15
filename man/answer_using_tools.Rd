@@ -19,7 +19,9 @@ which has been documented in a help file (e.g., because it is part of a package)
 the documentation will be parsed from the help file. If it is a custom function,
 documentation should be added with \code{\link[=tools_add_docs]{tools_add_docs()}} or with \code{\link[ellmer:tool]{ellmer::tool()}}.
 Note that you can also provide Model Context Protocol (MCP) tools from MCP servers
-as returned from \code{\link[mcptools:client]{mcptools::mcp_tools()}}}
+as returned from \code{\link[mcptools:client]{mcptools::mcp_tools()}}.
+Provider-specific 'ellmer' built-in tools are only supported with
+'ellmer'-backed providers.}
 
 \item{type}{(optional) The way that tool calling should be enabled.
 "auto" will automatically determine the type based on \code{llm_provider$api_type}
@@ -52,13 +54,17 @@ the help file (if available), or from documentation added by
 \code{\link[=tools_add_docs]{tools_add_docs()}}. Users can also provide an 'ellmer' tool definition
 (see \code{\link[ellmer:tool]{ellmer::tool()}}; \href{https://ellmer.tidyverse.org/articles/tool-calling.html}{'ellmer' documentation}).
 Model Context Protocol (MCP) tools from MCP servers, as returned from
-\code{\link[mcptools:client]{mcptools::mcp_tools()}}, may also be used. Regardless of which type of
-tool definition is provided, the function will work with both 'ellmer' and
-regular LLM providers (the function converts between the two types as needed).
+\code{\link[mcptools:client]{mcptools::mcp_tools()}}, may also be used. Regular \code{\link[ellmer:tool]{ellmer::tool()}}
+definitions are converted as needed and can work with both 'ellmer' and
+regular LLM providers. Provider-specific 'ellmer' built-in tools
+(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
 }
 \details{
 Note that conversion between 'tidyprompt' and 'ellmer' tool definitions
 is experimntal and might contain bugs.
+Provider-specific 'ellmer' built-in tools are only supported when using an
+\code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}} object (or an 'ellmer' chat passed directly to
+\code{\link[=send_prompt]{send_prompt()}}).
 }
 \examples{
 # When using functions from base R or R packages,

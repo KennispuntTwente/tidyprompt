@@ -258,7 +258,9 @@ definitions will work with any LLM provider type (also non-'ellmer' LLM
 providers). Similarly, when using an `llm_provider_ellmer()`, a tool definition
 can also be given with `tools_add_docs()`. And, when using an `llm_provider_ellmer()`,
 `answer_using_tools()` will call the native 'ellmer' functions to register
-tools. See example usage in the documentation of `answer_using_tools()`.
+tools. Provider-specific 'ellmer' built-in tools are the exception: they only
+work with 'ellmer'-backed providers. See example usage in the documentation of
+`answer_using_tools()`.
 
 Tool definitions returned by `mcptools::mcp_tools()` may also be provided,
 allowing the use of tools from Model Context Protocol (MCP) servers.

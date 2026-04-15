@@ -13,13 +13,17 @@
 #' [tools_add_docs()]. Users can also provide an 'ellmer' tool definition
 #' (see [ellmer::tool()]; ['ellmer' documentation](https://ellmer.tidyverse.org/articles/tool-calling.html)).
 #' Model Context Protocol (MCP) tools from MCP servers, as returned from
-#' [mcptools::mcp_tools()], may also be used. Regardless of which type of
-#' tool definition is provided, the function will work with both 'ellmer' and
-#' regular LLM providers (the function converts between the two types as needed).
+#' [mcptools::mcp_tools()], may also be used. Regular [ellmer::tool()]
+#' definitions are converted as needed and can work with both 'ellmer' and
+#' regular LLM providers. Provider-specific 'ellmer' built-in tools
+#' (i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
 #'
 #' @details
 #' Note that conversion between 'tidyprompt' and 'ellmer' tool definitions
 #' is experimntal and might contain bugs.
+#' Provider-specific 'ellmer' built-in tools are only supported when using an
+#' [llm_provider_ellmer()] object (or an 'ellmer' chat passed directly to
+#' [send_prompt()]).
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #'
@@ -29,7 +33,9 @@
 #' the documentation will be parsed from the help file. If it is a custom function,
 #' documentation should be added with [tools_add_docs()] or with [ellmer::tool()].
 #' Note that you can also provide Model Context Protocol (MCP) tools from MCP servers
-#' as returned from [mcptools::mcp_tools()]
+#' as returned from [mcptools::mcp_tools()].
+#' Provider-specific 'ellmer' built-in tools are only supported with
+#' 'ellmer'-backed providers.
 #'
 #' @param type (optional) The way that tool calling should be enabled.
 #' "auto" will automatically determine the type based on `llm_provider$api_type`
@@ -121,6 +127,17 @@ answer_using_tools <- function(
     }
   }
 
+  has_builtin_tools <- any(vapply(tools, is_ellmer_builtin_tool, logical(1)))
+  builtin_tool_error <- paste0(
+    "Provider-specific ellmer built-in tools can only be used with an ",
+    "ellmer-backed provider (`type = \"ellmer\"` or `type = \"auto\"` ",
+    "resolving to an ellmer provider)."
+  )
+
+  if (has_builtin_tools && !(type %in% c("auto", "ellmer"))) {
+    stop(builtin_tool_error, call. = FALSE)
+  }
+
   # -- Build dual representations ---------------------------------------------
   # For each supplied tool, we want:
   # - a tidyprompt-style function (with docs) for text-based/OpenAI/Ollama paths
@@ -168,6 +185,20 @@ answer_using_tools <- function(
   parameter_fn <- function(llm_provider) {
     t <- determine_type(llm_provider)
     parameters <- list()
+
+    if (has_builtin_tools && t != "ellmer") {
+      stop(builtin_tool_error, call. = FALSE)
+    }
+
+    if (t == "ellmer" && !isTRUE(llm_provider$api_type == "ellmer")) {
+      stop(
+        paste0(
+          "`answer_using_tools(type = \"ellmer\")` requires an ellmer-backed ",
+          "provider created with `llm_provider_ellmer()` or a direct ellmer chat."
+        ),
+        call. = FALSE
+      )
+    }
 
     if (t %in% c("openai", "ollama")) {
       tools_openai <- list()

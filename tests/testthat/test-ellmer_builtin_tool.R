@@ -61,3 +61,30 @@ testthat::test_that("answer_using_tools accepts ToolBuiltIn in tool list", {
       answer_using_tools(tools = list(echo = my_fun, search = tbi))
   )
 })
+
+testthat::test_that("answer_using_tools errors for ToolBuiltIn on non-ellmer providers", {
+  testthat::skip_if_not_installed("ellmer")
+  ellmer_ns <- asNamespace("ellmer")
+  testthat::skip_if_not(
+    exists("ToolBuiltIn", envir = ellmer_ns),
+    "ToolBuiltIn not available in this ellmer version"
+  )
+
+  tbi <- ellmer_ns$ToolBuiltIn(
+    name = "web_search"
+  )
+
+  testthat::expect_error(
+    "test" |>
+      answer_using_tools(tools = list(search = tbi), type = "text-based"),
+    "built-in tools can only be used with an ellmer-backed provider"
+  )
+
+  prompt <- "test" |>
+    answer_using_tools(tools = list(search = tbi))
+
+  testthat::expect_error(
+    send_prompt(prompt, llm_provider_fake(verbose = FALSE), verbose = FALSE),
+    "built-in tools can only be used with an ellmer-backed provider"
+  )
+})
