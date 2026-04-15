@@ -176,3 +176,93 @@ testthat::test_that("ellmer provider preserves native thinking content in comple
   testthat::expect_match(result$completed$content[2], "Reasoning step")
   testthat::expect_equal(result$completed$content[3], "Final answer")
 })
+
+testthat::test_that("ellmer provider preserves native json content in completed rows", {
+  testthat::skip_if_not_installed("ellmer")
+
+  ellmer_ns <- asNamespace("ellmer")
+  fake_chat <- fake_ellmer_chat()
+  fake_chat$chat <- function(...) {
+    fake_chat$turns <- c(
+      fake_chat$turns,
+      list(
+        ellmer::UserTurn(list(ellmer::ContentText("Return JSON"))),
+        ellmer::AssistantTurn(list(
+          ellmer_ns$ContentJson(data = list(answer = 42))
+        ))
+      )
+    )
+
+    "{\"answer\":42}"
+  }
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  result <- provider$complete_chat(data.frame(
+    role = "user",
+    content = "Return JSON",
+    stringsAsFactors = FALSE
+  ))
+
+  testthat::expect_equal(result$completed$role, c("user", "assistant"))
+  testthat::expect_equal(result$completed$content[2], '{"answer":42}')
+})
+
+testthat::test_that("ellmer provider preserves native image tool results in completed rows", {
+  testthat::skip_if_not_installed("ellmer")
+
+  ellmer_ns <- asNamespace("ellmer")
+  fake_chat <- fake_ellmer_chat()
+  fake_chat$chat <- function(...) {
+    request <- ellmer::ContentToolRequest(
+      id = "call-image-1",
+      name = "make_plot",
+      arguments = list()
+    )
+
+    fake_chat$turns <- c(
+      fake_chat$turns,
+      list(
+        ellmer::UserTurn(list(ellmer::ContentText("Make me a plot"))),
+        ellmer::AssistantTurn(list(request)),
+        ellmer::UserTurn(list(
+          ellmer::ContentToolResult(
+            value = ellmer_ns$ContentImageRemote(
+              url = "https://example.com/plot.png"
+            ),
+            request = request
+          )
+        )),
+        ellmer::AssistantTurn(list(ellmer::ContentText("Done")))
+      )
+    )
+
+    "Done"
+  }
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  result <- provider$complete_chat(data.frame(
+    role = "user",
+    content = "Make me a plot",
+    stringsAsFactors = FALSE
+  ))
+
+  testthat::expect_equal(
+    result$completed$role,
+    c("user", "assistant", "tool", "assistant")
+  )
+  testthat::expect_match(
+    result$completed$content[3],
+    "\\[image: https://example.com/plot.png\\]"
+  )
+  testthat::expect_equal(result$completed$content[4], "Done")
+})

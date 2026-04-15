@@ -1026,15 +1026,115 @@ llm_provider_ellmer <- function(
       )
     }
 
+    is_ellmer_content_object <- function(x) {
+      classes <- class(x) %||% character()
+      any(grepl("^ellmer::Content", classes))
+    }
+
+    serialize_native_content <- function(x) {
+      if (is.null(x)) {
+        return("")
+      }
+
+      props <- ellmer_object_props(x)
+      classes <- class(x) %||% character()
+      content_class <- classes[grepl("^ellmer::Content", classes)][1] %||%
+        classes[1] %||%
+        "Content"
+
+      if (any(grepl("ContentToolRequest|ContentToolResult", classes))) {
+        return("")
+      }
+
+      if (
+        any(grepl("ContentText", classes)) ||
+          !is.null(props$text)
+      ) {
+        return(as.character(props$text %||% ""))
+      }
+
+      if (
+        any(grepl("ContentThinking", classes)) ||
+          !is.null(props$thinking)
+      ) {
+        return(as.character(props$thinking %||% ""))
+      }
+
+      if (any(grepl("ContentJson", classes))) {
+        json_text <- props$string %||% NULL
+        if (!is.null(json_text) && nzchar(as.character(json_text))) {
+          return(as.character(json_text))
+        }
+
+        json_text <- tryCatch(
+          jsonlite::toJSON(
+            props$parsed %||% props$data %||% NULL,
+            auto_unbox = TRUE
+          ),
+          error = function(e) NULL
+        )
+        if (!is.null(json_text)) {
+          return(as.character(json_text))
+        }
+      }
+
+      if (
+        any(grepl("ContentImageRemote", classes)) ||
+          !is.null(props$url)
+      ) {
+        return(paste0("[image: ", as.character(props$url %||% "remote"), "]"))
+      }
+
+      if (any(grepl("ContentImageInline", classes))) {
+        return(paste0(
+          "[image: inline ",
+          as.character(props$type %||% "unknown"),
+          "]"
+        ))
+      }
+
+      if (any(grepl("ContentPDF", classes))) {
+        return(paste0(
+          "[pdf: ",
+          as.character(props$filename %||% "document.pdf"),
+          "]"
+        ))
+      }
+
+      fallback <- tryCatch(
+        jsonlite::toJSON(props, auto_unbox = TRUE),
+        error = function(e) NULL
+      )
+
+      if (!is.null(fallback)) {
+        return(paste0("[", content_class, "] ", as.character(fallback)))
+      }
+
+      paste0("[", content_class, "]")
+    }
+
     stringify_tool_result <- function(x) {
       if (is.null(x)) {
         return("")
+      }
+      if (is_ellmer_content_object(x)) {
+        return(serialize_native_content(x))
       }
       if (is.character(x) && length(x) == 1) {
         return(as.character(x))
       }
       if (is.atomic(x)) {
         return(paste(as.character(x), collapse = ", "))
+      }
+      if (
+        is.list(x) &&
+          length(x) > 0 &&
+          all(vapply(x, is_ellmer_content_object, logical(1)))
+      ) {
+        return(paste(
+          vapply(x, serialize_native_content, character(1)),
+          collapse = "\n"
+        ))
       }
 
       json <- tryCatch(
@@ -1066,28 +1166,6 @@ llm_provider_ellmer <- function(
         for (content_obj in contents) {
           props <- ellmer_object_props(content_obj)
           classes <- class(content_obj) %||% character()
-
-          if (
-            any(grepl("ContentText", classes)) ||
-              !is.null(props$text)
-          ) {
-            text <- as.character(props$text %||% "")
-            if (nzchar(text)) {
-              history <- append_native_history(history, role, text)
-            }
-            next
-          }
-
-          if (
-            any(grepl("ContentThinking", classes)) ||
-              !is.null(props$thinking)
-          ) {
-            thinking <- as.character(props$thinking %||% "")
-            if (nzchar(thinking)) {
-              history <- append_native_history(history, role, thinking)
-            }
-            next
-          }
 
           if (
             any(grepl("ContentToolRequest", classes)) ||
@@ -1140,6 +1218,11 @@ llm_provider_ellmer <- function(
               tool_result = TRUE
             )
             next
+          }
+
+          text <- serialize_native_content(content_obj)
+          if (nzchar(text)) {
+            history <- append_native_history(history, role, text)
           }
         }
       }
