@@ -25,12 +25,13 @@ add_image(
 rasterized automatically
 \item an 'ellmer' content object created by \code{ellmer::content_image_url()},
 \code{ellmer::content_image_file()}, or \code{ellmer::content_image_plot()}
-(this will work with both regular providers and 'ellmer'-backed providers)#'
+(this will work with both regular providers and 'ellmer'-backed providers)
+}
+
 For OpenAI Responses API, URLs must point directly to an image resource (not an HTML
 page) and are transmitted as a scalar string \code{image_url} with optional \code{detail}.
 Supplying a webpage URL (e.g. a Wikipedia media viewer link) will result in a
-provider 400 error expecting an image URL string
-}}
+provider 400 error expecting an image URL string}
 
 \item{alt}{Optional alternative text/alt description}
 

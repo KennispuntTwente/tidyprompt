@@ -19,7 +19,8 @@
 #'     rasterized automatically
 #'   - an 'ellmer' content object created by `ellmer::content_image_url()`,
 #'     `ellmer::content_image_file()`, or `ellmer::content_image_plot()`
-#'     (this will work with both regular providers and 'ellmer'-backed providers)#'
+#'     (this will work with both regular providers and 'ellmer'-backed providers)
+#'
 #' For OpenAI Responses API, URLs must point directly to an image resource (not an HTML
 #' page) and are transmitted as a scalar string `image_url` with optional `detail`.
 #' Supplying a webpage URL (e.g. a Wikipedia media viewer link) will result in a

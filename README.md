@@ -230,7 +230,7 @@ provider that can be configured with ‘ellmer’, including the respective
 configuration and features from the ‘ellmer’ package.
 
 Furthermore, `answer_as_json()` and `answer_using_tools()` support
-‘ellmer’ defintions for structured output and tools. When using an
+'ellmer' definitions for structured output and tools. When using an
 ‘ellmer’ LLM provider, these functions will also call the native
 ‘ellmer’ functions to obtain structured output and register tools. (And
 because `mcptools::mcp_tools()` returns ‘ellmer’ tool definitions,

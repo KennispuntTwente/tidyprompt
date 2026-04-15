@@ -17,7 +17,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Luka Koning \email{l.koning@kennispunttwente.nl} [copyright holder]
+\strong{Maintainer}: Luka Koning \email{koningluka@gmail.com} [copyright holder]
 
 Authors:
 \itemize{
