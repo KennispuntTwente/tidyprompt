@@ -239,6 +239,14 @@ and wraps the clean clone automatically:
   send_prompt(ellmer::chat_openai(model = "gpt-4.1-mini"))
 ```
 
+When using `llm_provider_ellmer()` or a raw `ellmer::chat()`,
+‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
+history for each call. In other words, the ‘ellmer’ chat mainly carries
+provider configuration and native features here, while conversation
+state lives in ‘tidyprompt’. If you need the updated native ‘ellmer’
+turns after a call, use `send_prompt(..., return_mode = "full")` and
+inspect `$ellmer_chat`.
+
 Furthermore, `answer_as_json()` and `answer_using_tools()` support
 'ellmer' definitions for structured output and tools. When using an
 ‘ellmer’ LLM provider, these functions will also call the native

@@ -30,6 +30,13 @@ configuration and features). When using an 'ellmer' LLM provider,
 functions like `answer_as_json()` and `answer_using_tools()` will also call the native
 'ellmer' functions for these features. 
 
+When using `llm_provider_ellmer()` or a raw `ellmer::chat()` with `send_prompt()`,
+'tidyprompt' rebuilds the working 'ellmer' turns from 'tidyprompt' chat history
+for each call. That means the 'ellmer' chat mainly acts as provider
+configuration plus native feature support here, while conversation state lives
+in 'tidyprompt'. If you need the updated native 'ellmer' turns after a call,
+use `send_prompt(..., return_mode = "full")` and inspect `$ellmer_chat`.
+
 Furthermore, with the `llm_provider-class`, you can easily write a hook for any other LLM provider.
 You could make API calls using the 'httr2' package or use another R package that already has
 a hook for the LLM provider you want to use. If your API of choice is compatible with the structure
