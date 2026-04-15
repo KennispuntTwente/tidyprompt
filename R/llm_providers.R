@@ -924,6 +924,37 @@ llm_provider_ellmer <- function(
     ch <- self$ellmer_chat
     params <- self$parameters
 
+    # Known parameter names that are handled by the ellmer provider path.
+    # Anything else is silently ignored because ellmer Chat objects carry their
+    # API params (temperature, max_tokens, etc.) from construction and cannot
+    # be modified afterwards.
+    ellmer_known_params <- c(
+      "model",
+      "stream",
+      ".ellmer_tools",
+      ".ellmer_structured_type",
+      ".add_image_parts",
+      ".reset_ellmer_chat"
+    )
+
+    # Warn once per session about parameters that cannot be forwarded.
+    extra <- setdiff(names(params), ellmer_known_params)
+    extra <- extra[!startsWith(extra, ".")]
+    if (length(extra)) {
+      rlang::warn(
+        c(
+          paste0(
+            "Parameters not forwarded to ellmer provider: ",
+            paste0("`", extra, "`", collapse = ", "),
+            "."
+          ),
+          i = "Set these when creating the ellmer chat, e.g., `chat_openai(params = list(...))`."
+        ),
+        .frequency = "once",
+        .frequency_id = "tidyprompt_ellmer_extra_params"
+      )
+    }
+
     if (!all(c("role", "content") %in% names(chat_history))) {
       stop("`chat_history` must have columns `role` and `content`.")
     }
