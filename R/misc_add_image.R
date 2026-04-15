@@ -104,6 +104,9 @@ add_image <- function(
           "'ellmer' content image must have either '@url' or '@data' property"
         )
       }
+
+      # Preserve MIME type from ellmer ContentImageInline (e.g., image/jpeg)
+      mime <- props[["type"]] %||% mime
     }
   }
 

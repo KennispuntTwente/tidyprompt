@@ -32,3 +32,19 @@ test_that("llm_provider_ellmer forwards add_image URL parts via ellmer helpers",
   used_chat <- result$ellmer_chat
   expect_true(length(used_chat$last_method$args) >= 2)
 })
+
+test_that("add_image preserves MIME type from ellmer ContentImageInline", {
+  skip_if_not_installed("ellmer")
+  skip_if_not_installed("S7")
+
+  # Create an inline JPEG content object via ellmer
+  # ContentImageInline has props: type (MIME), data (base64)
+  inline <- ellmer::ContentImageInline(
+    type = "image/jpeg",
+    data = paste0(rep("A", 200), collapse = "")
+  )
+
+  part <- .tp_normalize_image_input(inline)
+  expect_equal(part$mime, "image/jpeg")
+  expect_equal(part$source, "b64")
+})
