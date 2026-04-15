@@ -1424,8 +1424,17 @@ llm_provider_ellmer <- function(
       )
 
       if (is.null(stream) && !is.null(stream_error)) {
-        if (use_multimodal) {
-          reply_any <- do.call(ch$chat, multimodal_args)
+        # Streaming failed to initialise; fall back to non-streaming chat.
+        # (Multimodal paths already did this; now also try for plain text.)
+        reply_any <- tryCatch(
+          if (use_multimodal) {
+            do.call(ch$chat, multimodal_args)
+          } else {
+            ch$chat(prompt_for_model)
+          },
+          error = function(e) NULL
+        )
+        if (!is.null(reply_any)) {
           assistant_text <- as.character(reply_any)
         } else {
           stop(stream_error)
@@ -1473,7 +1482,16 @@ llm_provider_ellmer <- function(
                 verbose = self$verbose
               )
 
-              stream_cb(chunk_str, meta)
+              tryCatch(
+                stream_cb(chunk_str, meta),
+                error = function(e) {
+                  warning(
+                    "stream_callback error (streaming continues): ",
+                    conditionMessage(e),
+                    call. = FALSE
+                  )
+                }
+              )
             } else if (isTRUE(self$verbose)) {
               cat(chunk_str)
             }
