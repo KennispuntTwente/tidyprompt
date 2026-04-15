@@ -226,7 +226,7 @@ Furthermore,
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
 and
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
-support ‘ellmer’ defintions for structured output and tools. When using
+support ‘ellmer’ definitions for structured output and tools. When using
 an ‘ellmer’ LLM provider, these functions will also call the native
 ‘ellmer’ functions to obtain structured output and register tools. (And
 because

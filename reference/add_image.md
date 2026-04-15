@@ -51,11 +51,13 @@ add_image(
     or
     [`ellmer::content_image_plot()`](https://ellmer.tidyverse.org/reference/content_image_url.html)
     (this will work with both regular providers and 'ellmer'-backed
-    providers)#' For OpenAI Responses API, URLs must point directly to
-    an image resource (not an HTML page) and are transmitted as a scalar
-    string `image_url` with optional `detail`. Supplying a webpage URL
-    (e.g. a Wikipedia media viewer link) will result in a provider 400
-    error expecting an image URL string
+    providers)
+
+  For OpenAI Responses API, URLs must point directly to an image
+  resource (not an HTML page) and are transmitted as a scalar string
+  `image_url` with optional `detail`. Supplying a webpage URL (e.g. a
+  Wikipedia media viewer link) will result in a provider 400 error
+  expecting an image URL string
 
 - alt:
 
