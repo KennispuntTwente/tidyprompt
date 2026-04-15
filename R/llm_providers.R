@@ -952,6 +952,13 @@ llm_provider_ellmer <- function(
     }
 
     as_turn <- function(role, contents) {
+      # ellmer only supports user/assistant/system roles; map "tool" rows
+      # (created by openai/ollama tool handlers) to user turns so replayed
+      # histories don't crash.
+      if (identical(role, "tool")) {
+        role <- "user"
+      }
+
       if (!is.null(ellmer_ns)) {
         # Prefer role-specific constructors (ellmer >= 0.4.0)
         ctor <- switch(

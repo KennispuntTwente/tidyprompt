@@ -42,3 +42,37 @@ testthat::test_that("ellmer provider builds Turn objects with correct contents",
     testthat::expect_true(length(turn@contents) >= 1)
   }
 })
+
+testthat::test_that("ellmer provider handles tool-role rows without crashing", {
+  testthat::skip_if_not_installed("ellmer")
+
+  fake_chat <- fake_ellmer_chat()
+  provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
+
+  # Simulate a chat history containing tool-role rows (as produced by
+
+  # the openai/ollama handler in answer_using_tools)
+  chat_history <- data.frame(
+    role = c("user", "assistant", "tool", "assistant", "user"),
+    content = c(
+      "Call my_func(1)",
+      "Calling my_func...",
+      "~>> Result:\n42",
+      "The result is 42.",
+      "Thanks"
+    ),
+    tool_result = c(FALSE, FALSE, TRUE, FALSE, FALSE),
+    stringsAsFactors = FALSE
+  )
+
+  # Should not error; tool rows are mapped to user turns
+  result <- testthat::expect_no_error(
+    provider$complete_chat(chat_history)
+  )
+
+  turns <- result$ellmer_chat$turns
+  # 4 prior turns (all except last), tool row mapped to user
+  testthat::expect_length(turns, 4)
+  # The third turn (originally "tool") should now be a user turn
+  testthat::expect_equal(turns[[3]]@role, "user")
+})
