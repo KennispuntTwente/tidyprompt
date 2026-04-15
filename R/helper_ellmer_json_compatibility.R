@@ -15,36 +15,50 @@ is_json_schema_list <- function(x) {
       (!is.null(x$type) && is.character(x$type)))
 }
 
-# Cache class signatures of ellmer prototypes (robust detection)
-.ELLMER_CLASS_SIGNATURES <- local({
-  sig <- NULL
-  if (ellmer_available()) {
-    try(
-      {
-        sig <- list(
-          string = class(ellmer::type_string()),
-          number = class(ellmer::type_number()),
-          integer = class(ellmer::type_integer()),
-          boolean = class(ellmer::type_boolean()),
-          enum = class(ellmer::type_enum(c("a", "b"))),
-          array = class(ellmer::type_array(ellmer::type_string())),
-          object = class(ellmer::type_object(x = ellmer::type_string()))
-        )
-        if (exists("type_ignore", envir = asNamespace("ellmer"))) {
-          sig$ignore <- class(ellmer::type_ignore())
-        }
-        # type_from_schema() available in ellmer >= 0.4.0
-        if (exists("type_from_schema", envir = asNamespace("ellmer"))) {
-          sig$json_schema <- class(ellmer::type_from_schema(
-            '{"type": "string"}'
-          ))
-        }
-      },
-      silent = TRUE
-    )
+# Lazy cache for class signatures of ellmer prototypes (robust detection).
+# Computed on first access so that ellmer (a Suggests dependency) can be
+# loaded after tidyprompt without the cache staying permanently NULL.
+.ellmer_class_sig_env <- new.env(parent = emptyenv())
+.ellmer_class_sig_env$cache <- NULL
+.ellmer_class_sig_env$resolved <- FALSE
+
+.get_ellmer_class_signatures <- function() {
+  if (.ellmer_class_sig_env$resolved) {
+    return(.ellmer_class_sig_env$cache)
   }
+  .ellmer_class_sig_env$resolved <- TRUE
+  if (!ellmer_available()) {
+    return(NULL)
+  }
+  sig <- tryCatch(
+    {
+      s <- list(
+        string = class(ellmer::type_string()),
+        number = class(ellmer::type_number()),
+        integer = class(ellmer::type_integer()),
+        boolean = class(ellmer::type_boolean()),
+        enum = class(ellmer::type_enum(c("a", "b"))),
+        array = class(ellmer::type_array(ellmer::type_string())),
+        object = class(ellmer::type_object(
+          .description = "probe",
+          .additional_properties = TRUE
+        ))
+      )
+      if (exists("type_ignore", envir = asNamespace("ellmer"))) {
+        s$ignore <- class(ellmer::type_ignore())
+      }
+      if (exists("type_from_schema", envir = asNamespace("ellmer"))) {
+        s$json_schema <- class(ellmer::type_from_schema(
+          '{"type": "string"}'
+        ))
+      }
+      s
+    },
+    error = function(e) NULL
+  )
+  .ellmer_class_sig_env$cache <- sig
   sig
-})
+}
 
 has_all_classes <- function(x, cls) {
   if (is.null(cls)) {
@@ -54,10 +68,11 @@ has_all_classes <- function(x, cls) {
 }
 
 is_ellmer_type <- function(x) {
-  if (is.null(.ELLMER_CLASS_SIGNATURES)) {
+  sig <- .get_ellmer_class_signatures()
+  if (is.null(sig)) {
     return(FALSE)
   }
-  any(vapply(.ELLMER_CLASS_SIGNATURES, has_all_classes, logical(1), x = x))
+  any(vapply(sig, has_all_classes, logical(1), x = x))
 }
 
 is_ellmer_chat <- function(x) {
@@ -233,11 +248,10 @@ json_schema_to_ellmer_type <- function(
 # --- ellmer::type_* -> JSON Schema (best-effort) ----------------------------
 
 ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
-  if (is.null(.ELLMER_CLASS_SIGNATURES)) {
+  sig <- .get_ellmer_class_signatures()
+  if (is.null(sig)) {
     stop("ellmer is not installed; cannot convert ellmer types to JSON Schema.")
   }
-
-  sig <- .ELLMER_CLASS_SIGNATURES
   desc <- description %||% attr(x, "description", exact = TRUE)
 
   # --- type_from_schema: already carries a JSON schema, extract it --------

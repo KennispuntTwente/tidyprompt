@@ -1,59 +1,74 @@
 # R/helper_ellmer_tool_compatability.R
 
-# Cache class signature for ellmer ToolDef so we can robustly detect it
-.ELLMER_TOOLDEF_CLASS_SIG <- local({
-  sig <- NULL
-  if (ellmer_available()) {
-    try(
-      {
-        dummy_fun <- function(x = 1) x
-        td <- ellmer::tool(
-          dummy_fun,
-          description = "dummy",
-          arguments = list(x = ellmer::type_number())
-        )
-        sig <- class(td)
-      },
-      silent = TRUE
-    )
-  }
-  sig
-})
+# Lazy cache for ellmer ToolDef class signature.
+# Computed on first access so ellmer (a Suggests dependency) does not need
+# to be available at tidyprompt load time.
+.ellmer_tool_sig_env <- new.env(parent = emptyenv())
+.ellmer_tool_sig_env$tooldef <- NULL
+.ellmer_tool_sig_env$tooldef_resolved <- FALSE
+.ellmer_tool_sig_env$builtin <- NULL
+.ellmer_tool_sig_env$builtin_resolved <- FALSE
 
-# Cache class signature for ellmer ToolBuiltIn (provider-specific tools
-# like web search); available in ellmer >= 0.4.0.
-.ELLMER_TOOLBUILTIN_CLASS_SIG <- local({
-  sig <- NULL
-  if (ellmer_available()) {
-    try(
-      {
-        ellmer_ns <- asNamespace("ellmer")
-        if (exists("ToolBuiltIn", envir = ellmer_ns, inherits = FALSE)) {
-          # ToolBuiltIn is an S7 class; get signature from a dummy instance
-          tbi <- ellmer_ns$ToolBuiltIn(
-            name = "dummy"
-          )
-          sig <- class(tbi)
-        }
-      },
-      silent = TRUE
-    )
+.get_ellmer_tooldef_sig <- function() {
+  if (.ellmer_tool_sig_env$tooldef_resolved) {
+    return(.ellmer_tool_sig_env$tooldef)
   }
+  .ellmer_tool_sig_env$tooldef_resolved <- TRUE
+  if (!ellmer_available()) {
+    return(NULL)
+  }
+  sig <- tryCatch(
+    {
+      dummy_fun <- function(x = 1) x
+      td <- ellmer::tool(
+        dummy_fun,
+        description = "dummy",
+        arguments = list(x = ellmer::type_number())
+      )
+      class(td)
+    },
+    error = function(e) NULL
+  )
+  .ellmer_tool_sig_env$tooldef <- sig
   sig
-})
+}
+
+.get_ellmer_builtin_sig <- function() {
+  if (.ellmer_tool_sig_env$builtin_resolved) {
+    return(.ellmer_tool_sig_env$builtin)
+  }
+  .ellmer_tool_sig_env$builtin_resolved <- TRUE
+  if (!ellmer_available()) {
+    return(NULL)
+  }
+  sig <- tryCatch(
+    {
+      ellmer_ns <- asNamespace("ellmer")
+      if (exists("ToolBuiltIn", envir = ellmer_ns, inherits = FALSE)) {
+        tbi <- ellmer_ns$ToolBuiltIn(name = "dummy")
+        class(tbi)
+      }
+    },
+    error = function(e) NULL
+  )
+  .ellmer_tool_sig_env$builtin <- sig
+  sig
+}
 
 is_ellmer_tool <- function(x) {
-  if (is.null(.ELLMER_TOOLDEF_CLASS_SIG)) {
+  sig <- .get_ellmer_tooldef_sig()
+  if (is.null(sig)) {
     return(FALSE)
   }
-  has_all_classes(x, .ELLMER_TOOLDEF_CLASS_SIG)
+  has_all_classes(x, sig)
 }
 
 is_ellmer_builtin_tool <- function(x) {
-  if (is.null(.ELLMER_TOOLBUILTIN_CLASS_SIG)) {
+  sig <- .get_ellmer_builtin_sig()
+  if (is.null(sig)) {
     return(FALSE)
   }
-  has_all_classes(x, .ELLMER_TOOLBUILTIN_CLASS_SIG)
+  has_all_classes(x, sig)
 }
 
 is_ellmer_any_tool <- function(x) {
