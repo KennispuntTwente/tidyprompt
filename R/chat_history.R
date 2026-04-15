@@ -87,9 +87,9 @@ chat_history.data.frame <- function(chat_history) {
   if (!all(c("role", "content") %in% names(chat_history))) {
     stop("The data frame must contain'role' and 'content' columns.")
   }
-  if (!all(chat_history$role %in% c("user", "assistant", "system"))) {
+  if (!all(chat_history$role %in% c("user", "assistant", "system", "tool"))) {
     stop(
-      "The 'role' column must contain only 'user', 'assistant', or 'system'."
+      "The 'role' column must contain only 'user', 'assistant', 'system', or 'tool'."
     )
   }
   if (!is.character(chat_history$role)) {

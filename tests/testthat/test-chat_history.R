@@ -41,8 +41,19 @@ test_that("chat_history.data.frame errors on invalid role values", {
   )
   expect_error(
     chat_history(invalid_df),
-    "The 'role' column must contain only 'user', 'assistant', or 'system'."
+    "The 'role' column must contain only 'user', 'assistant', 'system', or 'tool'."
   )
+})
+
+test_that("chat_history.data.frame accepts 'tool' role", {
+  tool_df <- data.frame(
+    role = c("user", "assistant", "tool"),
+    content = c("Hello", "Calling tool", "Tool result"),
+    stringsAsFactors = FALSE
+  )
+  result <- chat_history(tool_df)
+  expect_s3_class(result, "chat_history")
+  expect_equal(result$role, c("user", "assistant", "tool"))
 })
 
 test_that("chat_history.data.frame errors on non-character content column", {
