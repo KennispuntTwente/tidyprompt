@@ -48,3 +48,33 @@ test_that("add_image preserves MIME type from ellmer ContentImageInline", {
   expect_equal(part$mime, "image/jpeg")
   expect_equal(part$source, "b64")
 })
+
+test_that("build_image_content cleans up temp files for base64 images", {
+  skip_if_not_installed("ellmer")
+
+  chat <- fake_ellmer_chat()
+  prov <- llm_provider_ellmer(
+    chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  # Create a real PNG image file to use as input
+  img <- tempfile(fileext = ".png")
+  grDevices::png(img)
+  plot(1:2, 1:2)
+  grDevices::dev.off()
+  on.exit(unlink(img), add = TRUE)
+
+  before <- list.files(tempdir(), full.names = TRUE)
+
+  tp <- tidyprompt("Describe the image") |>
+    add_image(img)
+
+  send_prompt(tp, prov, verbose = FALSE)
+
+  after <- list.files(tempdir(), full.names = TRUE)
+  leaked <- setdiff(after, before)
+
+  expect_length(leaked, 0L)
+})

@@ -1027,6 +1027,7 @@ llm_provider_ellmer <- function(
           }
           tf <- tempfile(fileext = ext)
           writeBin(raw_bytes, tf)
+          on.exit(unlink(tf), add = TRUE)
           return(ellmer::content_image_file(
             path = tf,
             content_type = p$mime %||% "auto"
