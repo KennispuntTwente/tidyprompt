@@ -1,5 +1,6 @@
 test_that("llm_provider_ellmer streaming uses stream_callback and accumulates text", {
   skip_if_not_installed("ellmer")
+  skip_test_if_no_openai()
 
   # Build a minimal ellmer chat that supports streaming
   ch <- ellmer::chat_openai()
