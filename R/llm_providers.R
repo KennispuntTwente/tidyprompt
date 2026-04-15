@@ -1076,6 +1076,21 @@ llm_provider_ellmer <- function(
     use_structured <- !is.null(structured_type) &&
       is.function(ch$chat_structured)
 
+    # Warn if both tools and structured output are requested:
+    # ellmer's chat_structured() suppresses tool use, so both cannot
+    # work simultaneously in a single request.
+    if (use_structured && !is.null(params$.ellmer_tools)) {
+      cli::cli_alert_warning(
+        paste0(
+          "{.strong `llm_provider_ellmer()`}:\n",
+          "* Both structured output and tool use are requested;\n",
+          "ellmer's {.fn chat_structured} suppresses tool use, ",
+          "so tools will not be called in this request\n",
+          "* Consider using {.code type = \"text-based\"} for one of them"
+        )
+      )
+    }
+
     # Central streaming hook: if provided, we will stream tokens/chunks
     # through this function instead of letting ellmer print to console.
     stream_cb <- self$stream_callback %||%
