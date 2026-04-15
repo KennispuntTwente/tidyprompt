@@ -47,15 +47,17 @@ tools_add_docs(func, docs)
       but recommended for text-based function calling
 
     - 'type': The type of the argument. This should be one of:
-      'integer', 'numeric', 'logical', 'string', 'match.arg', 'vector
-      integer', 'vector numeric', 'vector logical', 'vector string'. For
-      arguments which are named lists, 'type' should be a named list
-      which contains the types of the elements. For type 'match.arg',
-      the possible values should be passed as a vector under
-      'default_value'. 'type' is required for native function calling
-      (with, e.g., OpenAI) but may also be useful to provide for
-      text-based function calling, in which it will be added to the
-      prompt introducing the function
+      'integer', 'numeric', 'logical', 'string', 'ignore', 'match.arg',
+      'vector integer', 'vector numeric', 'vector logical', 'vector
+      string'. For arguments which are named lists, 'type' should be a
+      named list which contains the types of the elements. For type
+      'match.arg', the possible values should be passed as a vector
+      under 'default_value'. Use 'ignore' to keep an argument out of
+      generated tool prompts/schemas and rely on the R function itself
+      to supply it (for example via a default value). 'type' is required
+      for native function calling (with, e.g., OpenAI) but may also be
+      useful to provide for text-based function calling, in which it
+      will be added to the prompt introducing the function
 
     - 'default_value': The default value of the argument. This is only
       required when 'type' is set to 'match.arg'. It should then be a

@@ -233,6 +233,17 @@ and wraps the clean clone automatically:
   send_prompt(ellmer::chat_openai(model = "gpt-4.1-mini"))
 ```
 
+When using
+[`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+or a raw
+[`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html),
+‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
+history for each call. In other words, the ‘ellmer’ chat mainly carries
+provider configuration and native features here, while conversation
+state lives in ‘tidyprompt’. If you need the updated native ‘ellmer’
+turns after a call, use `send_prompt(..., return_mode = "full")` and
+inspect `$ellmer_chat`.
+
 Furthermore,
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
 and
@@ -244,7 +255,11 @@ because
 [`mcptools::mcp_tools()`](https://posit-dev.github.io/mcptools/reference/client.html)
 returns ‘ellmer’ tool definitions,
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
-also supports tools from MCP servers.)
+also supports tools from MCP servers.) Regular
+[`ellmer::tool()`](https://ellmer.tidyverse.org/reference/tool.html)
+definitions can be converted for non-‘ellmer’ providers, but
+provider-specific ‘ellmer’ built-in tools only work with ‘ellmer’-backed
+providers.
 
 This means that ‘tidyprompt’ extends what is possible with ‘ellmer’ (and
 vice versa).

@@ -41,7 +41,14 @@ send_prompt(
   object directly; in that case, `send_prompt()` will clone it, clear
   any existing turns, and wrap the clean clone with
   [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-  before evaluation. Note that the 'verbose' and 'stream' settings in
+  before evaluation. When using
+  [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+  or a raw
+  [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html),
+  the working `ellmer` turns are rebuilt from tidyprompt's own chat
+  history for each call. Treat the `ellmer` chat primarily as provider
+  configuration plus native feature support, not as the main source of
+  conversation state. Note that the 'verbose' and 'stream' settings in
   the LLM provider will be overruled by the 'verbose' and 'stream'
   arguments in this function when those are not NULL. Furthermore,
   advanced
@@ -127,10 +134,11 @@ send_prompt(
     object was used, this will be the updated 'ellmer' chat object,
     containing for instance the turns and possible tool calls. (As this
     function uses a clone of the provided LLM provider, the 'ellmer'
-    chat object in the LLM provider will not be updated; via this way,
-    you can then still get an updated 'ellmer' chat object. Note that
-    turns in the 'ellmer' chat object may not contain the full chat
-    history when `clean_chat_history = TRUE` was used.)
+    chat object in the LLM provider will not be updated; use this return
+    value when you need the updated native `ellmer` turns from the
+    current evaluation. Note that turns in the 'ellmer' chat object may
+    not contain the full chat history when `clean_chat_history = TRUE`
+    was used.)
 
 ## See also
 

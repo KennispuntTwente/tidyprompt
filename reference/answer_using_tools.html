@@ -8,9 +8,10 @@ the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
 (see ellmer::tool(); 'ellmer' documentation).
 Model Context Protocol (MCP) tools from MCP servers, as returned from
-mcptools::mcp_tools(), may also be used. Regardless of which type of
-tool definition is provided, the function will work with both 'ellmer' and
-regular LLM providers (the function converts between the two types as needed)."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
+mcptools::mcp_tools(), may also be used. Regular ellmer::tool()
+definitions are converted as needed and can work with both 'ellmer' and
+regular LLM providers. Provider-specific 'ellmer' built-in tools
+(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
 Users can specify a list of functions that the LLM can call, and the
 prompt will be modified to include information, as well as an
 accompanying extraction function to call the functions (handled by
@@ -19,9 +20,10 @@ the help file (if available), or from documentation added by
 tools_add_docs(). Users can also provide an 'ellmer' tool definition
 (see ellmer::tool(); 'ellmer' documentation).
 Model Context Protocol (MCP) tools from MCP servers, as returned from
-mcptools::mcp_tools(), may also be used. Regardless of which type of
-tool definition is provided, the function will work with both 'ellmer' and
-regular LLM providers (the function converts between the two types as needed)."></head><body>
+mcptools::mcp_tools(), may also be used. Regular ellmer::tool()
+definitions are converted as needed and can work with both 'ellmer' and
+regular LLM providers. Provider-specific 'ellmer' built-in tools
+(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -72,9 +74,10 @@ the help file (if available), or from documentation added by
 <code><a href="tools_add_docs.html">tools_add_docs()</a></code>. Users can also provide an 'ellmer' tool definition
 (see <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>; <a href="https://ellmer.tidyverse.org/articles/tool-calling.html" class="external-link">'ellmer' documentation</a>).
 Model Context Protocol (MCP) tools from MCP servers, as returned from
-<code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>, may also be used. Regardless of which type of
-tool definition is provided, the function will work with both 'ellmer' and
-regular LLM providers (the function converts between the two types as needed).</p>
+<code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>, may also be used. Regular <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>
+definitions are converted as needed and can work with both 'ellmer' and
+regular LLM providers. Provider-specific 'ellmer' built-in tools
+(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.</p>
     </div>
 
     <div class="section level2">
@@ -101,7 +104,9 @@ which has been documented in a help file (e.g., because it is part of a package)
 the documentation will be parsed from the help file. If it is a custom function,
 documentation should be added with <code><a href="tools_add_docs.html">tools_add_docs()</a></code> or with <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>.
 Note that you can also provide Model Context Protocol (MCP) tools from MCP servers
-as returned from <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code></p></dd>
+as returned from <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>.
+Provider-specific 'ellmer' built-in tools are only supported with
+'ellmer'-backed providers.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -131,7 +136,10 @@ the prompt with <code><a href="send_prompt.html">send_prompt()</a></code></p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Note that conversion between 'tidyprompt' and 'ellmer' tool definitions
-is experimntal and might contain bugs.</p>
+is experimntal and might contain bugs.
+Provider-specific 'ellmer' built-in tools are only supported when using an
+<code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> object (or an 'ellmer' chat passed directly to
+<code><a href="send_prompt.html">send_prompt()</a></code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -25,6 +25,19 @@ and
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
 will also call the native ‘ellmer’ functions for these features.
 
+When using
+[`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+or a raw
+[`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
+with
+[`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md),
+‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
+history for each call. That means the ‘ellmer’ chat mainly acts as
+provider configuration plus native feature support here, while
+conversation state lives in ‘tidyprompt’. If you need the updated native
+‘ellmer’ turns after a call, use
+`send_prompt(..., return_mode = "full")` and inspect `$ellmer_chat`.
+
 Furthermore, with the `llm_provider-class`, you can easily write a hook
 for any other LLM provider. You could make API calls using the ‘httr2’
 package or use another R package that already has a hook for the LLM
@@ -296,8 +309,10 @@ a tool definition can also be given with
 And, when using an
 [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md),
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
-will call the native ‘ellmer’ functions to register tools. See example
-usage in the documentation of
+will call the native ‘ellmer’ functions to register tools.
+Provider-specific ‘ellmer’ built-in tools are the exception: they only
+work with ‘ellmer’-backed providers. See example usage in the
+documentation of
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md).
 
 Tool definitions returned by

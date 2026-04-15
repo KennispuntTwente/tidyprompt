@@ -84,6 +84,10 @@ This object and its settings will be used to evaluate the prompt.
 You may also pass an <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object directly; in that case,
 <code>send_prompt()</code> will clone it, clear any existing turns, and wrap the clean
 clone with <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> before evaluation.
+When using <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> or a raw <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code>, the working
+<code>ellmer</code> turns are rebuilt from tidyprompt's own chat history for each call.
+Treat the <code>ellmer</code> chat primarily as provider configuration plus native
+feature support, not as the main source of conversation state.
 Note that the 'verbose' and 'stream' settings in the LLM provider will be
 overruled by the 'verbose' and 'stream' arguments in this function
 when those are not NULL.
@@ -149,8 +153,8 @@ object was used, this will be
 the updated 'ellmer' chat object, containing for instance
 the turns and possible tool calls. (As this function
 uses a clone of the provided LLM provider, the 'ellmer' chat object in the
-LLM provider will not be updated; via this way, you can
-then still get an updated 'ellmer' chat object. Note that turns in the 'ellmer'
+LLM provider will not be updated; use this return value when you need the
+updated native <code>ellmer</code> turns from the current evaluation. Note that turns in the 'ellmer'
 chat object may not contain the full chat history when <code>clean_chat_history = TRUE</code>
 was used.)</p></li>
 </ul></li>

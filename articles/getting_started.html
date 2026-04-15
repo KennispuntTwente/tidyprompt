@@ -85,6 +85,15 @@ allows you to use any LLM provider that you can configure with the
 features). When using an ‘ellmer’ LLM provider, functions like
 <code><a href="../reference/answer_as_json.html">answer_as_json()</a></code> and <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> will
 also call the native ‘ellmer’ functions for these features.</p>
+<p>When using <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code> or a raw
+<code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> with <code><a href="../reference/send_prompt.html">send_prompt()</a></code>,
+‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
+history for each call. That means the ‘ellmer’ chat mainly acts as
+provider configuration plus native feature support here, while
+conversation state lives in ‘tidyprompt’. If you need the updated native
+‘ellmer’ turns after a call, use
+<code>send_prompt(..., return_mode = "full")</code> and inspect
+<code>$ellmer_chat</code>.</p>
 <p>Furthermore, with the <code>llm_provider-class</code>, you can easily
 write a hook for any other LLM provider. You could make API calls using
 the ‘httr2’ package or use another R package that already has a hook for
@@ -318,7 +327,9 @@ Similarly, when using an <code><a href="../reference/llm_provider_ellmer.html">l
 definition can also be given with <code><a href="../reference/tools_add_docs.html">tools_add_docs()</a></code>. And,
 when using an <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code>,
 <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> will call the native ‘ellmer’
-functions to register tools. See example usage in the documentation of
+functions to register tools. Provider-specific ‘ellmer’ built-in tools
+are the exception: they only work with ‘ellmer’-backed providers. See
+example usage in the documentation of
 <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code>.</p>
 <p>Tool definitions returned by <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code> may
 also be provided, allowing the use of tools from Model Context Protocol

@@ -14,9 +14,11 @@ Users can also provide an 'ellmer' tool definition (see
 documentation](https://ellmer.tidyverse.org/articles/tool-calling.html)).
 Model Context Protocol (MCP) tools from MCP servers, as returned from
 [`mcptools::mcp_tools()`](https://posit-dev.github.io/mcptools/reference/client.html),
-may also be used. Regardless of which type of tool definition is
-provided, the function will work with both 'ellmer' and regular LLM
-providers (the function converts between the two types as needed).
+may also be used. Regular
+[`ellmer::tool()`](https://ellmer.tidyverse.org/reference/tool.html)
+definitions are converted as needed and can work with both 'ellmer' and
+regular LLM providers. Provider-specific 'ellmer' built-in tools (i.e.,
+'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
 
 ## Usage
 
@@ -50,7 +52,9 @@ answer_using_tools(
   [`ellmer::tool()`](https://ellmer.tidyverse.org/reference/tool.html).
   Note that you can also provide Model Context Protocol (MCP) tools from
   MCP servers as returned from
-  [`mcptools::mcp_tools()`](https://posit-dev.github.io/mcptools/reference/client.html)
+  [`mcptools::mcp_tools()`](https://posit-dev.github.io/mcptools/reference/client.html).
+  Provider-specific 'ellmer' built-in tools are only supported with
+  'ellmer'-backed providers.
 
 - type:
 
@@ -87,7 +91,11 @@ the prompt with
 ## Details
 
 Note that conversion between 'tidyprompt' and 'ellmer' tool definitions
-is experimntal and might contain bugs.
+is experimntal and might contain bugs. Provider-specific 'ellmer'
+built-in tools are only supported when using an
+[`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+object (or an 'ellmer' chat passed directly to
+[`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)).
 
 ## See also
 
