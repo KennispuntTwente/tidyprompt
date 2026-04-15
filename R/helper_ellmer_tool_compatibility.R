@@ -84,6 +84,39 @@ is_ellmer_any_tool <- function(x) {
   props
 }
 
+.ellmer_tool_formals <- function(tooldef) {
+  fmls <- tryCatch(formals(tooldef), error = function(e) NULL)
+  if (!is.null(fmls) && length(fmls)) {
+    return(fmls)
+  }
+
+  arg_names <- names(.ellmer_tool_properties(tooldef))
+  if (!length(arg_names)) {
+    return(alist(... = ))
+  }
+  blanks <- rep(list(quote(expr = )), length(arg_names))
+  names(blanks) <- arg_names
+  as.pairlist(blanks)
+}
+
+.tidyprompt_arg_is_ignored <- function(arg) {
+  if (is.null(arg)) {
+    return(FALSE)
+  }
+
+  if (is.character(arg) && length(arg) == 1) {
+    return(identical(arg, "ignore"))
+  }
+
+  if (!is.list(arg)) {
+    return(FALSE)
+  }
+
+  is.character(arg$type) &&
+    length(arg$type) == 1 &&
+    identical(arg$type, "ignore")
+}
+
 # ---- JSON Schema -> tidyprompt docs (argument shape) -----------------------
 
 # Return just the "type descriptor" used by tidyprompt docs:
@@ -93,6 +126,10 @@ is_ellmer_any_tool <- function(x) {
 .json_schema_to_tidyprompt_type_only <- function(s) {
   if (is.null(s)) {
     return("unknown")
+  }
+
+  if (isTRUE(s$`x-tidyprompt-ignore`)) {
+    return("ignore")
   }
 
   # enums can't be expressed in nested named-lists in tidyprompt's type mini-DSL
@@ -174,10 +211,19 @@ ellmer_tool_to_tidyprompt_docs <- function(tooldef) {
   desc <- tryCatch(tooldef@description, error = function(e) NULL)
 
   props <- .ellmer_tool_properties(tooldef)
+  arg_names <- names(.ellmer_tool_formals(tooldef))
+  if (!length(arg_names)) {
+    arg_names <- names(props)
+  }
 
   args_docs <- list()
-  if (length(props)) {
-    for (nm in names(props)) {
+  if (length(arg_names)) {
+    for (nm in arg_names) {
+      if (!nm %in% names(props)) {
+        args_docs[[nm]] <- list(type = "ignore")
+        next
+      }
+
       # Best-effort: use your ellmer -> JSON Schema converter
       s <- tryCatch(
         ellmer_type_to_json_schema(props[[nm]], strict = TRUE),
@@ -206,26 +252,8 @@ ellmer_tool_to_tidyprompt <- function(tooldef) {
 
   docs <- ellmer_tool_to_tidyprompt_docs(tooldef)
 
-  # Determine the correct formals for the wrapper
-  get_tool_formals <- function(td) {
-    # ToolDef inherits from function, so this usually works:
-    fmls <- tryCatch(formals(td), error = function(e) NULL)
-    if (!is.null(fmls) && length(fmls)) {
-      return(fmls)
-    }
-
-    # Fallback: build empty formals from the ToolDef's argument names
-    arg_names <- names(.ellmer_tool_properties(td))
-    if (!length(arg_names)) {
-      return(alist(... = ))
-    }
-    blanks <- rep(list(quote(expr = )), length(arg_names))
-    names(blanks) <- arg_names
-    as.pairlist(blanks)
-  }
-
   wrapper <- function() {}
-  formals(wrapper) <- get_tool_formals(tooldef)
+  formals(wrapper) <- .ellmer_tool_formals(tooldef)
   body(wrapper) <- quote({
     tool <- attr(sys.function(), "ellmer_tool", exact = TRUE)
     args <- as.list(match.call(expand.dots = TRUE))[-1]
@@ -308,7 +336,15 @@ tidyprompt_docs_to_ellmer_tool <- function(
   # Fill any missing with permissive strings; drop extras
   missing <- setdiff(fn_formals, names(props))
   for (nm in missing) {
-    props[[nm]] <- ellmer::type_string(required = FALSE)
+    arg_doc <- docs$arguments[[nm]] %||% NULL
+    if (
+      .tidyprompt_arg_is_ignored(arg_doc) &&
+        exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE)
+    ) {
+      props[[nm]] <- ellmer::type_ignore()
+    } else {
+      props[[nm]] <- ellmer::type_string(required = FALSE)
+    }
   }
   props <- props[fn_formals]
 

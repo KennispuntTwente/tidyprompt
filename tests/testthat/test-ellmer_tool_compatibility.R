@@ -139,6 +139,26 @@ testthat::test_that("ellmer_tool_to_tidyprompt_docs maps common types correctly"
   testthat::expect_equal(types$obj$y, "integer")
 })
 
+testthat::test_that("ellmer_tool_to_tidyprompt_docs preserves ignored args", {
+  testthat::skip_if_not_installed("ellmer")
+
+  f <- function(x, hidden = 1) x + hidden
+
+  td <- ellmer::tool(
+    f,
+    description = "Uses a hidden default",
+    arguments = list(
+      x = ellmer::type_number(),
+      hidden = ellmer::type_ignore()
+    )
+  )
+
+  docs <- ellmer_tool_to_tidyprompt_docs(td)
+
+  testthat::expect_equal(docs$arguments$x$type, "numeric")
+  testthat::expect_equal(docs$arguments$hidden$type, "ignore")
+})
+
 # ---- ellmer -> tidyprompt: function wrapper --------------------------------
 
 testthat::test_that("ellmer_tool_to_tidyprompt creates a working wrapper with docs", {
@@ -237,6 +257,27 @@ testthat::test_that("tidyprompt_docs_to_ellmer_tool fills missing argument types
   testthat::expect_equal(ps$b$type, "string")
 })
 
+testthat::test_that("tidyprompt_docs_to_ellmer_tool rebuilds ignored args", {
+  testthat::skip_if_not_installed("ellmer")
+
+  f <- function(x, hidden = 1) x + hidden
+  docs <- list(
+    name = "f",
+    description = "Uses a hidden default",
+    arguments = list(
+      x = list(type = "numeric"),
+      hidden = list(type = "ignore", description = "Use the default")
+    )
+  )
+
+  td <- tidyprompt_docs_to_ellmer_tool(f, docs, strict = TRUE)
+
+  testthat::expect_true(is_ellmer_tool(td))
+  testthat::expect_identical(names(formals(td)), c("x", "hidden"))
+  testthat::expect_identical(names(.ellmer_tool_properties(td)), "x")
+  testthat::expect_identical(td(x = 2), 3)
+})
+
 # ---- Round-trip behavior ---------------------------------------------------
 
 testthat::test_that("ellmer ToolDef -> tidyprompt fn -> ellmer ToolDef keeps behavior", {
@@ -265,6 +306,47 @@ testthat::test_that("ellmer ToolDef -> tidyprompt fn -> ellmer ToolDef keeps beh
   r1 <- td(name = "Ada", excited = TRUE)
   r2 <- td2(name = "Ada", excited = TRUE)
   testthat::expect_identical(r1, r2)
+})
+
+testthat::test_that("ignored args stay hidden across tool roundtrips", {
+  testthat::skip_if_not_installed("ellmer")
+
+  add_hidden <- function(x, hidden = 1) x + hidden
+
+  td <- ellmer::tool(
+    add_hidden,
+    description = "Add with a hidden default",
+    arguments = list(
+      x = ellmer::type_number(),
+      hidden = ellmer::type_ignore()
+    )
+  )
+
+  tp_fun <- ellmer_tool_to_tidyprompt(td)
+  tp_docs <- tools_get_docs(tp_fun)
+  td2 <- tidyprompt_tool_to_ellmer(tp_fun, strict = TRUE)
+
+  testthat::expect_equal(tp_docs$arguments$hidden$type, "ignore")
+  testthat::expect_false("hidden" %in% names(.ellmer_tool_properties(td2)))
+  testthat::expect_identical(td2(x = 2), 3)
+})
+
+testthat::test_that("ignored args are omitted from emitted schemas and text", {
+  docs <- list(
+    name = "f",
+    description = "Uses a hidden default",
+    arguments = list(
+      x = list(type = "numeric", description = "Visible"),
+      hidden = list(type = "ignore", description = "Hidden")
+    )
+  )
+
+  schema <- tools_docs_to_r_json_schema(docs, all_required = FALSE)
+  text <- tools_docs_to_text(docs)
+
+  testthat::expect_identical(names(schema$properties), "x")
+  testthat::expect_identical(as.character(schema$required), "x")
+  testthat::expect_false(grepl("- hidden:", text, fixed = TRUE))
 })
 
 # ---- normalize_tool_dual ---------------------------------------------------

@@ -853,11 +853,13 @@ answer_using_tools <- function(
 #' required or used for native function calling (e.g., with OpenAI), but recommended
 #' for text-based function calling
 #' \item 'type': The type of the argument. This should be one of:
-#' 'integer', 'numeric', 'logical', 'string', 'match.arg',
+#' 'integer', 'numeric', 'logical', 'string', 'ignore', 'match.arg',
 #' 'vector integer', 'vector numeric', 'vector logical', 'vector string'.
 #'  For arguments which are named lists, 'type' should be a named list
 #'  which contains the types of the elements. For type 'match.arg', the
 #'  possible values should be passed as a vector under 'default_value'.
+#'  Use 'ignore' to keep an argument out of generated tool prompts/schemas and
+#'  rely on the R function itself to supply it (for example via a default value).
 #'  'type' is required for native function calling (with, e.g., OpenAI) but may
 #'  also be useful to provide for text-based function calling, in which it will
 #'  be added to the prompt introducing the function
@@ -1438,6 +1440,10 @@ tools_docs_to_r_json_schema <- function(
 ) {
   # Helper function to process each argument recursively
   process_argument <- function(arg) {
+    if (.tidyprompt_arg_is_ignored(arg)) {
+      return(NULL)
+    }
+
     prop <- list()
     r_type <- arg$type
 
@@ -1474,7 +1480,10 @@ tools_docs_to_r_json_schema <- function(
             NULL
           }
         )
-        prop$properties[[name]] <- process_argument(sub_arg)
+        sub_prop <- process_argument(sub_arg)
+        if (!is.null(sub_prop)) {
+          prop$properties[[name]] <- sub_prop
+        }
       }
     } else if (is.null(r_type) || r_type == "unknown") {
       prop$type <- "string"
@@ -1543,7 +1552,10 @@ tools_docs_to_r_json_schema <- function(
               type = arg$type[[name]],
               default_value = default_value[[name]]
             )
-            prop$properties[[name]] <- process_argument(sub_arg)
+            sub_prop <- process_argument(sub_arg)
+            if (!is.null(sub_prop)) {
+              prop$properties[[name]] <- sub_prop
+            }
           }
         }
       } else {
@@ -1581,6 +1593,9 @@ tools_docs_to_r_json_schema <- function(
   for (arg_name in names(args)) {
     arg <- args[[arg_name]]
     prop <- process_argument(arg)
+    if (is.null(prop)) {
+      next
+    }
 
     # Add to required arguments if there's no default value
     if (!"default_value" %in% names(arg)) {
@@ -1592,7 +1607,7 @@ tools_docs_to_r_json_schema <- function(
   }
 
   if (all_required) {
-    required_args <- names(args)
+    required_args <- names(properties)
   }
 
   list(
@@ -1616,6 +1631,10 @@ tools_docs_to_text <- function(docs, with_arguments = TRUE) {
   # Internal helper function to process arguments
   tools_docs_to_text_arguments <- function(docs, line_prefix = "  ") {
     process_argument <- function(arg_name, arg_info, prefix = "  ") {
+      if (.tidyprompt_arg_is_ignored(arg_info)) {
+        return(NULL)
+      }
+
       # Warning for unknown type
       if (arg_info$type == "unknown") {
         cli::cli_alert_warning(
@@ -1664,6 +1683,10 @@ tools_docs_to_text <- function(docs, with_arguments = TRUE) {
       for (arg_name in names(arg_list)) {
         arg_info <- arg_list[[arg_name]]
 
+        if (.tidyprompt_arg_is_ignored(arg_info)) {
+          next
+        }
+
         # If arg_info is not a list, assume it represents the type
         if (!is.list(arg_info)) {
           arg_info <- list(type = arg_info)
@@ -1699,6 +1722,9 @@ tools_docs_to_text <- function(docs, with_arguments = TRUE) {
         } else {
           # For simple arguments, handle normally
           arg_line <- process_argument(arg_name, arg_info, prefix)
+          if (is.null(arg_line)) {
+            next
+          }
           nested_text <- paste(
             nested_text,
             arg_line,

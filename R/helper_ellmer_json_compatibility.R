@@ -30,6 +30,9 @@ is_json_schema_list <- function(x) {
           array = class(ellmer::type_array(ellmer::type_string())),
           object = class(ellmer::type_object(x = ellmer::type_string()))
         )
+        if (exists("type_ignore", envir = asNamespace("ellmer"))) {
+          sig$ignore <- class(ellmer::type_ignore())
+        }
         # type_from_schema() available in ellmer >= 0.4.0
         if (exists("type_from_schema", envir = asNamespace("ellmer"))) {
           sig$json_schema <- class(ellmer::type_from_schema(
@@ -125,6 +128,13 @@ json_schema_to_ellmer_type <- function(
   # Unwrap "json_schema" wrapper shape {name, schema, strict}
   if (!is.null(schema$schema) && is.list(schema$schema)) {
     schema <- schema$schema
+  }
+
+  if (isTRUE(schema$`x-tidyprompt-ignore`)) {
+    return(ellmer::type_ignore(
+      description = schema$description %||% NULL,
+      required = required
+    ))
   }
 
   # Handle enum
@@ -237,6 +247,13 @@ ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
     if (is.list(schema)) {
       return(schema)
     }
+  }
+
+  if (!is.null(sig$ignore) && has_all_classes(x, sig$ignore)) {
+    return(compact_list(list(
+      `x-tidyprompt-ignore` = TRUE,
+      description = desc
+    )))
   }
 
   # --- Basic scalars: prefer S7 'type' property over class signatures ----
