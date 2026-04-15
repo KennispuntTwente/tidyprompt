@@ -85,6 +85,12 @@ NULL
       response <- llm_provider$complete_chat(self$chat_history)
       self$chat_history <- response$completed
 
+      # Sync the updated ellmer chat back so native state (tool calls,
+      # thinking turns, etc.) accumulates across persistent_chat turns.
+      if (!is.null(response$ellmer_chat)) {
+        self$llm_provider$ellmer_chat <- response$ellmer_chat
+      }
+
       if (verbose) {
         return(invisible(response))
       }
