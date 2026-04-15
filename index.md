@@ -222,6 +222,17 @@ This allows users to use any LLM provider that can be configured with
 ‘ellmer’, including the respective configuration and features from the
 ‘ellmer’ package.
 
+You can also pass an ‘ellmer’ chat object directly to
+[`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md).
+In that case, ‘tidyprompt’ clones the chat, clears any existing turns,
+and wraps the clean clone automatically:
+
+``` r
+"What is 2 + 2?" |>
+  answer_as_integer() |>
+  send_prompt(ellmer::chat_openai(model = "gpt-4.1-mini"))
+```
+
 Furthermore,
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
 and

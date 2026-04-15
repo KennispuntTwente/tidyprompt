@@ -35,10 +35,16 @@ send_prompt(
   [llm_provider](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider-class.md)
   object (default is
   [`llm_provider_ollama()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ollama.md)).
-  This object and its settings will be used to evaluate the prompt. Note
-  that the 'verbose' and 'stream' settings in the LLM provider will be
-  overruled by the 'verbose' and 'stream' arguments in this function
-  when those are not NULL. Furthermore, advanced
+  This object and its settings will be used to evaluate the prompt. You
+  may also pass an
+  [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
+  object directly; in that case, `send_prompt()` will clone it, clear
+  any existing turns, and wrap the clean clone with
+  [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+  before evaluation. Note that the 'verbose' and 'stream' settings in
+  the LLM provider will be overruled by the 'verbose' and 'stream'
+  arguments in this function when those are not NULL. Furthermore,
+  advanced
   [tidyprompt](https://kennispunttwente.github.io/tidyprompt/reference/tidyprompt-class.md)
   objects may carry '\$parameter_fn' functions which can set parameters
   in the llm_provider object (see
@@ -116,13 +122,15 @@ send_prompt(
 
   - 'ellmer_chat' (if
     [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-    was used, this will be the updated 'ellmer' chat object, containing
-    for instance the turns and possible tool calls. (As this function
-    uses a clone of the provided LLM provider, the 'ellmer' chat object
-    in the LLM provider will not be updated; via this way, you can then
-    still get an updated 'ellmer' chat object. Note that turns in the
-    'ellmer' chat object may not contain the full chat history when
-    `clean_chat_history = TRUE` was used.)
+    or a raw
+    [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
+    object was used, this will be the updated 'ellmer' chat object,
+    containing for instance the turns and possible tool calls. (As this
+    function uses a clone of the provided LLM provider, the 'ellmer'
+    chat object in the LLM provider will not be updated; via this way,
+    you can then still get an updated 'ellmer' chat object. Note that
+    turns in the 'ellmer' chat object may not contain the full chat
+    history when `clean_chat_history = TRUE` was used.)
 
 ## See also
 

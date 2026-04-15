@@ -81,6 +81,9 @@ in the prompt wraps (see <code><a href="prompt_wrap.html">prompt_wrap()</a></cod
 <dd><p><a href="llm_provider-class.html">llm_provider</a> object
 (default is <code><a href="llm_provider_ollama.html">llm_provider_ollama()</a></code>).
 This object and its settings will be used to evaluate the prompt.
+You may also pass an <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object directly; in that case,
+<code>send_prompt()</code> will clone it, clear any existing turns, and wrap the clean
+clone with <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> before evaluation.
 Note that the 'verbose' and 'stream' settings in the LLM provider will be
 overruled by the 'verbose' and 'stream' arguments in this function
 when those are not NULL.
@@ -141,7 +144,8 @@ last message from the assistant, and all messages from the system are kept),</p>
 <li><p>'duration_seconds' (the duration of the function in seconds),</p></li>
 <li><p>'http_list' (a list with all HTTP responses made during the interactions;
 as returned by <code>llm_provider$complete_chat()</code>),</p></li>
-<li><p>'ellmer_chat' (if <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> was used, this will be
+<li><p>'ellmer_chat' (if <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> or a raw <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code>
+object was used, this will be
 the updated 'ellmer' chat object, containing for instance
 the turns and possible tool calls. (As this function
 uses a clone of the provided LLM provider, the 'ellmer' chat object in the
