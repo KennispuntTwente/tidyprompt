@@ -1328,16 +1328,27 @@ llm_provider_ellmer <- function(
               content_type = p$mime %||% "auto"
             ),
             error = function(e) {
-              # ellmer may require magick for resizing; fall back to a
-              # manual base64 data-URI so the image still reaches the API.
               b64 <- jsonlite::base64_enc(raw_bytes)
               mime <- p$mime %||% "image/png"
-              list(
-                type = "image_url",
-                image_url = list(
-                  url = paste0("data:", mime, ";base64,", b64)
-                )
-              )
+
+              # If ellmer can't build from a temp file (for example because
+              # an image helper dependency is unavailable), fall back to an
+              # inline ellmer content object instead of an OpenAI-style payload.
+              if (exists("ContentImageInline", envir = ellmer_ns, inherits = FALSE)) {
+                return(ellmer_ns$ContentImageInline(
+                  type = mime,
+                  data = b64
+                ))
+              }
+
+              if (exists("content_image_url", envir = ellmer_ns, inherits = FALSE)) {
+                return(ellmer::content_image_url(
+                  url = paste0("data:", mime, ";base64,", b64),
+                  detail = p$detail %||% "auto"
+                ))
+              }
+
+              stop(e)
             }
           )
           return(img)
