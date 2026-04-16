@@ -253,6 +253,8 @@ NULL
         self$parameters$.native_structured_result <- response$native_structured_result
       }
 
+      response$completed <- normalize_chat_history_metadata(response$completed)
+
       # Filter content with empty string ("") (Ollama tool call)
       response$completed <- response$completed[
         response$completed$content != "",
@@ -274,6 +276,8 @@ NULL
             is.data.frame(response$completed),
             all(c("role", "content") %in% names(response$completed))
           )
+
+          response$completed <- normalize_chat_history_metadata(response$completed)
 
           if (isTRUE(response$`break`)) break
         }

@@ -85,6 +85,28 @@ testthat::test_that("ellmer provider handles tool-role rows without crashing", {
   testthat::expect_equal(turns[[3]]@role, "user")
 })
 
+testthat::test_that("ellmer provider normalizes tool metadata on plain replies", {
+  testthat::skip_if_not_installed("ellmer")
+
+  fake_chat <- fake_ellmer_chat()
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  result <- provider$complete_chat(data.frame(
+    role = "user",
+    content = "what is 5+5",
+    stringsAsFactors = FALSE
+  ))
+
+  testthat::expect_equal(result$completed$role, c("user", "assistant"))
+  testthat::expect_equal(result$completed$tool_call, c(FALSE, FALSE))
+  testthat::expect_true(all(is.na(result$completed$tool_call_id)))
+  testthat::expect_equal(result$completed$tool_result, c(FALSE, FALSE))
+})
+
 testthat::test_that("ellmer provider preserves native tool history in completed rows", {
   testthat::skip_if_not_installed("ellmer")
 

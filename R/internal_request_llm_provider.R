@@ -21,6 +21,28 @@
 #'
 #' @keywords internal
 #' @noRd
+normalize_chat_history_metadata <- function(chat_history) {
+  stopifnot(is.data.frame(chat_history))
+
+  if (!"tool_call" %in% names(chat_history)) {
+    chat_history$tool_call <- FALSE
+  }
+  if (!"tool_call_id" %in% names(chat_history)) {
+    chat_history$tool_call_id <- NA_character_
+  }
+  if (!"tool_result" %in% names(chat_history)) {
+    chat_history$tool_result <- FALSE
+  }
+
+  chat_history$tool_call <- as.logical(chat_history$tool_call)
+  chat_history$tool_call[is.na(chat_history$tool_call)] <- FALSE
+  chat_history$tool_call_id <- as.character(chat_history$tool_call_id)
+  chat_history$tool_result <- as.logical(chat_history$tool_result)
+  chat_history$tool_result[is.na(chat_history$tool_result)] <- FALSE
+
+  chat_history
+}
+
 request_llm_provider <- function(
   chat_history,
   request,
@@ -53,6 +75,7 @@ request_llm_provider <- function(
   )
 
   completed <- dplyr::bind_rows(chat_history, req_result$new)
+  completed <- normalize_chat_history_metadata(completed)
 
   return(
     list(

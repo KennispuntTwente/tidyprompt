@@ -2,8 +2,7 @@ testthat::test_that("send message with fake llm provider", {
   ollama <- llm_provider_fake()
   result <- ollama$complete_chat("Hi!")
 
-  # Check length of result
-  testthat::expect_length(result$completed, 3)
+  testthat::expect_equal(nrow(result$completed), 2)
 
   # Check that 'role' and 'response' are in the result
   testthat::expect_true(all(c("role", "content") %in% names(result$completed)))

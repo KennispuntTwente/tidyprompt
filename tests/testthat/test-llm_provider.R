@@ -70,6 +70,38 @@ test_that("llm_provider_fake returns expected response for known prompt", {
   expect_match(response$content, "nice to meet you")
 })
 
+test_that("llm_provider normalizes sparse tool metadata in completed history", {
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      list(
+        completed = dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = "Hello!",
+            stringsAsFactors = FALSE
+          )
+        ),
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    verbose = FALSE
+  )
+
+  result <- provider$complete_chat(list(chat_history = data.frame(
+    role = "user",
+    content = "Hello",
+    tool_call = FALSE,
+    tool_call_id = NA_character_,
+    tool_result = FALSE,
+    stringsAsFactors = FALSE
+  )))
+
+  expect_equal(result$completed$tool_call, c(FALSE, FALSE))
+  expect_true(all(is.na(result$completed$tool_call_id)))
+  expect_equal(result$completed$tool_result, c(FALSE, FALSE))
+})
+
 # Test: Invalid parameters handling
 test_that("llm_provider errors on invalid parameters", {
   expect_error(
