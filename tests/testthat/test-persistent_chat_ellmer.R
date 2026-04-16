@@ -49,3 +49,79 @@ test_that("persistent_chat syncs ellmer_chat after each turn", {
   # user + assistant for each).
   expect_true(nrow(pc$chat_history) >= 4L)
 })
+
+test_that("persistent_chat replays native tool results on follow-up turns", {
+  skip_if_not_installed("ellmer")
+
+  fake_chat <- fake_ellmer_chat()
+  fake_chat$chat <- function(...) {
+    args <- list(...)
+    fake_chat$last_method <- list(
+      method = "chat",
+      args = args,
+      turns = fake_chat$turns
+    )
+
+    prompt <- paste(vapply(args, as.character, character(1)), collapse = "")
+
+    if (identical(prompt, "call tool")) {
+      request <- ellmer::ContentToolRequest(
+        id = "call-1",
+        name = "get_secret_number",
+        arguments = list(input = 123)
+      )
+
+      fake_chat$turns <- c(
+        fake_chat$turns,
+        list(
+          ellmer::UserTurn(list(ellmer::ContentText("call tool"))),
+          ellmer::AssistantTurn(list(request)),
+          ellmer::UserTurn(list(
+            ellmer::ContentToolResult(value = "42", request = request)
+          )),
+          ellmer::AssistantTurn(list(ellmer::ContentText("The result is 42.")))
+        )
+      )
+
+      return("The result is 42.")
+    }
+
+    fake_chat$turns <- c(
+      fake_chat$turns,
+      list(
+        ellmer::UserTurn(list(ellmer::ContentText(prompt))),
+        ellmer::AssistantTurn(list(ellmer::ContentText("follow-up reply")))
+      )
+    )
+
+    "follow-up reply"
+  }
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  pc <- `persistent_chat-class`$new(
+    llm_provider = provider,
+    chat_history = NULL
+  )
+
+  invisible(pc$chat("call tool", verbose = FALSE))
+  res <- pc$chat("what was the tool result?", verbose = FALSE)
+
+  prior_turns <- res$ellmer_chat$last_method$turns
+
+  expect_length(prior_turns, 3)
+  expect_equal(vapply(prior_turns, function(turn) turn@role, character(1)), c(
+    "user",
+    "user",
+    "assistant"
+  ))
+  expect_true(any(grepl(
+    "ContentToolResult",
+    class(prior_turns[[2]]@contents[[1]])
+  )))
+  expect_equal(prior_turns[[3]]@contents[[1]]@text, "The result is 42.")
+})

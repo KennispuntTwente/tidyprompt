@@ -136,6 +136,42 @@ test_that("send_prompt does not resend hidden history rows on retry", {
   )
 })
 
+test_that("send_prompt preserves provider metadata updates on existing rows", {
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      updated_history <- chat_history
+      updated_history$native_turn_id <- rep(NA_character_, nrow(updated_history))
+      updated_history$native_turn_id[nrow(updated_history)] <- "turn-1"
+      updated_history$native_turn_role <- rep(NA_character_, nrow(updated_history))
+      updated_history$native_turn_role[nrow(updated_history)] <- "user"
+
+      list(
+        completed = dplyr::bind_rows(
+          updated_history,
+          data.frame(
+            role = "assistant",
+            content = "reply",
+            stringsAsFactors = FALSE
+          )
+        ),
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    verbose = FALSE
+  )
+
+  result <- send_prompt(
+    "Hello",
+    provider,
+    return_mode = "full",
+    verbose = FALSE
+  )
+
+  expect_equal(result$response, "reply")
+  expect_equal(result$chat_history$native_turn_id[1], "turn-1")
+  expect_equal(result$chat_history$native_turn_role[1], "user")
+})
+
 test_that("send_prompt does not resend tool call rows on retry", {
   feedback_sent <- FALSE
   state <- new.env(parent = emptyenv())

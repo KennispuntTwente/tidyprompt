@@ -176,6 +176,49 @@ send_prompt <- function(
     role = "user",
     tool_result = FALSE
   ) {
+    merge_completed_chat_history <- function(
+      original_chat_history,
+      completed_chat_history,
+      request_rows
+    ) {
+      updated_chat_history <- dplyr::bind_rows(
+        original_chat_history,
+        completed_chat_history[0, , drop = FALSE]
+      )
+      updated_chat_history <- updated_chat_history[
+        seq_len(nrow(original_chat_history)),
+        ,
+        drop = FALSE
+      ]
+
+      request_rows <- as.integer(request_rows %||% integer())
+      request_rows <- request_rows[
+        !is.na(request_rows) & request_rows >= 1L &
+          request_rows <= nrow(updated_chat_history)
+      ]
+
+      sent_rows <- min(length(request_rows), nrow(completed_chat_history))
+      if (sent_rows > 0L) {
+        updated_chat_history[
+          request_rows[seq_len(sent_rows)],
+          names(completed_chat_history)
+        ] <- completed_chat_history[seq_len(sent_rows), , drop = FALSE]
+      }
+
+      if (nrow(completed_chat_history) > sent_rows) {
+        updated_chat_history <- dplyr::bind_rows(
+          updated_chat_history,
+          completed_chat_history[
+            (sent_rows + 1L):nrow(completed_chat_history),
+            ,
+            drop = FALSE
+          ]
+        )
+      }
+
+      updated_chat_history
+    }
+
     if (!is.null(message)) {
       message <- as.character(message)
       chat_history <<- chat_history |>
@@ -187,17 +230,18 @@ send_prompt <- function(
       response <- llm_provider$complete_chat(
         list(chat_history = cleaned_chat_history)
       )
-      chat_history <<- dplyr::bind_rows(
+      chat_history <<- merge_completed_chat_history(
         chat_history,
-        response$completed[
-          (nrow(cleaned_chat_history) + 1):nrow(response$completed),
-        ]
+        response$completed,
+        attr(cleaned_chat_history, "source_rows") %||%
+          as.integer(rownames(cleaned_chat_history))
       )
     } else {
       response <- llm_provider$complete_chat(list(chat_history = chat_history))
-      chat_history <<- dplyr::bind_rows(
+      chat_history <<- merge_completed_chat_history(
         chat_history,
-        response$completed[(nrow(chat_history) + 1):nrow(response$completed), ]
+        response$completed,
+        seq_len(nrow(chat_history))
       )
     }
 
@@ -493,6 +537,7 @@ clean_chat_history <- function(chat_history) {
 
   # Subset the dataframe with these rows
   cleaned_chat_history <- chat_history[sort(unique(keep_rows)), ]
+  attr(cleaned_chat_history, "source_rows") <- sort(unique(keep_rows))
   # (sort(unique()) is used to ensure that the rows are in order)
 
   return(cleaned_chat_history)

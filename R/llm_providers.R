@@ -1043,20 +1043,78 @@ llm_provider_ellmer <- function(
       tool_call_id = NA_character_,
       tool_call = FALSE,
       tool_result = FALSE,
-      hidden_from_llm = FALSE
+      hidden_from_llm = FALSE,
+      native_turn_id = NA_character_,
+      native_turn_role = NA_character_,
+      native_contents = NULL
     ) {
+      normalize_native_contents <- function(x) {
+        if (is.null(x)) {
+          return(list())
+        }
+        if (is_ellmer_content_object(x)) {
+          return(list(x))
+        }
+        if (!is.list(x)) {
+          return(list())
+        }
+
+        Filter(Negate(is.null), x)
+      }
+
+      row <- data.frame(
+        role = as.character(role %||% "assistant"),
+        content = as.character(content %||% ""),
+        tool_call = tool_call,
+        tool_call_id = ifelse(is.null(tool_call_id), NA, tool_call_id),
+        tool_result = tool_result,
+        hidden_from_llm = hidden_from_llm,
+        native_turn_id = as.character(native_turn_id %||% NA_character_),
+        native_turn_role = as.character(native_turn_role %||% NA_character_),
+        stringsAsFactors = FALSE
+      )
+      row$native_contents <- list(normalize_native_contents(native_contents))
+
       dplyr::bind_rows(
         history,
-        data.frame(
-          role = as.character(role %||% "assistant"),
-          content = as.character(content %||% ""),
-          tool_call = tool_call,
-          tool_call_id = ifelse(is.null(tool_call_id), NA, tool_call_id),
-          tool_result = tool_result,
-          hidden_from_llm = hidden_from_llm,
-          stringsAsFactors = FALSE
-        )
+        row
       )
+    }
+
+    set_native_turn_metadata <- function(
+      history,
+      row,
+      native_turn_id = NA_character_,
+      native_turn_role = NA_character_,
+      native_contents = NULL
+    ) {
+      if (!nrow(history) || row < 1L || row > nrow(history)) {
+        return(history)
+      }
+
+      if (!"native_turn_id" %in% names(history)) {
+        history$native_turn_id <- rep(NA_character_, nrow(history))
+      }
+      if (!"native_turn_role" %in% names(history)) {
+        history$native_turn_role <- rep(NA_character_, nrow(history))
+      }
+      if (!"native_contents" %in% names(history)) {
+        history$native_contents <- vector("list", nrow(history))
+      }
+
+      history$native_turn_id[row] <- as.character(native_turn_id %||% NA_character_)
+      history$native_turn_role[row] <- as.character(native_turn_role %||% NA_character_)
+      history$native_contents[[row]] <- if (is.null(native_contents)) {
+        list()
+      } else if (is_ellmer_content_object(native_contents)) {
+        list(native_contents)
+      } else if (is.list(native_contents)) {
+        Filter(Negate(is.null), native_contents)
+      } else {
+        list()
+      }
+
+      history
     }
 
     is_ellmer_content_object <- function(x) {
@@ -1181,7 +1239,7 @@ llm_provider_ellmer <- function(
       paste(as.character(x), collapse = ", ")
     }
 
-    native_turns_to_history <- function(turns) {
+    native_turns_to_history <- function(turns, start_index = 1L) {
       history <- data.frame(
         role = character(),
         content = character(),
@@ -1190,11 +1248,16 @@ llm_provider_ellmer <- function(
         tool_result = logical(),
         stringsAsFactors = FALSE
       )
+      history$native_turn_id <- character()
+      history$native_turn_role <- character()
+      history$native_contents <- list()
 
-      for (turn in turns) {
+      for (turn_i in seq_along(turns)) {
+        turn <- turns[[turn_i]]
         turn_props <- ellmer_object_props(turn)
         role <- turn_props$role %||% "assistant"
         contents <- turn_props$contents %||% list()
+        turn_id <- paste0("ellmer-turn-", start_index + turn_i - 1L)
 
         for (content_obj in contents) {
           props <- ellmer_object_props(content_obj)
@@ -1225,7 +1288,10 @@ llm_provider_ellmer <- function(
               ),
               tool_call_id = as.character(props$id %||% NA_character_),
               tool_call = TRUE,
-              tool_result = FALSE
+              tool_result = FALSE,
+              native_turn_id = turn_id,
+              native_turn_role = role,
+              native_contents = content_obj
             )
             next
           }
@@ -1248,7 +1314,10 @@ llm_provider_ellmer <- function(
               content = paste0("~>> Result:\n", result_text),
               tool_call_id = as.character(request_props$id %||% NA_character_),
               tool_call = FALSE,
-              tool_result = TRUE
+              tool_result = TRUE,
+              native_turn_id = turn_id,
+              native_turn_role = role,
+              native_contents = content_obj
             )
             next
           }
@@ -1263,7 +1332,10 @@ llm_provider_ellmer <- function(
                 history,
                 role,
                 thinking,
-                hidden_from_llm = TRUE
+                hidden_from_llm = TRUE,
+                native_turn_id = turn_id,
+                native_turn_role = role,
+                native_contents = content_obj
               )
             }
             next
@@ -1271,7 +1343,14 @@ llm_provider_ellmer <- function(
 
           text <- serialize_native_content(content_obj)
           if (nzchar(text)) {
-            history <- append_native_history(history, role, text)
+            history <- append_native_history(
+              history,
+              role,
+              text,
+              native_turn_id = turn_id,
+              native_turn_role = role,
+              native_contents = content_obj
+            )
           }
         }
       }
@@ -1372,19 +1451,92 @@ llm_provider_ellmer <- function(
       NULL
     }
 
+    history_native_turn_id <- function(history, i) {
+      if (!"native_turn_id" %in% names(history)) {
+        return(NA_character_)
+      }
+
+      as.character(history$native_turn_id[i] %||% NA_character_)
+    }
+
+    history_native_turn_role <- function(history, i) {
+      if (!"native_turn_role" %in% names(history)) {
+        return(NA_character_)
+      }
+
+      as.character(history$native_turn_role[i] %||% NA_character_)
+    }
+
+    history_native_contents <- function(history, i) {
+      if (!"native_contents" %in% names(history)) {
+        return(NULL)
+      }
+
+      contents <- history$native_contents[[i]]
+      if (is.null(contents)) {
+        return(NULL)
+      }
+      if (is_ellmer_content_object(contents)) {
+        return(list(contents))
+      }
+      if (!is.list(contents)) {
+        return(NULL)
+      }
+
+      contents <- Filter(Negate(is.null), contents)
+      if (!length(contents)) {
+        return(NULL)
+      }
+
+      contents
+    }
+
     # Prepare historical turns (excluding the latest message)
-    prior_turns <- if (nrow(hist)) {
-      lapply(seq_len(nrow(hist)), function(i) {
-        as_turn(
-          role = hist$role[i],
-          contents = {
-            ct <- as_content_text(hist$content[i])
-            if (is.null(ct)) list() else list(ct)
+    prior_turns <- list()
+    if (nrow(hist)) {
+      i <- 1L
+
+      while (i <= nrow(hist)) {
+        turn_id <- history_native_turn_id(hist, i)
+
+        if (!is.na(turn_id) && nzchar(turn_id)) {
+          grouped_contents <- list()
+          turn_role <- history_native_turn_role(hist, i)
+          j <- i
+
+          while (
+            j <= nrow(hist) &&
+              identical(history_native_turn_id(hist, j), turn_id)
+          ) {
+            grouped_contents <- c(
+              grouped_contents,
+              history_native_contents(hist, j) %||% list()
+            )
+            j <- j + 1L
           }
+
+          grouped_contents <- Filter(Negate(is.null), grouped_contents)
+          if (length(grouped_contents)) {
+            prior_turns[[length(prior_turns) + 1L]] <- as_turn(
+              role = if (!is.na(turn_role) && nzchar(turn_role)) {
+                turn_role
+              } else {
+                hist$role[i]
+              },
+              contents = grouped_contents
+            )
+            i <- j
+            next
+          }
+        }
+
+        ct <- as_content_text(hist$content[i])
+        prior_turns[[length(prior_turns) + 1L]] <- as_turn(
+          role = hist$role[i],
+          contents = if (is.null(ct)) list() else list(ct)
         )
-      })
-    } else {
-      list()
+        i <- i + 1L
+      }
     }
 
     # Prompt = last message (may be converted to multimodal contents below)
@@ -1600,11 +1752,24 @@ llm_provider_ellmer <- function(
       error = function(e) NULL
     )
 
+    prompt_turn_index <- length(prior_turns) + 1L
+    if (length(native_turns) >= prompt_turn_index && nrow(chat_history) > 0) {
+      prompt_turn <- native_turns[[prompt_turn_index]]
+      prompt_props <- ellmer_object_props(prompt_turn)
+      chat_history <- set_native_turn_metadata(
+        chat_history,
+        row = nrow(chat_history),
+        native_turn_id = paste0("ellmer-turn-", prompt_turn_index),
+        native_turn_role = prompt_props$role %||% chat_history$role[nrow(chat_history)],
+        native_contents = prompt_props$contents %||% list()
+      )
+    }
+
     first_new_turn <- length(prior_turns) + 2L
     if (length(native_turns) >= first_new_turn) {
       native_rows <- native_turns_to_history(native_turns[
         first_new_turn:length(native_turns)
-      ])
+      ], start_index = first_new_turn)
       if (!is.null(native_rows) && nrow(native_rows)) {
         completed <- dplyr::bind_rows(chat_history, native_rows)
       }
