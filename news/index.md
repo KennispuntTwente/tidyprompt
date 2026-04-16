@@ -2,6 +2,26 @@
 
 ## tidyprompt (development version)
 
+- [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
+  and
+  [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+  now work more smoothly with direct
+  [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
+  objects, with better synchronization of native ellmer state for
+  streaming, multimodal content, and persistent chats.
+
+- [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
+  and
+  [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
+  have broader ellmer compatibility, including newer
+  structured-output/tool definitions and clearer handling of
+  ellmer-specific native features.
+
+- Chat history handling is more robust for tool and ellmer-native
+  workflows: `tool` rows are supported, non-replayable native rows are
+  kept for inspection without being re-sent, and related metadata is
+  normalized more reliably.
+
 ## tidyprompt 0.3.0
 
 CRAN release: 2025-11-30

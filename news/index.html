@@ -41,7 +41,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="tidyprompt-development-version">tidyprompt (development version)<a class="anchor" aria-label="anchor" href="#tidyprompt-development-version"></a></h2>
-</div>
+<ul><li><p><code><a href="../reference/send_prompt.html">send_prompt()</a></code> and <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code> now work more smoothly with direct <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> objects, with better synchronization of native ellmer state for streaming, multimodal content, and persistent chats.</p></li>
+<li><p><code><a href="../reference/answer_as_json.html">answer_as_json()</a></code> and <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> have broader ellmer compatibility, including newer structured-output/tool definitions and clearer handling of ellmer-specific native features.</p></li>
+<li><p>Chat history handling is more robust for tool and ellmer-native workflows: <code>tool</code> rows are supported, non-replayable native rows are kept for inspection without being re-sent, and related metadata is normalized more reliably.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="tidyprompt-030">tidyprompt 0.3.0<a class="anchor" aria-label="anchor" href="#tidyprompt-030"></a></h2><p class="text-muted">CRAN release: 2025-11-30</p>
 <ul><li><p><code>llm_provider-class</code>: can now take a <code>stream_callback</code> function, which can be used to intercept streamed tokens as they arrive from the LLM provider. This may be used to build custom streaming behavior, for instance to show a live response in a Shiny app (see new <code><a href="../articles/streaming_shiny_ipc.html">vignette("streaming_shiny_ipc")</a></code> for an example)</p></li>
