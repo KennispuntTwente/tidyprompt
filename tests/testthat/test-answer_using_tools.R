@@ -225,3 +225,31 @@ test_that("function calling works with ellmer tool definition", {
     secret_number
   ))
 })
+
+test_that("messages_from_history omits non-replayable rows", {
+  history <- data.frame(
+    role = c("user", "assistant", "assistant", "tool", "assistant"),
+    content = c(
+      "Question",
+      "Reasoning step",
+      "~>> Calling function 'tool' with arguments:\n{}",
+      "~>> Result:\n42",
+      "Answer"
+    ),
+    hidden_from_llm = c(FALSE, TRUE, FALSE, FALSE, FALSE),
+    tool_call = c(FALSE, FALSE, TRUE, FALSE, FALSE),
+    tool_result = c(FALSE, FALSE, FALSE, TRUE, FALSE),
+    stringsAsFactors = FALSE
+  )
+
+  messages <- .messages_from_history(history)
+
+  expect_equal(
+    vapply(messages, `[[`, character(1), "content"),
+    c("Question", "~>> Result:\n42", "Answer")
+  )
+  expect_equal(
+    vapply(messages, `[[`, character(1), "role"),
+    c("user", "tool", "assistant")
+  )
+})

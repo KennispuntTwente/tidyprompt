@@ -813,6 +813,8 @@ answer_using_tools <- function(
 }
 
 .messages_from_history <- function(history_df) {
+  history_df <- chat_history_to_send(history_df)
+
   lapply(seq_len(nrow(history_df)), function(i) {
     list(role = history_df$role[i], content = history_df$content[i])
   })

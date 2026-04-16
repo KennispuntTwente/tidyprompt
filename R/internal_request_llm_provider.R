@@ -33,12 +33,43 @@ normalize_chat_history_metadata <- function(chat_history) {
   if (!"tool_result" %in% names(chat_history)) {
     chat_history$tool_result <- FALSE
   }
+  if (!"hidden_from_llm" %in% names(chat_history)) {
+    chat_history$hidden_from_llm <- FALSE
+  }
 
   chat_history$tool_call <- as.logical(chat_history$tool_call)
   chat_history$tool_call[is.na(chat_history$tool_call)] <- FALSE
   chat_history$tool_call_id <- as.character(chat_history$tool_call_id)
   chat_history$tool_result <- as.logical(chat_history$tool_result)
   chat_history$tool_result[is.na(chat_history$tool_result)] <- FALSE
+  chat_history$hidden_from_llm <- as.logical(chat_history$hidden_from_llm)
+  chat_history$hidden_from_llm[is.na(chat_history$hidden_from_llm)] <- FALSE
+  chat_history$hidden_from_llm[chat_history$tool_call] <- TRUE
+
+  chat_history
+}
+
+chat_history_to_send <- function(chat_history) {
+  stopifnot(is.data.frame(chat_history))
+
+  keep_rows <- rep(TRUE, nrow(chat_history))
+
+  if ("hidden_from_llm" %in% names(chat_history)) {
+    hidden_rows <- as.logical(chat_history$hidden_from_llm)
+    hidden_rows[is.na(hidden_rows)] <- FALSE
+    keep_rows <- keep_rows & !hidden_rows
+  }
+
+  if ("tool_call" %in% names(chat_history)) {
+    tool_call_rows <- as.logical(chat_history$tool_call)
+    tool_call_rows[is.na(tool_call_rows)] <- FALSE
+    keep_rows <- keep_rows & !tool_call_rows
+  }
+
+  chat_history <- chat_history[keep_rows, , drop = FALSE]
+  if ("hidden_from_llm" %in% names(chat_history)) {
+    chat_history$hidden_from_llm <- NULL
+  }
 
   chat_history
 }

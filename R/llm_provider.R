@@ -207,6 +207,7 @@ NULL
       )
 
       chat_history <- chat_history(input$chat_history)
+      chat_history_request <- chat_history_to_send(chat_history)
       if (self$verbose) {
         message(
           crayon::bold(
@@ -238,7 +239,7 @@ NULL
       }
 
       environment(private$complete_chat_function) <- environment()
-      response <- private$complete_chat_function(chat_history)
+      response <- private$complete_chat_function(chat_history_request)
 
       # If this is an ellmer provider, sync the chat object
       #   This ensures handler_fn can access the current state of the chat
@@ -251,6 +252,21 @@ NULL
       # so extraction functions can use it without JSON round-tripping
       if (!is.null(response$native_structured_result)) {
         self$parameters$.native_structured_result <- response$native_structured_result
+      }
+
+      if (nrow(chat_history_request) < nrow(chat_history)) {
+        new_rows_start <- nrow(chat_history_request) + 1L
+        new_rows <- if (nrow(response$completed) >= new_rows_start) {
+          response$completed[
+            new_rows_start:nrow(response$completed),
+            ,
+            drop = FALSE
+          ]
+        } else {
+          response$completed[0, , drop = FALSE]
+        }
+
+        response$completed <- dplyr::bind_rows(chat_history, new_rows)
       }
 
       response$completed <- normalize_chat_history_metadata(response$completed)
@@ -277,7 +293,9 @@ NULL
             all(c("role", "content") %in% names(response$completed))
           )
 
-          response$completed <- normalize_chat_history_metadata(response$completed)
+          response$completed <- normalize_chat_history_metadata(
+            response$completed
+          )
 
           if (isTRUE(response$`break`)) break
         }

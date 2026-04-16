@@ -395,6 +395,8 @@ send_prompt <- function(
   if (return_mode == "full") {
     return_list <- list()
 
+    chat_history <- normalize_chat_history_metadata(chat_history)
+
     return_list$response <- response
     return_list$interactions <- interactions
     return_list$chat_history <- chat_history
@@ -465,6 +467,8 @@ create_chat_df <- function(
 #' @noRd
 #' @keywords internal
 clean_chat_history <- function(chat_history) {
+  chat_history <- chat_history_to_send(chat_history)
+
   # Keep only first and last message from user;
   # keep only last message from assistant;
   # keep all messages from system;

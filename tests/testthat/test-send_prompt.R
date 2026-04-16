@@ -63,3 +63,161 @@ test_that("send_prompt keeps llm_provider_ellmer stream defaults for raw chats",
 
   expect_identical(result$ellmer_chat$last_method$method, "stream")
 })
+
+test_that("send_prompt does not resend hidden history rows on retry", {
+  feedback_sent <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$provider_calls <- list()
+  state$provider_call_n <- 0L
+
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      state <- self$parameters$.test_state
+      state$provider_call_n <- state$provider_call_n + 1L
+      state$provider_calls[[state$provider_call_n]] <- chat_history
+
+      if (state$provider_call_n == 1L) {
+        completed <- dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = c("assistant", "assistant"),
+            content = c("Reasoning step", "Initial answer"),
+            hidden_from_llm = c(TRUE, FALSE),
+            stringsAsFactors = FALSE
+          )
+        )
+      } else {
+        completed <- dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = "Fixed answer",
+            stringsAsFactors = FALSE
+          )
+        )
+      }
+
+      list(
+        completed = completed,
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    parameters = list(.test_state = state),
+    verbose = FALSE
+  )
+
+  prompt <- "Think through this" |>
+    prompt_wrap(validation_fn = function(response) {
+      if (!feedback_sent) {
+        feedback_sent <<- TRUE
+        return(llm_feedback("Please fix format"))
+      }
+
+      TRUE
+    })
+
+  result <- send_prompt(
+    prompt,
+    provider,
+    return_mode = "full",
+    verbose = FALSE
+  )
+
+  expect_equal(result$response, "Fixed answer")
+  expect_equal(state$provider_calls[[1]]$content, "Think through this")
+  expect_equal(
+    state$provider_calls[[2]]$content,
+    c("Think through this", "Initial answer", "Please fix format")
+  )
+  expect_false(any(state$provider_calls[[2]]$content == "Reasoning step"))
+  expect_equal(
+    result$chat_history$hidden_from_llm,
+    c(FALSE, TRUE, FALSE, FALSE, FALSE)
+  )
+})
+
+test_that("send_prompt does not resend tool call rows on retry", {
+  feedback_sent <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$provider_calls <- list()
+  state$provider_call_n <- 0L
+
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      state <- self$parameters$.test_state
+      state$provider_call_n <- state$provider_call_n + 1L
+      state$provider_calls[[state$provider_call_n]] <- chat_history
+
+      if (state$provider_call_n == 1L) {
+        completed <- dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = c("assistant", "tool", "assistant"),
+            content = c(
+              "~>> Calling function 'tool' with arguments:\n{}",
+              "~>> Result:\n42",
+              "Initial answer"
+            ),
+            tool_call = c(TRUE, FALSE, FALSE),
+            tool_call_id = c("call-1", "call-1", NA_character_),
+            tool_result = c(FALSE, TRUE, FALSE),
+            stringsAsFactors = FALSE
+          )
+        )
+      } else {
+        completed <- dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = "Fixed answer",
+            stringsAsFactors = FALSE
+          )
+        )
+      }
+
+      list(
+        completed = completed,
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    parameters = list(.test_state = state),
+    verbose = FALSE
+  )
+
+  prompt <- "Think through this" |>
+    prompt_wrap(validation_fn = function(response) {
+      if (!feedback_sent) {
+        feedback_sent <<- TRUE
+        return(llm_feedback("Please fix format"))
+      }
+
+      TRUE
+    })
+
+  result <- send_prompt(
+    prompt,
+    provider,
+    return_mode = "full",
+    verbose = FALSE
+  )
+
+  expect_equal(result$response, "Fixed answer")
+  expect_equal(state$provider_calls[[1]]$content, "Think through this")
+  expect_equal(
+    state$provider_calls[[2]]$content,
+    c(
+      "Think through this",
+      "~>> Result:\n42",
+      "Initial answer",
+      "Please fix format"
+    )
+  )
+  expect_false(any(grepl(
+    "Calling function",
+    state$provider_calls[[2]]$content
+  )))
+  expect_equal(
+    result$chat_history$hidden_from_llm,
+    c(FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)
+  )
+})

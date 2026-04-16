@@ -149,6 +149,10 @@ testthat::test_that("ellmer provider preserves native tool history in completed 
     result$completed$role,
     c("user", "assistant", "tool", "assistant")
   )
+  testthat::expect_equal(
+    result$completed$hidden_from_llm,
+    c(FALSE, TRUE, FALSE, FALSE)
+  )
   testthat::expect_true(isTRUE(result$completed$tool_call[2]))
   testthat::expect_equal(result$completed$tool_call_id[2], "call-1")
   testthat::expect_true(isTRUE(result$completed$tool_result[3]))
@@ -194,6 +198,10 @@ testthat::test_that("ellmer provider preserves native thinking content in comple
   testthat::expect_equal(
     result$completed$role,
     c("user", "assistant", "assistant")
+  )
+  testthat::expect_equal(
+    result$completed$hidden_from_llm,
+    c(FALSE, TRUE, FALSE)
   )
   testthat::expect_match(result$completed$content[2], "Reasoning step")
   testthat::expect_equal(result$completed$content[3], "Final answer")

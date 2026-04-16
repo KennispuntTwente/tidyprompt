@@ -1042,7 +1042,8 @@ llm_provider_ellmer <- function(
       content,
       tool_call_id = NA_character_,
       tool_call = FALSE,
-      tool_result = FALSE
+      tool_result = FALSE,
+      hidden_from_llm = FALSE
     ) {
       dplyr::bind_rows(
         history,
@@ -1052,6 +1053,7 @@ llm_provider_ellmer <- function(
           tool_call = tool_call,
           tool_call_id = ifelse(is.null(tool_call_id), NA, tool_call_id),
           tool_result = tool_result,
+          hidden_from_llm = hidden_from_llm,
           stringsAsFactors = FALSE
         )
       )
@@ -1248,6 +1250,22 @@ llm_provider_ellmer <- function(
               tool_call = FALSE,
               tool_result = TRUE
             )
+            next
+          }
+
+          if (
+            any(grepl("ContentThinking", classes)) ||
+              !is.null(props$thinking)
+          ) {
+            thinking <- as.character(props$thinking %||% "")
+            if (nzchar(thinking)) {
+              history <- append_native_history(
+                history,
+                role,
+                thinking,
+                hidden_from_llm = TRUE
+              )
+            }
             next
           }
 
