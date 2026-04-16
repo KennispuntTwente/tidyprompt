@@ -215,34 +215,16 @@ with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface
 to LLM APIs.
 
 ‘ellmer’ specifically has surfaced as the most popular R package for
-interfacing with LLM APIs. Therefore, we have introduced a LLM provider
-which can be built from an ‘ellmer’ chat object (see:
-[`tidyprompt::llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)).
-This allows users to use any LLM provider that can be configured with
+interfacing with LLM APIs. Therefore, ‘tidyprompt’ now supports ‘ellmer’
+chat objects as LLM providers. Users can pass an ‘ellmer’ chat object
+directly to
+[`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md),
+or use the
+[`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+function to create an LLM provider from an ‘ellmer’ chat object. This
+allows users to use any LLM provider that can be configured with
 ‘ellmer’, including the respective configuration and features from the
 ‘ellmer’ package.
-
-You can also pass an ‘ellmer’ chat object directly to
-[`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md).
-In that case, ‘tidyprompt’ clones the chat, clears any existing turns,
-and wraps the clean clone automatically:
-
-``` r
-"What is 2 + 2?" |>
-  answer_as_integer() |>
-  send_prompt(ellmer::chat_openai(model = "gpt-4.1-mini"))
-```
-
-When using
-[`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-or a raw
-[`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html),
-‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
-history for each call. In other words, the ‘ellmer’ chat mainly carries
-provider configuration and native features here, while conversation
-state lives in ‘tidyprompt’. If you need the updated native ‘ellmer’
-turns after a call, use `send_prompt(..., return_mode = "full")` and
-inspect `$ellmer_chat`.
 
 Furthermore,
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
@@ -255,14 +237,11 @@ because
 [`mcptools::mcp_tools()`](https://posit-dev.github.io/mcptools/reference/client.html)
 returns ‘ellmer’ tool definitions,
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
-also supports tools from MCP servers.) Regular
-[`ellmer::tool()`](https://ellmer.tidyverse.org/reference/tool.html)
-definitions can be converted for non-‘ellmer’ providers, but
-provider-specific ‘ellmer’ built-in tools only work with ‘ellmer’-backed
-providers.
+also supports tools from MCP servers.)
 
 This means that ‘tidyprompt’ extends what is possible with ‘ellmer’ (and
-vice versa).
+vice versa), and the two packages can be used together to elegantly
+design complex interactions with LLMs.
 
 # Package index
 
