@@ -86,8 +86,6 @@ You may also pass an <code><a href="https://ellmer.tidyverse.org/reference/chat-
 clone with <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> before evaluation.
 When using <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> or a raw <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code>, the working
 <code>ellmer</code> turns are rebuilt from tidyprompt's own chat history for each call.
-Treat the <code>ellmer</code> chat primarily as provider configuration plus native
-feature support, not as the main source of conversation state.
 Note that the 'verbose' and 'stream' settings in the LLM provider will be
 overruled by the 'verbose' and 'stream' arguments in this function
 when those are not NULL.
@@ -109,6 +107,9 @@ interaction. Cleaning the chat history means that only the
 first and last message from the user, the last message from the assistant,
 all messages from the system, and all tool results are kept in a 'clean'
 chat history. This clean chat history is used when requesting a new chat completion.
+Rows marked as non-replayable are excluded from new requests regardless of
+this setting, so the returned transcript may contain more rows than the model
+actually sees on a retry or follow-up call.
 (i.e., if a LLM repeatedly fails to provide a correct response, only its last failed response
 will included in the context window). This may increase the LLM performance
 on the next interaction</p></dd>
@@ -139,10 +140,13 @@ when unsuccessful after the maximum number of interactions).</p></li>
 <li><p>If return mode 'full', the function will return a list with the following elements:</p><ul><li><p>'response' (the LLM response after extraction and validation functions have been applied;
 NULL is returned when unsuccessful after the maximum number of interactions),</p></li>
 <li><p>'interactions' (the number of interactions with the LLM provider),</p></li>
-<li><p>'chat_history' (a dataframe with the full chat history which led to the final response),</p></li>
+<li><p>'chat_history' (a dataframe with the full chat history which led to the final response.
+This may include rows that are retained for inspection but not re-sent to the model;
+such rows are marked with column <code>hidden_from_llm = TRUE</code>),</p></li>
 <li><p>'chat_history_clean' (a dataframe with the cleaned chat history which led to
 the final response; here, only the first and last message from the user, the
-last message from the assistant, and all messages from the system are kept),</p></li>
+last message from the assistant, and all messages from the system are kept,
+after excluding any non-replayable rows),</p></li>
 <li><p>'start_time' (the time when the function was called),</p></li>
 <li><p>'end_time' (the time when the function ended),</p></li>
 <li><p>'duration_seconds' (the duration of the function in seconds),</p></li>

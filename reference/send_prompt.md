@@ -46,10 +46,8 @@ send_prompt(
   or a raw
   [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html),
   the working `ellmer` turns are rebuilt from tidyprompt's own chat
-  history for each call. Treat the `ellmer` chat primarily as provider
-  configuration plus native feature support, not as the main source of
-  conversation state. Note that the 'verbose' and 'stream' settings in
-  the LLM provider will be overruled by the 'verbose' and 'stream'
+  history for each call. Note that the 'verbose' and 'stream' settings
+  in the LLM provider will be overruled by the 'verbose' and 'stream'
   arguments in this function when those are not NULL. Furthermore,
   advanced
   [tidyprompt](https://kennispunttwente.github.io/tidyprompt/reference/tidyprompt-class.md)
@@ -73,10 +71,13 @@ send_prompt(
   the chat history means that only the first and last message from the
   user, the last message from the assistant, all messages from the
   system, and all tool results are kept in a 'clean' chat history. This
-  clean chat history is used when requesting a new chat completion.
-  (i.e., if a LLM repeatedly fails to provide a correct response, only
-  its last failed response will included in the context window). This
-  may increase the LLM performance on the next interaction
+  clean chat history is used when requesting a new chat completion. Rows
+  marked as non-replayable are excluded from new requests regardless of
+  this setting, so the returned transcript may contain more rows than
+  the model actually sees on a retry or follow-up call. (i.e., if a LLM
+  repeatedly fails to provide a correct response, only its last failed
+  response will included in the context window). This may increase the
+  LLM performance on the next interaction
 
 - verbose:
 
@@ -111,12 +112,15 @@ send_prompt(
   - 'interactions' (the number of interactions with the LLM provider),
 
   - 'chat_history' (a dataframe with the full chat history which led to
-    the final response),
+    the final response. This may include rows that are retained for
+    inspection but not re-sent to the model; such rows are marked with
+    column `hidden_from_llm = TRUE`),
 
   - 'chat_history_clean' (a dataframe with the cleaned chat history
     which led to the final response; here, only the first and last
     message from the user, the last message from the assistant, and all
-    messages from the system are kept),
+    messages from the system are kept, after excluding any
+    non-replayable rows),
 
   - 'start_time' (the time when the function was called),
 
