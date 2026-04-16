@@ -31,14 +31,16 @@ Other text_helpers:
 ## Examples
 
 ``` r
-# First add some labels to 'mtcars':
-mtcars$car <- rownames(mtcars)
-mtcars$car <- factor(mtcars$car, levels = rownames(mtcars))
-attr(mtcars$car, "label") <- "Name of the car"
+if (requireNamespace("skimr", quietly = TRUE)) {
+  # First add some labels to 'mtcars':
+  mtcars$car <- rownames(mtcars)
+  mtcars$car <- factor(mtcars$car, levels = rownames(mtcars))
+  attr(mtcars$car, "label") <- "Name of the car"
 
-# Then skim the data:
-mtcars |>
-  skim_with_labels_and_levels()
+  # Then skim the data:
+  mtcars |>
+    skim_with_labels_and_levels()
+}
 #>    variable     description       levels skim_type n_missing complete_rate
 #> 1        am            <NA>           NA   numeric         0             1
 #> 2       car Name of the car Mazda RX....    factor         0             1
