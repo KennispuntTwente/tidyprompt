@@ -18,8 +18,6 @@
 #' clone with [llm_provider_ellmer()] before evaluation.
 #' When using [llm_provider_ellmer()] or a raw `ellmer::chat()`, the working
 #' `ellmer` turns are rebuilt from tidyprompt's own chat history for each call.
-#' Treat the `ellmer` chat primarily as provider configuration plus native
-#' feature support, not as the main source of conversation state.
 #' Note that the 'verbose' and 'stream' settings in the LLM provider will be
 #'  overruled by the 'verbose' and 'stream' arguments in this function
 #'  when those are not NULL.
@@ -36,6 +34,9 @@
 #' first and last message from the user, the last message from the assistant,
 #' all messages from the system, and all tool results are kept in a 'clean'
 #' chat history. This clean chat history is used when requesting a new chat completion.
+#' Rows marked as non-replayable are excluded from new requests regardless of
+#' this setting, so the returned transcript may contain more rows than the model
+#' actually sees on a retry or follow-up call.
 #' (i.e., if a LLM repeatedly fails to provide a correct response, only its last failed response
 #' will included in the context window). This may increase the LLM performance
 #' on the next interaction
@@ -55,10 +56,13 @@
 #'    \item 'response' (the LLM response after extraction and validation functions have been applied;
 #'  NULL is returned when unsuccessful after the maximum number of interactions),
 #'    \item 'interactions' (the number of interactions with the LLM provider),
-#'    \item 'chat_history' (a dataframe with the full chat history which led to the final response),
+#'    \item 'chat_history' (a dataframe with the full chat history which led to the final response.
+#'    This may include rows that are retained for inspection but not re-sent to the model;
+#'    such rows are marked with column `hidden_from_llm = TRUE`),
 #'    \item 'chat_history_clean' (a dataframe with the cleaned chat history which led to
 #' the final response; here, only the first and last message from the user, the
-#' last message from the assistant, and all messages from the system are kept),
+#' last message from the assistant, and all messages from the system are kept,
+#' after excluding any non-replayable rows),
 #'    \item 'start_time' (the time when the function was called),
 #'    \item 'end_time' (the time when the function ended),
 #'    \item 'duration_seconds' (the duration of the function in seconds),
