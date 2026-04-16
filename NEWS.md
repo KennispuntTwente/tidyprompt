@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* New prompt wrap `answer_as_dataframe()` for extracting tabular results via
+    structured output, with support for row schemas, array-of-row schemas,
+    and optional row-count validation.
+
 * New prompt wrap `answer_as_numeric()` for extracting numeric responses,
   including optional minimum and maximum value validation.
 

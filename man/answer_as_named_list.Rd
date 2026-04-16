@@ -72,6 +72,7 @@ Other pre_built_prompt_wraps:
 \code{\link{add_text}()},
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},
+\code{\link{answer_as_dataframe}()},
 \code{\link{answer_as_integer}()},
 \code{\link{answer_as_json}()},
 \code{\link{answer_as_list}()},
@@ -91,6 +92,7 @@ Other pre_built_prompt_wraps:
 Other answer_as_prompt_wraps: 
 \code{\link{answer_as_boolean}()},
 \code{\link{answer_as_category}()},
+\code{\link{answer_as_dataframe}()},
 \code{\link{answer_as_integer}()},
 \code{\link{answer_as_json}()},
 \code{\link{answer_as_list}()},
