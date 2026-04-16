@@ -2,25 +2,33 @@
 
 ## tidyprompt (development version)
 
+- Update e-mail address of maintainer in DESCRIPTION file (change to a
+  personal e-mail address due to leaving the organization).
+
 - [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
-  and
+  can now directly use an ‘ellmer’ chat object as the `llm_provider` to
+  evaluate the prompt with (will build an
   [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-  now work more smoothly with direct
-  [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
-  objects, with better synchronization of native ellmer state for
-  streaming, multimodal content, and persistent chats.
+  under the hood)
+
+- [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
+  was improved to better synchronize with the native ‘ellmer’ state, for
+  instance for streaming, multimodal/image content, and persistent
+  chats, with clearer warnings when settings need to be configured on
+  the underlying `ellmer` chat object.
 
 - [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
   and
   [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
-  have broader ellmer compatibility, including newer
-  structured-output/tool definitions and clearer handling of
-  ellmer-specific native features.
+  have broader ellmer compatibility, including
+  [`ellmer::type_from_schema()`](https://ellmer.tidyverse.org/reference/type_boolean.html),
+  ellmer built-in tools, and better handling of optional or ignored tool
+  arguments.
 
 - Chat history handling is more robust for tool and ellmer-native
-  workflows: `tool` rows are supported, non-replayable native rows are
-  kept for inspection without being re-sent, and related metadata is
-  normalized more reliably.
+  workflows: `tool` rows are supported, non-replayable native rows (tool
+  call and thinking rows) are kept for inspection but not re-sent to the
+  LLM provider, and related metadata is normalized more reliably.
 
 ## tidyprompt 0.3.0
 
