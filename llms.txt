@@ -50,7 +50,7 @@ Install the development version from GitHub:
 remotes::install_github("KennispuntTwente/tidyprompt")
 ```
 
-Or install from CRAN (0.2.0):
+Or install from CRAN (0.3.0):
 
 ``` r
 install.packages("tidyprompt")
