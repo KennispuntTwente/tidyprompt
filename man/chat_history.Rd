@@ -9,7 +9,7 @@ chat_history(chat_history)
 \arguments{
 \item{chat_history}{A single string, a \code{data.frame} with 'role' and 'content' columns,
 or NULL. If a \code{data.frame} is provided, it should contain 'role' and 'content' columns,
-where 'role' is either 'user', 'assistant', or 'system', and 'content' is a character string
+where 'role' is either 'user', 'assistant', 'system', or 'tool', and 'content' is a character string
 representing a chat message}
 }
 \value{

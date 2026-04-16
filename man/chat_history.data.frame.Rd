@@ -8,7 +8,7 @@
 }
 \arguments{
 \item{chat_history}{A data frame with 'role' and 'content' columns,
-where 'role' is either 'user', 'assistant', or 'system', and 'content' is a character string
+where 'role' is either 'user', 'assistant', 'system', or 'tool', and 'content' is a character string
 representing a chat message}
 }
 \value{
