@@ -334,6 +334,8 @@ Functions to have LLMs answer in a specific format (structured output).
   : Make LLM answer as a boolean (TRUE or FALSE)
 - [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md)
   : Make LLM answer as a category
+- [`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md)
+  : Make LLM answer as a data frame via structured output
 - [`answer_as_integer()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_integer.md)
   : Make LLM answer as an integer (between min and max)
 - [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
@@ -346,6 +348,8 @@ Functions to have LLMs answer in a specific format (structured output).
   : Build prompt for categorizing a text into multiple categories
 - [`answer_as_named_list()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_named_list.md)
   : Make LLM answer as a named list
+- [`answer_as_numeric()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_numeric.md)
+  : Make LLM answer as a number (between min and max)
 - [`answer_as_regex_match()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_regex_match.md)
   : Make LLM answer match a specific regex
 - [`answer_as_text()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_text.md)

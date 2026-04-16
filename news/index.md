@@ -2,6 +2,16 @@
 
 ## tidyprompt (development version)
 
+- New prompt wrap
+  [`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md)
+  for extracting tabular results via structured output, with support for
+  row schemas, array-of-row schemas, and optional row-count validation.
+
+- New prompt wrap
+  [`answer_as_numeric()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_numeric.md)
+  for extracting numeric responses, including optional minimum and
+  maximum value validation.
+
 - Update e-mail address of maintainer in DESCRIPTION file (change to a
   personal e-mail address due to leaving the organization).
 

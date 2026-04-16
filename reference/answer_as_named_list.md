@@ -59,10 +59,12 @@ Other pre_built_prompt_wraps:
 [`add_text()`](https://kennispunttwente.github.io/tidyprompt/reference/add_text.md),
 [`answer_as_boolean()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_boolean.md),
 [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md),
+[`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md),
 [`answer_as_integer()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_integer.md),
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md),
 [`answer_as_list()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_list.md),
 [`answer_as_multi_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_multi_category.md),
+[`answer_as_numeric()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_numeric.md),
 [`answer_as_regex_match()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_regex_match.md),
 [`answer_as_text()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_text.md),
 [`answer_by_chain_of_thought()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_by_chain_of_thought.md),
@@ -77,10 +79,12 @@ Other pre_built_prompt_wraps:
 Other answer_as_prompt_wraps:
 [`answer_as_boolean()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_boolean.md),
 [`answer_as_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_category.md),
+[`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md),
 [`answer_as_integer()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_integer.md),
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md),
 [`answer_as_list()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_list.md),
 [`answer_as_multi_category()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_multi_category.md),
+[`answer_as_numeric()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_numeric.md),
 [`answer_as_regex_match()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_regex_match.md),
 [`answer_as_text()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_text.md)
 
