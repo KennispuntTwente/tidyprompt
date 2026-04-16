@@ -38,6 +38,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
+  withr,
     here,
     callr,
     skimr,
@@ -59,6 +60,5 @@ Imports:
     cli,
     R6,
     rlang,
-    S7,
-    methods
+    S7
 Config/testthat/edition: 3
