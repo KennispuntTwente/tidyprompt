@@ -141,6 +141,10 @@ testthat::test_that("ellmer_tool_to_tidyprompt_docs maps common types correctly"
 
 testthat::test_that("ellmer_tool_to_tidyprompt_docs preserves ignored args", {
   testthat::skip_if_not_installed("ellmer")
+  testthat::skip_if_not(
+    exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE),
+    "type_ignore not available in this ellmer version"
+  )
 
   f <- function(x, hidden = 1) x + hidden
 
@@ -259,6 +263,10 @@ testthat::test_that("tidyprompt_docs_to_ellmer_tool fills missing argument types
 
 testthat::test_that("tidyprompt_docs_to_ellmer_tool rebuilds ignored args", {
   testthat::skip_if_not_installed("ellmer")
+  testthat::skip_if_not(
+    exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE),
+    "type_ignore not available in this ellmer version"
+  )
 
   f <- function(x, hidden = 1) x + hidden
   docs <- list(
@@ -310,6 +318,10 @@ testthat::test_that("ellmer ToolDef -> tidyprompt fn -> ellmer ToolDef keeps beh
 
 testthat::test_that("ignored args stay hidden across tool roundtrips", {
   testthat::skip_if_not_installed("ellmer")
+  testthat::skip_if_not(
+    exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE),
+    "type_ignore not available in this ellmer version"
+  )
 
   add_hidden <- function(x, hidden = 1) x + hidden
 

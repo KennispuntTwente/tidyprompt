@@ -356,7 +356,10 @@ tidyprompt_docs_to_ellmer_tool <- function(
       .tidyprompt_arg_is_ignored(arg_doc) &&
         exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE)
     ) {
-      props[[nm]] <- ellmer::type_ignore()
+      props[[nm]] <- ellmer_type_ignore_compat(
+        description = arg_doc$description %||% NULL,
+        required = FALSE
+      )
     } else {
       props[[nm]] <- ellmer::type_string(required = FALSE)
     }

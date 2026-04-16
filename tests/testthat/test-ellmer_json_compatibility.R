@@ -184,6 +184,25 @@ testthat::test_that("array with missing items defaults to string items", {
   testthat::expect_true(isTRUE(back$additionalProperties))
 })
 
+testthat::test_that("ignore marker converts across ellmer versions", {
+  testthat::skip_if_not_installed("ellmer")
+
+  schema <- list(
+    `x-tidyprompt-ignore` = TRUE,
+    description = "Hidden argument"
+  )
+
+  ty <- json_schema_to_ellmer_type(schema, strict = TRUE)
+  back <- ellmer_type_to_json_schema(ty, strict = TRUE)
+
+  if (exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE)) {
+    testthat::expect_true(isTRUE(back$`x-tidyprompt-ignore`))
+  } else {
+    testthat::expect_equal(back$type, "string")
+  }
+  testthat::expect_equal(back$description, "Hidden argument")
+})
+
 testthat::test_that("enum values survive a JSON->ellmer->JSON roundtrip", {
   testthat::skip_if_not_installed("ellmer")
 

@@ -129,6 +129,23 @@ as_send_prompt_llm_provider <- function(
   provider
 }
 
+ellmer_type_ignore_compat <- function(description = NULL, required = FALSE) {
+  stopifnot(ellmer_available())
+
+  ellmer_ns <- asNamespace("ellmer")
+  if (exists("TypeIgnore", envir = ellmer_ns, inherits = FALSE)) {
+    ctor <- get("TypeIgnore", envir = ellmer_ns, inherits = FALSE)
+    return(ctor(description = description, required = required))
+  }
+
+  obj <- ellmer::type_ignore()
+  if (!is.null(description)) {
+    attr(obj, "description") <- description
+  }
+  attr(obj, "required") <- required
+  obj
+}
+
 # --- JSON Schema -> ellmer::type_* -----------------------------------------
 
 json_schema_to_ellmer_type <- function(
@@ -146,9 +163,16 @@ json_schema_to_ellmer_type <- function(
   }
 
   if (isTRUE(schema$`x-tidyprompt-ignore`)) {
-    return(ellmer::type_ignore(
+    if (exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE)) {
+      return(ellmer_type_ignore_compat(
+        description = schema$description %||% NULL,
+        required = FALSE
+      ))
+    }
+
+    return(ellmer::type_string(
       description = schema$description %||% NULL,
-      required = required
+      required = FALSE
     ))
   }
 
