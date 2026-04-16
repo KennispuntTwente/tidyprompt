@@ -57,6 +57,7 @@ Other pre_built_prompt_wraps:
 \code{\link{answer_as_list}()},
 \code{\link{answer_as_multi_category}()},
 \code{\link{answer_as_named_list}()},
+\code{\link{answer_as_numeric}()},
 \code{\link{answer_as_regex_match}()},
 \code{\link{answer_by_chain_of_thought}()},
 \code{\link{answer_by_react}()},
@@ -75,6 +76,7 @@ Other answer_as_prompt_wraps:
 \code{\link{answer_as_list}()},
 \code{\link{answer_as_multi_category}()},
 \code{\link{answer_as_named_list}()},
+\code{\link{answer_as_numeric}()},
 \code{\link{answer_as_regex_match}()}
 }
 \concept{answer_as_prompt_wraps}

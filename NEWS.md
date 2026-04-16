@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* New prompt wrap `answer_as_numeric()` for extracting numeric responses,
+  including optional minimum and maximum value validation.
+
 * Update e-mail address of maintainer in DESCRIPTION file 
 (change to a personal e-mail address due to leaving the organization).
 
