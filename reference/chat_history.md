@@ -17,9 +17,9 @@ chat_history(chat_history)
 
   A single string, a `data.frame` with 'role' and 'content' columns, or
   NULL. If a `data.frame` is provided, it should contain 'role' and
-  'content' columns, where 'role' is either 'user', 'assistant', or
-  'system', and 'content' is a character string representing a chat
-  message
+  'content' columns, where 'role' is either 'user', 'assistant',
+  'system', or 'tool', and 'content' is a character string representing
+  a chat message
 
 ## Value
 
