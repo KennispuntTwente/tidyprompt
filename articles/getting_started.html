@@ -82,18 +82,11 @@ Groq, XAI (Grok), and Google Gemini.</p>
 create an LLM provider from an <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object. This
 allows you to use any LLM provider that you can configure with the
 ‘ellmer’ R package (including its respective configuration and
-features). When using an ‘ellmer’ LLM provider, functions like
+features). It is also possible to directly use an
+<code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object with <code><a href="../reference/send_prompt.html">send_prompt()</a></code>. When
+using an ‘ellmer’ LLM provider, functions like
 <code><a href="../reference/answer_as_json.html">answer_as_json()</a></code> and <code><a href="../reference/answer_using_tools.html">answer_using_tools()</a></code> will
-also call the native ‘ellmer’ functions for these features.</p>
-<p>When using <code><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer()</a></code> or a raw
-<code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> with <code><a href="../reference/send_prompt.html">send_prompt()</a></code>,
-‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
-history for each call. That means the ‘ellmer’ chat mainly acts as
-provider configuration plus native feature support here, while
-conversation state lives in ‘tidyprompt’. If you need the updated native
-‘ellmer’ turns after a call, use
-<code>send_prompt(..., return_mode = "full")</code> and inspect
-<code>$ellmer_chat</code>.</p>
+call the native ‘ellmer’ functions for these features.</p>
 <p>Furthermore, with the <code>llm_provider-class</code>, you can easily
 write a hook for any other LLM provider. You could make API calls using
 the ‘httr2’ package or use another R package that already has a hook for
@@ -114,14 +107,14 @@ key to make it work.</p>
 <span></span>
 <span><span class="co"># Various providers via OpenRouter (e.g., Anthropic)</span></span>
 <span><span class="va">openrouter</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/llm_provider_openrouter.html">llm_provider_openrouter</a></span><span class="op">(</span></span>
-<span>  parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"anthropic/claude-3.5-sonnet"</span><span class="op">)</span></span>
+<span>  parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"anthropic/claude-4.6-sonnet"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># ... functions also included for Mistral, Groq, XAI (Grok), and Google Gemini</span></span>
 <span></span>
-<span><span class="co"># Alternatively, you can use an `ellmer::chat()` object (e.g., `ellmer::chat_openai()`)</span></span>
+<span><span class="co"># Alternatively, you can use an `ellmer::chat()` object (e.g., via `ellmer::chat_openai()`)</span></span>
 <span><span class="co"># (See also: https://ellmer.tidyverse.org/index.html)</span></span>
-<span><span class="va">ellmer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer</a></span><span class="op">(</span><span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/chat_openai.html" class="external-link">chat_openai</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ellmer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer</a></span><span class="op">(</span><span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/chat_openai.html" class="external-link">chat_openai</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"gpt-5.4-nano"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># ... or easily create your own hook for any other LLM provider;</span></span>
 <span><span class="co">#   see ?`llm_provider-class` for more information; also take a look at the source code of</span></span>

@@ -19,24 +19,15 @@ function, you can also create an LLM provider from an
 [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
 object. This allows you to use any LLM provider that you can configure
 with the ‘ellmer’ R package (including its respective configuration and
-features). When using an ‘ellmer’ LLM provider, functions like
+features). It is also possible to directly use an
+[`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
+object with
+[`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md).
+When using an ‘ellmer’ LLM provider, functions like
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
 and
 [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
-will also call the native ‘ellmer’ functions for these features.
-
-When using
-[`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-or a raw
-[`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)
-with
-[`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md),
-‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
-history for each call. That means the ‘ellmer’ chat mainly acts as
-provider configuration plus native feature support here, while
-conversation state lives in ‘tidyprompt’. If you need the updated native
-‘ellmer’ turns after a call, use
-`send_prompt(..., return_mode = "full")` and inspect `$ellmer_chat`.
+will call the native ‘ellmer’ functions for these features.
 
 Furthermore, with the `llm_provider-class`, you can easily write a hook
 for any other LLM provider. You could make API calls using the ‘httr2’
@@ -59,14 +50,14 @@ openai <- llm_provider_openai(
 
 # Various providers via OpenRouter (e.g., Anthropic)
 openrouter <- llm_provider_openrouter(
-  parameters = list(model = "anthropic/claude-3.5-sonnet")
+  parameters = list(model = "anthropic/claude-4.6-sonnet")
 )
 
 # ... functions also included for Mistral, Groq, XAI (Grok), and Google Gemini
 
-# Alternatively, you can use an `ellmer::chat()` object (e.g., `ellmer::chat_openai()`)
+# Alternatively, you can use an `ellmer::chat()` object (e.g., via `ellmer::chat_openai()`)
 # (See also: https://ellmer.tidyverse.org/index.html)
-ellmer <- llm_provider_ellmer(ellmer::chat_openai())
+ellmer <- llm_provider_ellmer(ellmer::chat_openai(model = "gpt-5.4-nano"))
 
 # ... or easily create your own hook for any other LLM provider;
 #   see ?`llm_provider-class` for more information; also take a look at the source code of
