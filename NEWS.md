@@ -1,5 +1,26 @@
 # tidyprompt (development version)
 
+* Update e-mail address of maintainer in DESCRIPTION file 
+(change to a personal e-mail address due to leaving the organization).
+
+* `send_prompt()` can now directly use an 'ellmer' chat object as
+the `llm_provider` to evaluate the prompt with (will build 
+an `llm_provider_ellmer()` under the hood)
+
+* `llm_provider_ellmer()` was improved to better synchronize with 
+the native 'ellmer' state, for instance for streaming, multimodal/image
+content, and persistent chats, with clearer warnings when settings need to
+be configured on the underlying `ellmer` chat object.
+
+* `answer_as_json()` and `answer_using_tools()` have broader ellmer
+compatibility, including `ellmer::type_from_schema()`, ellmer built-in tools,
+and better handling of optional or ignored tool arguments.
+
+* Chat history handling is more robust for tool and ellmer-native workflows:
+`tool` rows are supported, non-replayable native rows (tool call and thinking rows)
+are kept for inspection but not re-sent to the LLM provider, and related
+metadata is normalized more reliably.
+
 # tidyprompt 0.3.0
 
 * `llm_provider-class`: can now take a `stream_callback` function, which
