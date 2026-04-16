@@ -60,7 +60,7 @@ Install the development version from GitHub:
 remotes::install_github("KennispuntTwente/tidyprompt")
 ```
 
-Or install from CRAN (0.2.0):
+Or install from CRAN (0.3.0):
 
 ``` r
 install.packages("tidyprompt")
@@ -223,39 +223,21 @@ with ‘ellmer’, ‘tidyllm’, and any other packages offering an interface
 to LLM APIs.
 
 ‘ellmer’ specifically has surfaced as the most popular R package for
-interfacing with LLM APIs. Therefore, we have introduced a LLM provider
-which can be built from an ‘ellmer’ chat object (see:
-`tidyprompt::llm_provider_ellmer()`). This allows users to use any LLM
-provider that can be configured with ‘ellmer’, including the respective
-configuration and features from the ‘ellmer’ package.
-
-You can also pass an ‘ellmer’ chat object directly to `send_prompt()`.
-In that case, ‘tidyprompt’ clones the chat, clears any existing turns,
-and wraps the clean clone automatically:
-
-``` r
-"What is 2 + 2?" |>
-  answer_as_integer() |>
-  send_prompt(ellmer::chat_openai(model = "gpt-4.1-mini"))
-```
-
-When using `llm_provider_ellmer()` or a raw `ellmer::chat()`,
-‘tidyprompt’ rebuilds the working ‘ellmer’ turns from ‘tidyprompt’ chat
-history for each call. In other words, the ‘ellmer’ chat mainly carries
-provider configuration and native features here, while conversation
-state lives in ‘tidyprompt’. If you need the updated native ‘ellmer’
-turns after a call, use `send_prompt(..., return_mode = "full")` and
-inspect `$ellmer_chat`.
+interfacing with LLM APIs. Therefore, ‘tidyprompt’ now supports ‘ellmer’
+chat objects as LLM providers. Users can pass an ‘ellmer’ chat object
+directly to `send_prompt()`, or use the `llm_provider_ellmer()` function
+to create an LLM provider from an ‘ellmer’ chat object. This allows
+users to use any LLM provider that can be configured with ‘ellmer’,
+including the respective configuration and features from the ‘ellmer’
+package.
 
 Furthermore, `answer_as_json()` and `answer_using_tools()` support
-'ellmer' definitions for structured output and tools. When using an
+‘ellmer’ definitions for structured output and tools. When using an
 ‘ellmer’ LLM provider, these functions will also call the native
 ‘ellmer’ functions to obtain structured output and register tools. (And
 because `mcptools::mcp_tools()` returns ‘ellmer’ tool definitions,
-`answer_using_tools()` also supports tools from MCP servers.) Regular
-`ellmer::tool()` definitions can be converted for non-'ellmer'
-providers, but provider-specific 'ellmer' built-in tools only work with
-'ellmer'-backed providers.
+`answer_using_tools()` also supports tools from MCP servers.)
 
 This means that ‘tidyprompt’ extends what is possible with ‘ellmer’ (and
-vice versa).
+vice versa), and the two packages can be used together to elegantly
+design complex interactions with LLMs.
