@@ -34,7 +34,10 @@ fake_ellmer_chat <- function(turns = list()) {
         vapply(
           args,
           function(a) {
-            tryCatch(as.character(a), error = function(e) class(a)[1])
+            tryCatch(
+              paste(as.character(a), collapse = ","),
+              error = function(e) class(a)[1]
+            )
           },
           character(1)
         ),
