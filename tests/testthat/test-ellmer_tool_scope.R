@@ -1,6 +1,6 @@
 # Tests for tool scope isolation across successive ellmer-backed calls
 
-test_that("tools do not leak across successive send_prompt calls", {
+test_that("prompt-level tools do not leak across successive send_prompt calls", {
   fake_chat <- fake_ellmer_chat()
   provider <- llm_provider_ellmer(
     fake_chat,
@@ -26,6 +26,7 @@ test_that("tools do not leak across successive send_prompt calls", {
 
   # The returned ellmer_chat should only have tool_a registered
   expect_length(res1$ellmer_chat$get_tools(), 1)
+
   expect_identical(res1$ellmer_chat$get_tools()[[1]]$name, "tool_a")
 
   # Second call: plain prompt with no tools
@@ -53,10 +54,10 @@ test_that("tools do not leak across successive send_prompt calls", {
   expect_identical(res3$ellmer_chat$get_tools()[[1]]$name, "tool_b")
 })
 
-test_that("persistent_chat does not leak tools across turns", {
+test_that("user-pre-registered tools are preserved across calls", {
   fake_chat <- fake_ellmer_chat()
-  # Pre-register a tool to simulate leftover state
-  fake_chat$set_tools(list(list(name = "leftover_tool")))
+  # User pre-registers a tool on the chat before creating the provider
+  fake_chat$set_tools(list(list(name = "user_tool")))
 
   provider <- llm_provider_ellmer(
     fake_chat,
@@ -64,12 +65,56 @@ test_that("persistent_chat does not leak tools across turns", {
     verbose = FALSE
   )
 
-  pc <- `persistent_chat-class`$new(
-    llm_provider = provider,
-    chat_history = NULL
+  # Plain call with no prompt tools -- base tool stays
+  res1 <- "Hello" |>
+    send_prompt(provider, verbose = FALSE, return_mode = "full")
+
+  expect_length(res1$ellmer_chat$get_tools(), 1)
+  expect_identical(res1$ellmer_chat$get_tools()[[1]]$name, "user_tool")
+
+  # Call with a prompt tool -- base tool + prompt tool
+  prompt_with_tool_a <- "Use tool A" |>
+    prompt_wrap(parameter_fn = function(llm_provider) {
+      list(.ellmer_tools = list(list(name = "tool_a")))
+    })
+
+  res2 <- send_prompt(
+    prompt_with_tool_a,
+    provider,
+    verbose = FALSE,
+    return_mode = "full"
   )
 
-  # First turn with tool_a
+  expect_length(res2$ellmer_chat$get_tools(), 2)
+  tool_names <- vapply(
+    res2$ellmer_chat$get_tools(),
+    `[[`,
+    character(1),
+    "name"
+  )
+  expect_true("user_tool" %in% tool_names)
+  expect_true("tool_a" %in% tool_names)
+
+  # Follow-up plain call -- back to just the base tool
+  res3 <- "Again" |>
+    send_prompt(provider, verbose = FALSE, return_mode = "full")
+
+  expect_length(res3$ellmer_chat$get_tools(), 1)
+  expect_identical(res3$ellmer_chat$get_tools()[[1]]$name, "user_tool")
+})
+
+test_that("prompt-level tools do not leak through persistent_chat", {
+  fake_chat <- fake_ellmer_chat()
+  # User pre-registers a base tool
+  fake_chat$set_tools(list(list(name = "base_tool")))
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  # First call with prompt tool_a
   prompt_with_tool_a <- "Use tool A" |>
     prompt_wrap(parameter_fn = function(llm_provider) {
       list(.ellmer_tools = list(list(name = "tool_a")))
@@ -82,29 +127,13 @@ test_that("persistent_chat does not leak tools across turns", {
     return_mode = "full"
   )
 
-  # Should only have tool_a, not leftover_tool + tool_a
-  expect_length(res1$ellmer_chat$get_tools(), 1)
-  expect_identical(res1$ellmer_chat$get_tools()[[1]]$name, "tool_a")
-})
+  # Should have base_tool + tool_a
+  expect_length(res1$ellmer_chat$get_tools(), 2)
 
-test_that("tools are cleared when set_tools is available on chat", {
-  fake_chat <- fake_ellmer_chat()
-  # Pre-load tools to simulate previous call's leftovers
-  fake_chat$set_tools(list(
-    list(name = "stale_tool_1"),
-    list(name = "stale_tool_2")
-  ))
-  expect_length(fake_chat$get_tools(), 2)
-
-  provider <- llm_provider_ellmer(
-    fake_chat,
-    parameters = list(stream = FALSE),
-    verbose = FALSE
-  )
-
-  # Call with no tools -- stale tools should be cleared
-  res <- "Hello" |>
+  # Second call with no prompt tools -- only base_tool should remain
+  res2 <- "No tools" |>
     send_prompt(provider, verbose = FALSE, return_mode = "full")
 
-  expect_length(res$ellmer_chat$get_tools(), 0)
+  expect_length(res2$ellmer_chat$get_tools(), 1)
+  expect_identical(res2$ellmer_chat$get_tools()[[1]]$name, "base_tool")
 })

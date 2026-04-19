@@ -1554,13 +1554,16 @@ llm_provider_ellmer <- function(
     # Prompt = last message (may be converted to multimodal contents below)
     prompt <- chat_history$content[nrow(chat_history)] %||% ""
     prompt <- if (!is.na(prompt)) as.character(prompt) else ""
-    # Reset tools to only the current prompt's set so that tools from
-    # earlier calls (via persistent_chat or repeated send_prompt) do not
-    # leak into subsequent requests.
+    # Set tools to the union of user-pre-registered base tools and the
+    # current prompt's tools.  Base tools are captured at provider creation
+    # time so they survive across calls; prompt tools are transient.
+    base_tools <- self$parameters$.ellmer_base_tools %||% list()
+    prompt_tools <- params$.ellmer_tools %||% list()
+    all_tools <- c(base_tools, prompt_tools)
     if (is.function(ch$set_tools)) {
-      ch$set_tools(params$.ellmer_tools %||% list())
-    } else if (!is.null(params$.ellmer_tools)) {
-      for (td in params$.ellmer_tools) {
+      ch$set_tools(all_tools)
+    } else {
+      for (td in all_tools) {
         ch$register_tool(td)
       }
     }
@@ -1864,6 +1867,17 @@ llm_provider_ellmer <- function(
   provider$ellmer_chat <- chat
   # Initial sync so $parameters$model reflects the chat's current model
   provider$.__enclos_env__$private$sync_model()
+
+  # Capture tools already registered on the chat so they are preserved
+  # across calls.  Prompt-level tools (from answer_using_tools) are
+  # layered on top of these each request and do not persist.
+  provider$parameters$.ellmer_base_tools <- tryCatch(
+    {
+      gt <- chat$get_tools
+      if (is.function(gt)) gt() else list()
+    },
+    error = function(e) list()
+  )
 
   provider
 }
