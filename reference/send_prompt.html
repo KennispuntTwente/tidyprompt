@@ -150,7 +150,7 @@ after excluding any non-replayable rows),</p></li>
 <li><p>'start_time' (the time when the function was called),</p></li>
 <li><p>'end_time' (the time when the function ended),</p></li>
 <li><p>'duration_seconds' (the duration of the function in seconds),</p></li>
-<li><p>'http_list' (a list with all HTTP responses made during the interactions;
+<li><p>'http' (a list with all HTTP requests and responses made during the interactions;
 as returned by <code>llm_provider$complete_chat()</code>),</p></li>
 <li><p>'ellmer_chat' (if <code><a href="llm_provider_ellmer.html">llm_provider_ellmer()</a></code> or a raw <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code>
 object was used, this will be
@@ -207,8 +207,8 @@ was used.)</p></li>
 <span class="r-in"><span>  <span class="co"># $duration_seconds</span></span></span>
 <span class="r-in"><span>  <span class="co"># [1] 1.13276</span></span></span>
 <span class="r-in"><span>  <span class="co">#</span></span></span>
-<span class="r-in"><span>  <span class="co"># $http_list</span></span></span>
-<span class="r-in"><span>  <span class="co"># $http_list[[1]]</span></span></span>
+<span class="r-in"><span>  <span class="co"># $http</span></span></span>
+<span class="r-in"><span>  <span class="co"># $http$responses[[1]]</span></span></span>
 <span class="r-in"><span>  <span class="co"># Response [http://localhost:11434/api/chat]</span></span></span>
 <span class="r-in"><span>  <span class="co">#   Date: 2024-11-18 14:43</span></span></span>
 <span class="r-in"><span>  <span class="co">#   Status: 200</span></span></span>

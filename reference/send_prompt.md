@@ -128,7 +128,7 @@ send_prompt(
 
   - 'duration_seconds' (the duration of the function in seconds),
 
-  - 'http_list' (a list with all HTTP responses made during the
+  - 'http' (a list with all HTTP requests and responses made during the
     interactions; as returned by `llm_provider$complete_chat()`),
 
   - 'ellmer_chat' (if
@@ -192,8 +192,8 @@ if (FALSE) { # \dontrun{
   # $duration_seconds
   # [1] 1.13276
   #
-  # $http_list
-  # $http_list[[1]]
+  # $http
+  # $http$responses[[1]]
   # Response [http://localhost:11434/api/chat]
   #   Date: 2024-11-18 14:43
   #   Status: 200

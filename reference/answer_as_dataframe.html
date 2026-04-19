@@ -130,7 +130,10 @@ schema definitions and JSON-schema representations as needed.</p>
 object whose properties describe the columns of one row.</p></li>
 <li><p>An array-of-rows schema, such as <code>ellmer::type_array(row_schema)</code> or a JSON
 schema with <code>type = "array"</code> and row objects under <code>items</code>.</p></li>
-<li><p>A wrapper object with a <code>rows</code> field containing an array of row objects.</p></li>
+<li><p>A wrapper object whose <strong>only</strong> property is a <code>rows</code> field containing an
+array of row objects (matching the shape produced internally by
+<code>answer_as_dataframe()</code>). Schemas with additional sibling properties
+alongside <code>rows</code> are treated as row schemas, not wrappers.</p></li>
 </ul><p>Regardless of which of these forms you supply, <code>answer_as_dataframe()</code>
 normalizes it to a row-oriented structured-output schema before delegating to
 <code><a href="answer_as_json.html">answer_as_json()</a></code>.</p>
