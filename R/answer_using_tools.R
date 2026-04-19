@@ -98,9 +98,11 @@ answer_using_tools <- function(
   }
 
   # Normalize to a named list while trying to keep stable names
+  user_named <- logical(0) # track which positions had explicit names
   if (is_toolish(tools)) {
     nm <- sanitize_name(deparse(substitute(tools)))
     tools <- rlang::set_names(list(tools), nm)
+    user_named <- FALSE
   } else {
     stopifnot(
       is.list(tools),
@@ -108,6 +110,7 @@ answer_using_tools <- function(
       all(vapply(tools, is_toolish, logical(1)))
     )
     if (is.null(names(tools)) || !all(nzchar(names(tools)))) {
+      user_named <- rep(FALSE, length(tools))
       # Try to derive names from the call; else fallback
       call_elems <- tryCatch(
         as.list(substitute(tools))[-1],
@@ -123,7 +126,21 @@ answer_using_tools <- function(
         names(tools) <- paste0("tool", seq_along(tools))
       }
     } else {
+      user_named <- rep(TRUE, length(tools))
       names(tools) <- sanitize_name(names(tools))
+    }
+  }
+
+  # For ellmer ToolDefs that were NOT explicitly named by the user,
+
+  # prefer the tool's own declared @name so text prompts, API payloads,
+  # and dispatch all agree on the same identifier.
+  for (i in seq_along(tools)) {
+    if (!user_named[i] && is_ellmer_tool(tools[[i]])) {
+      declared <- tryCatch(tools[[i]]@name, error = function(e) NULL)
+      if (is.character(declared) && nzchar(declared)) {
+        names(tools)[i] <- sanitize_name(declared)
+      }
     }
   }
 
@@ -947,6 +964,7 @@ tools_get_docs <- function(func, name = NULL) {
   )
 
   docs <- list()
+  caller_name <- name
   if (is.null(name)) {
     name <- deparse(substitute(func))
   }
@@ -966,6 +984,12 @@ tools_get_docs <- function(func, name = NULL) {
         (is.character(docs$return$description) &
           length(docs$return$description) == 1)
     )
+
+    # When the caller provides an explicit name, use it so the advertised
+    # name always matches the dispatch key (e.g., in answer_using_tools).
+    if (!is.null(caller_name)) {
+      docs$name <- caller_name
+    }
   } else {
     docs <- tools_generate_docs(name, func)
   }

@@ -253,3 +253,116 @@ test_that("messages_from_history omits non-replayable rows", {
     c("user", "tool", "assistant")
   )
 })
+
+test_that("text-based dispatch uses ellmer tool's declared name, not R symbol", {
+  skip_if_not_installed("ellmer")
+
+  add_xy <- function(x, y) x + y
+
+  td <- ellmer::tool(
+    add_xy,
+    name = "sum_two",
+    description = "Add two numbers",
+    arguments = list(
+      x = ellmer::type_number(),
+      y = ellmer::type_number()
+    )
+  )
+
+  state <- new.env(parent = emptyenv())
+  state$call_n <- 0L
+
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      state <- self$parameters$.test_state
+      state$call_n <- state$call_n + 1L
+
+      if (state$call_n == 1L) {
+        # Model calls the tool by its declared name
+        reply <- '{"function": "sum_two", "arguments": {"x": 3, "y": 4}}'
+      } else {
+        reply <- "The answer is 7"
+      }
+
+      list(
+        completed = dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = reply,
+            stringsAsFactors = FALSE
+          )
+        ),
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    parameters = list(.test_state = state),
+    verbose = FALSE
+  )
+
+  result <- "What is 3 + 4?" |>
+    answer_using_tools(td, type = "text-based") |>
+    send_prompt(provider, verbose = FALSE)
+
+  # If dispatch failed, the tool call would error and we'd never reach call 2
+  expect_equal(state$call_n, 2L)
+  expect_equal(result, "The answer is 7")
+})
+
+test_that("openai path uses ellmer tool's declared name in API payload", {
+  skip_if_not_installed("ellmer")
+
+  add_xy <- function(x, y) x + y
+
+  td <- ellmer::tool(
+    add_xy,
+    name = "sum_two",
+    description = "Add two numbers",
+    arguments = list(
+      x = ellmer::type_number(),
+      y = ellmer::type_number()
+    )
+  )
+
+  # Build prompt and extract the parameter_fn to inspect the OpenAI tool payload
+  prompt <- "What is 3 + 4?" |>
+    answer_using_tools(td, type = "openai")
+
+  wraps <- get_prompt_wraps(prompt)
+  # Find the wrap with a parameter_fn
+  param_wrap <- NULL
+  for (w in wraps) {
+    if (!is.null(w$parameter_fn)) {
+      param_wrap <- w
+      break
+    }
+  }
+  expect_false(is.null(param_wrap))
+
+  # Call parameter_fn with a mock provider
+  mock_provider <- list(tool_type = "openai", api_type = "openai")
+  params <- param_wrap$parameter_fn(mock_provider)
+
+  # The tools payload should have function.name = "sum_two"
+  expect_true(!is.null(params$tools))
+  expect_equal(params$tools[[1]][["function"]]$name, "sum_two")
+})
+
+test_that("tools_get_docs overrides attribute name when caller provides one", {
+  my_fn <- function(x) x + 1
+  docs_attr <- list(
+    name = "original_name",
+    description = "A test function",
+    arguments = list(x = list(type = "number", description = "A number"))
+  )
+  attr(my_fn, "tidyprompt_tool_docs") <- docs_attr
+
+  # Without explicit name, docs$name stays as attribute value
+  docs_default <- tools_get_docs(my_fn)
+  expect_equal(docs_default$name, "original_name")
+
+  # With explicit name, docs$name is overridden
+
+  docs_override <- tools_get_docs(my_fn, name = "dispatch_key")
+  expect_equal(docs_override$name, "dispatch_key")
+})
