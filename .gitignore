@@ -23,3 +23,5 @@ vignettes/getting_started.R
 vignettes/sentiment_analysis.html
 vignettes/streaming_shiny_ipc.html
 /.rcmdcheck
+/tidyprompt.Rcheck
+tidyprompt_0.3.0.9000.tar.gz
