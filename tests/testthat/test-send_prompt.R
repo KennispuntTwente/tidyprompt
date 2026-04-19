@@ -265,6 +265,87 @@ test_that("send_prompt preserves metadata updates when hidden rows exist", {
   )
 })
 
+test_that("clean_chat_history=TRUE merges metadata correctly with hidden rows", {
+  feedback_sent <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$provider_calls <- list()
+  state$provider_call_n <- 0L
+
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      state <- self$parameters$.test_state
+      state$provider_call_n <- state$provider_call_n + 1L
+      state$provider_calls[[state$provider_call_n]] <- chat_history
+
+      if (state$provider_call_n == 1L) {
+        completed <- dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = c("assistant", "assistant"),
+            content = c("Hidden step", "First answer"),
+            hidden_from_llm = c(TRUE, FALSE),
+            stringsAsFactors = FALSE
+          )
+        )
+      } else {
+        completed <- dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = "Fixed answer",
+            stringsAsFactors = FALSE
+          )
+        )
+      }
+
+      list(
+        completed = completed,
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    parameters = list(.test_state = state),
+    verbose = FALSE
+  )
+
+  prompt <- "Hello" |>
+    prompt_wrap(validation_fn = function(response) {
+      if (!feedback_sent) {
+        feedback_sent <<- TRUE
+        return(llm_feedback("Please fix"))
+      }
+      TRUE
+    })
+
+  result <- send_prompt(
+    prompt,
+    provider,
+    return_mode = "full",
+    clean_chat_history = TRUE,
+    verbose = FALSE
+  )
+
+  expect_equal(result$response, "Fixed answer")
+
+  # After first call: rows are [user, assistant(hidden), assistant]
+  # After feedback: rows are [user, assistant(hidden), assistant, user(feedback)]
+  # clean_chat_history filters hidden row 2 → sends rows 1,3,4
+  # Bug: old code mapped these back to positions 1,2,3 instead of 1,3,4,
+  # which would overwrite the hidden row and misplace content.
+  # Verify the hidden row is preserved intact:
+  expect_equal(result$chat_history$content[2], "Hidden step")
+  expect_true(result$chat_history$hidden_from_llm[2])
+
+  # Verify content didn't get shuffled into wrong rows
+  expect_equal(result$chat_history$role[1], "user")
+  expect_equal(result$chat_history$content[1], "Hello")
+  expect_equal(result$chat_history$role[3], "assistant")
+  expect_equal(result$chat_history$content[3], "First answer")
+
+  # Feedback row should still be at its original position (row 4)
+  expect_equal(result$chat_history$role[4], "user")
+  expect_equal(result$chat_history$content[4], "Please fix")
+})
+
 test_that("send_prompt does not resend tool call rows on retry", {
   feedback_sent <- FALSE
   state <- new.env(parent = emptyenv())

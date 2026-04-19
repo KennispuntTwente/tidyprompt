@@ -516,17 +516,21 @@ create_chat_df <- function(
 #' @noRd
 #' @keywords internal
 clean_chat_history <- function(chat_history) {
-  chat_history <- chat_history_to_send(chat_history)
+  filtered <- chat_history_to_send(chat_history)
+  # source_rows maps positions in `filtered` back to the original
+  # chat_history rows (accounting for hidden / tool_call filtering).
+  original_source_rows <- attr(filtered, "source_rows") %||%
+    seq_len(nrow(filtered))
 
   # Keep only first and last message from user;
   # keep only last message from assistant;
   # keep all messages from system;
   # keep all tool_result messages
-  user_rows <- which(chat_history$role == "user")
-  assistant_rows <- which(chat_history$role == "assistant")
-  system_rows <- which(chat_history$role == "system")
+  user_rows <- which(filtered$role == "user")
+  assistant_rows <- which(filtered$role == "assistant")
+  system_rows <- which(filtered$role == "system")
   tool_result_rows <- which(
-    chat_history$tool_result | chat_history$role == "tool"
+    filtered$tool_result | filtered$role == "tool"
   )
 
   keep_rows <- c(
@@ -536,9 +540,14 @@ clean_chat_history <- function(chat_history) {
     tool_result_rows
   )
 
+  keep_rows <- sort(unique(keep_rows))
+
   # Subset the dataframe with these rows
-  cleaned_chat_history <- chat_history[sort(unique(keep_rows)), ]
-  attr(cleaned_chat_history, "source_rows") <- sort(unique(keep_rows))
+  cleaned_chat_history <- filtered[keep_rows, ]
+  # Compose the two mappings: keep_rows indexes into `filtered`, whose
+
+  # positions map back to the original frame via original_source_rows.
+  attr(cleaned_chat_history, "source_rows") <- original_source_rows[keep_rows]
   # (sort(unique()) is used to ensure that the rows are in order)
 
   return(cleaned_chat_history)
