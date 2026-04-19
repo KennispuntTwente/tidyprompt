@@ -143,14 +143,17 @@ answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
 
   # Detect a wrapper object whose `rows` field is an array of row objects.
 
-  # We require that rows.items looks like a row schema (has properties).
-  # This can still false-positive when a row schema coincidentally has a
+  # We require that rows.items looks like a row schema (has properties)
+  # AND that `rows` is the ONLY property -- a genuine wrapper produced by
 
-  # column named "rows" that is an array of objects, but that combination
-  # is rare enough that this heuristic is practical.
+  # answer_as_dataframe_wrapper_schema() never has sibling columns.  When
+
+  # a row schema itself has a column named "rows" (e.g. array<object>),
+  # sibling columns will be present and we leave the schema alone.
   if (
     identical(json_schema$type %||% NULL, "object") &&
       is.list(json_schema$properties) &&
+      length(json_schema$properties) == 1L &&
       "rows" %in% names(json_schema$properties) &&
       identical(json_schema$properties$rows$type %||% NULL, "array") &&
       is.list(json_schema$properties$rows$items) &&

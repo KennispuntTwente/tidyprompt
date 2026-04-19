@@ -99,7 +99,7 @@ test_that("answer_as_dataframe accepts array-of-rows schemas", {
   expect_equal(result$age, c(32L, 28L))
 })
 
-test_that("answer_as_dataframe accepts wrapper-object schemas with extra fields", {
+test_that("answer_as_dataframe accepts wrapper-object schema (rows-only)", {
   provider <- `llm_provider-class`$new(
     complete_chat_function = function(chat_history) {
       reply <- jsonlite::toJSON(
@@ -128,7 +128,7 @@ test_that("answer_as_dataframe accepts wrapper-object schemas with extra fields"
     verbose = FALSE
   )
 
-  # Wrapper schema with rows + an extra field (count)
+  # Wrapper schema with rows as the sole property
   schema <- list(
     type = "object",
     properties = list(
@@ -143,75 +143,9 @@ test_that("answer_as_dataframe accepts wrapper-object schemas with extra fields"
           required = c("name", "age"),
           additionalProperties = FALSE
         )
-      ),
-      count = list(type = "integer")
-    ),
-    required = c("rows", "count")
-  )
-
-  result <- "Extract the people." |>
-    answer_as_dataframe(schema, type = "text-based") |>
-    send_prompt(provider, verbose = FALSE)
-
-  expect_s3_class(result, "data.frame")
-  expect_equal(nrow(result), 2)
-  expect_equal(names(result), c("name", "age"))
-  expect_equal(result$name, c("Alice", "Bob"))
-})
-
-test_that("answer_as_dataframe unwraps wrapper with object-valued sibling", {
-  provider <- `llm_provider-class`$new(
-    complete_chat_function = function(chat_history) {
-      reply <- jsonlite::toJSON(
-        list(
-          rows = list(
-            list(name = "Alice", age = 32L),
-            list(name = "Bob", age = 28L)
-          )
-        ),
-        auto_unbox = TRUE
-      )
-      reply <- as.character(reply)
-
-      list(
-        completed = dplyr::bind_rows(
-          chat_history,
-          data.frame(
-            role = "assistant",
-            content = reply,
-            stringsAsFactors = FALSE
-          )
-        ),
-        http = list(request = NULL, response = NULL)
-      )
-    },
-    verbose = FALSE
-  )
-
-  # Wrapper schema with rows + an object-valued metadata field
-  schema <- list(
-    type = "object",
-    properties = list(
-      rows = list(
-        type = "array",
-        items = list(
-          type = "object",
-          properties = list(
-            name = list(type = "string"),
-            age = list(type = "integer")
-          ),
-          required = c("name", "age"),
-          additionalProperties = FALSE
-        )
-      ),
-      meta = list(
-        type = "object",
-        properties = list(
-          total = list(type = "integer")
-        )
       )
     ),
-    required = c("rows")
+    required = "rows"
   )
 
   result <- "Extract the people." |>
@@ -386,4 +320,31 @@ test_that("answer_as_dataframe uses native ellmer structured results", {
   expect_s3_class(result, "data.frame")
   expect_equal(result$name, c("Alice", "Bob"))
   expect_equal(result$age, c(32, 28))
+})
+
+test_that("answer_as_dataframe_row_schema preserves row schema with array<object> 'rows' column", {
+  # Row schema where "rows" is an array-of-objects column, not a wrapper
+  schema <- list(
+    type = "object",
+    properties = list(
+      id = list(type = "integer"),
+      rows = list(
+        type = "array",
+        items = list(
+          type = "object",
+          properties = list(label = list(type = "string"))
+        )
+      )
+    ),
+    required = c("id", "rows")
+  )
+
+  row_schema <- answer_as_dataframe_row_schema(schema)
+
+  # The heuristic must NOT unwrap; the row schema should keep both columns
+  expect_equal(row_schema$type, "object")
+  expect_true("id" %in% names(row_schema$properties))
+  expect_true("rows" %in% names(row_schema$properties))
+  expect_equal(row_schema$properties$id$type, "integer")
+  expect_equal(row_schema$properties$rows$type, "array")
 })
