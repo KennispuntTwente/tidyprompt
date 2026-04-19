@@ -163,7 +163,9 @@ json_schema_to_ellmer_type <- function(
   }
 
   if (isTRUE(schema$`x-tidyprompt-ignore`)) {
-    if (exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE)) {
+    if (
+      exists("type_ignore", envir = asNamespace("ellmer"), inherits = FALSE)
+    ) {
       return(ellmer_type_ignore_compat(
         description = schema$description %||% NULL,
         required = FALSE

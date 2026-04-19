@@ -193,7 +193,8 @@ send_prompt <- function(
 
       request_rows <- as.integer(request_rows %||% integer())
       request_rows <- request_rows[
-        !is.na(request_rows) & request_rows >= 1L &
+        !is.na(request_rows) &
+          request_rows >= 1L &
           request_rows <= nrow(updated_chat_history)
       ]
 

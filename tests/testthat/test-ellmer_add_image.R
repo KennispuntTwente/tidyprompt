@@ -70,7 +70,11 @@ test_that("add_image preserves MIME type from ellmer ContentImageInline", {
   skip_if_not_installed("ellmer")
   skip_if_not_installed("S7")
   skip_if_not(
-    exists("ContentImageInline", envir = asNamespace("ellmer"), inherits = FALSE),
+    exists(
+      "ContentImageInline",
+      envir = asNamespace("ellmer"),
+      inherits = FALSE
+    ),
     "ContentImageInline not available in this ellmer version"
   )
 

@@ -140,9 +140,15 @@ test_that("send_prompt preserves provider metadata updates on existing rows", {
   provider <- `llm_provider-class`$new(
     complete_chat_function = function(chat_history) {
       updated_history <- chat_history
-      updated_history$native_turn_id <- rep(NA_character_, nrow(updated_history))
+      updated_history$native_turn_id <- rep(
+        NA_character_,
+        nrow(updated_history)
+      )
       updated_history$native_turn_id[nrow(updated_history)] <- "turn-1"
-      updated_history$native_turn_role <- rep(NA_character_, nrow(updated_history))
+      updated_history$native_turn_role <- rep(
+        NA_character_,
+        nrow(updated_history)
+      )
       updated_history$native_turn_role[nrow(updated_history)] <- "user"
 
       list(

@@ -114,11 +114,14 @@ test_that("persistent_chat replays native tool results on follow-up turns", {
   prior_turns <- res$ellmer_chat$last_method$turns
 
   expect_length(prior_turns, 3)
-  expect_equal(vapply(prior_turns, function(turn) turn@role, character(1)), c(
-    "user",
-    "user",
-    "assistant"
-  ))
+  expect_equal(
+    vapply(prior_turns, function(turn) turn@role, character(1)),
+    c(
+      "user",
+      "user",
+      "assistant"
+    )
+  )
   expect_true(any(grepl(
     "ContentToolResult",
     class(prior_turns[[2]]@contents[[1]])
