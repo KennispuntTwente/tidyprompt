@@ -144,7 +144,7 @@ answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
   if (
     identical(json_schema$type %||% NULL, "object") &&
       is.list(json_schema$properties) &&
-      identical(names(json_schema$properties), "rows") &&
+      "rows" %in% names(json_schema$properties) &&
       identical(json_schema$properties$rows$type %||% NULL, "array")
   ) {
     json_schema <- json_schema$properties$rows$items
