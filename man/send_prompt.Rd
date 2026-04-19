@@ -79,7 +79,7 @@ after excluding any non-replayable rows),
 \item 'start_time' (the time when the function was called),
 \item 'end_time' (the time when the function ended),
 \item 'duration_seconds' (the duration of the function in seconds),
-\item 'http_list' (a list with all HTTP responses made during the interactions;
+\item 'http' (a list with all HTTP requests and responses made during the interactions;
 as returned by \code{llm_provider$complete_chat()}),
 \item 'ellmer_chat' (if \code{\link[=llm_provider_ellmer]{llm_provider_ellmer()}} or a raw \code{ellmer::chat()}
 object was used, this will be
@@ -134,8 +134,8 @@ in the prompt wraps (see \code{\link[=prompt_wrap]{prompt_wrap()}}). If the maxi
   # $duration_seconds
   # [1] 1.13276
   #
-  # $http_list
-  # $http_list[[1]]
+  # $http
+  # $http$responses[[1]]
   # Response [http://localhost:11434/api/chat]
   #   Date: 2024-11-18 14:43
   #   Status: 200

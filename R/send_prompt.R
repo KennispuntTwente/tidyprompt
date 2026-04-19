@@ -66,7 +66,7 @@
 #'    \item 'start_time' (the time when the function was called),
 #'    \item 'end_time' (the time when the function ended),
 #'    \item 'duration_seconds' (the duration of the function in seconds),
-#'    \item 'http_list' (a list with all HTTP responses made during the interactions;
+#'    \item 'http' (a list with all HTTP requests and responses made during the interactions;
 #'    as returned by `llm_provider$complete_chat()`),
 #'    \item 'ellmer_chat' (if [llm_provider_ellmer()] or a raw `ellmer::chat()`
 #'    object was used, this will be

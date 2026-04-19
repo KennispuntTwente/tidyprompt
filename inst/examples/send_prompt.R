@@ -31,8 +31,8 @@
   # $duration_seconds
   # [1] 1.13276
   #
-  # $http_list
-  # $http_list[[1]]
+  # $http
+  # $http$responses[[1]]
   # Response [http://localhost:11434/api/chat]
   #   Date: 2024-11-18 14:43
   #   Status: 200
