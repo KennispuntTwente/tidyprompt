@@ -1558,16 +1558,21 @@ llm_provider_ellmer <- function(
     # (registered via $register_tool() / $set_tools() on the provider's
     # ellmer_chat).  Prompt-level tools are layered on top for this request
     # only.  When there are no prompt tools we leave the registry untouched.
+    #
+    # base_tools is captured once (before any prompt-level merge) so that
+    # retries within the same send_prompt() call don't accumulate duplicates.
     prompt_tools <- params$.ellmer_tools %||% list()
     if (length(prompt_tools)) {
-      base_tools <- tryCatch(
-        {
-          gt <- ch$get_tools
-          if (is.function(gt)) gt() else list()
-        },
-        error = function(e) list()
-      )
-      all_tools <- c(base_tools, prompt_tools)
+      if (is.null(private$.base_tools_snapshot)) {
+        private$.base_tools_snapshot <- tryCatch(
+          {
+            gt <- ch$get_tools
+            if (is.function(gt)) gt() else list()
+          },
+          error = function(e) list()
+        )
+      }
+      all_tools <- c(private$.base_tools_snapshot, prompt_tools)
       if (is.function(ch$set_tools)) {
         ch$set_tools(all_tools)
       } else {
@@ -1844,6 +1849,7 @@ llm_provider_ellmer <- function(
     ),
     private = list(
       complete_chat_function = NULL,
+      .base_tools_snapshot = NULL,
 
       # Keep self$parameters$model in sync with ellmer_chat$get_model()
       sync_model = function() {

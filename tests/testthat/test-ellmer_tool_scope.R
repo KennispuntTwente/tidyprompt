@@ -187,3 +187,50 @@ test_that("tools registered after provider construction are seen", {
   expect_length(res3$ellmer_chat$get_tools(), 1)
   expect_identical(res3$ellmer_chat$get_tools()[[1]]$name, "late_tool")
 })
+
+test_that("prompt-level tools are not duplicated on retries within send_prompt", {
+  fake_chat <- fake_ellmer_chat()
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  # Counter to trigger a retry on the first call
+  state <- new.env(parent = emptyenv())
+  state$call_n <- 0L
+
+  prompt_with_retry <- "Retry me" |>
+    prompt_wrap(parameter_fn = function(llm_provider) {
+      list(.ellmer_tools = list(list(name = "tool_a")))
+    }) |>
+    prompt_wrap(
+      validation_fn = function(x) {
+        state$call_n <- state$call_n + 1L
+        if (state$call_n == 1L) {
+          return(llm_feedback("try again"))
+        }
+        x
+      },
+      type = "check"
+    )
+
+  res <- send_prompt(
+    prompt_with_retry,
+    provider,
+    verbose = FALSE,
+    return_mode = "full"
+  )
+
+  # Provider was called at least twice (first feedback, then success)
+  expect_true(state$call_n >= 2L)
+
+  # Despite multiple invocations, tool_a should appear exactly once
+  tool_names <- vapply(
+    res$ellmer_chat$get_tools(),
+    `[[`,
+    character(1),
+    "name"
+  )
+  expect_equal(sum(tool_names == "tool_a"), 1L)
+})
