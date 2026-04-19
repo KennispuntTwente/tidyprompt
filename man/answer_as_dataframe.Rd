@@ -62,7 +62,10 @@ schema definitions and JSON-schema representations as needed.
 object whose properties describe the columns of one row.
 \item An array-of-rows schema, such as \code{ellmer::type_array(row_schema)} or a JSON
 schema with \code{type = "array"} and row objects under \code{items}.
-\item A wrapper object with a \code{rows} field containing an array of row objects.
+\item A wrapper object whose \strong{only} property is a \code{rows} field containing an
+array of row objects (matching the shape produced internally by
+\code{answer_as_dataframe()}). Schemas with additional sibling properties
+alongside \code{rows} are treated as row schemas, not wrappers.
 }
 
 Regardless of which of these forms you supply, \code{answer_as_dataframe()}

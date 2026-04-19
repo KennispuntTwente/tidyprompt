@@ -22,7 +22,10 @@
 #'   object whose properties describe the columns of one row.
 #' * An array-of-rows schema, such as `ellmer::type_array(row_schema)` or a JSON
 #'   schema with `type = "array"` and row objects under `items`.
-#' * A wrapper object with a `rows` field containing an array of row objects.
+#' * A wrapper object whose **only** property is a `rows` field containing an
+#'   array of row objects (matching the shape produced internally by
+#'   `answer_as_dataframe()`). Schemas with additional sibling properties
+#'   alongside `rows` are treated as row schemas, not wrappers.
 #'
 #' Regardless of which of these forms you supply, `answer_as_dataframe()`
 #' normalizes it to a row-oriented structured-output schema before delegating to
