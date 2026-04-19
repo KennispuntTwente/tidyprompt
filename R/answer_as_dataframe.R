@@ -143,11 +143,11 @@ answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
 
   # Detect a wrapper object whose `rows` field is an array of row objects.
 
-  # To avoid conflating a genuine row schema that happens to have a column
-  # named "rows" (type array) with the wrapper format, we also require that
-  # rows.items looks like a row schema (has properties) AND that no sibling
-  # property is itself an object schema with properties (which would indicate
-  # the outer object is a row schema, not a wrapper).
+  # We require that rows.items looks like a row schema (has properties).
+  # This can still false-positive when a row schema coincidentally has a
+
+  # column named "rows" that is an array of objects, but that combination
+  # is rare enough that this heuristic is practical.
   if (
     identical(json_schema$type %||% NULL, "object") &&
       is.list(json_schema$properties) &&
@@ -157,21 +157,7 @@ answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
       (identical(json_schema$properties$rows$items$type %||% NULL, "object") ||
         is.list(json_schema$properties$rows$items$properties))
   ) {
-    sibling_names <- setdiff(names(json_schema$properties), "rows")
-    sibling_is_object <- vapply(
-      sibling_names,
-      function(nm) {
-        prop <- json_schema$properties[[nm]]
-        is.list(prop) &&
-          (identical(prop$type %||% NULL, "object") ||
-            is.list(prop$properties))
-      },
-      logical(1)
-    )
-
-    if (!any(sibling_is_object)) {
-      json_schema <- json_schema$properties$rows$items
-    }
+    json_schema <- json_schema$properties$rows$items
   }
 
   if (identical(json_schema$type %||% NULL, "array")) {
