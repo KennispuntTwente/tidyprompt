@@ -51,6 +51,17 @@ with api_type = "ellmer"
 
 ## Details
 
+**ellmer version compatibility:** tidyprompt requires ellmer \>= 0.3.0.
+Some features are only fully available with ellmer \>= 0.4.0; on older
+versions they degrade gracefully:
+
+- Built-in tools (`ToolBuiltIn`, e.g. `claude_tool_web_search()`)
+  require ellmer \>= 0.4.0.
+
+- `type_ignore()` for ignored tool arguments requires ellmer \>= 0.4.0;
+  on older versions, ignored arguments fall back to optional string
+  parameters.
+
 Unlike other LLM provider classes, most LLM provider settings need to be
 managed in the
 [`ellmer::chat()`](https://ellmer.tidyverse.org/reference/chat-any.html)

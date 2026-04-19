@@ -91,7 +91,14 @@ should be printed to the console. Default is TRUE</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Unlike other LLM provider classes,
+    <p><strong>ellmer version compatibility:</strong> tidyprompt requires ellmer &gt;= 0.3.0.
+Some features are only fully available with ellmer &gt;= 0.4.0; on older
+versions they degrade gracefully:</p><ul><li><p>Built-in tools (<code>ToolBuiltIn</code>, e.g. <code>claude_tool_web_search()</code>)
+require ellmer &gt;= 0.4.0.</p></li>
+<li><p><code>type_ignore()</code> for ignored tool arguments requires ellmer &gt;= 0.4.0;
+on older versions, ignored arguments fall back to optional string
+parameters.</p></li>
+</ul><p>Unlike other LLM provider classes,
 most LLM provider settings need to be managed in the <code><a href="https://ellmer.tidyverse.org/reference/chat-any.html" class="external-link">ellmer::chat()</a></code> object
 (and not in the <code>$parameters</code> list). <code>$get_chat()</code> and <code>$set_chat()</code> may be used
 to manipulate the chat object. There are however some parameters that can be set
