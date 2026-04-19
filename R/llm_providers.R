@@ -1554,17 +1554,26 @@ llm_provider_ellmer <- function(
     # Prompt = last message (may be converted to multimodal contents below)
     prompt <- chat_history$content[nrow(chat_history)] %||% ""
     prompt <- if (!is.na(prompt)) as.character(prompt) else ""
-    # Set tools to the union of user-pre-registered base tools and the
-    # current prompt's tools.  Base tools are captured at provider creation
-    # time so they survive across calls; prompt tools are transient.
-    base_tools <- self$parameters$.ellmer_base_tools %||% list()
+    # Merge tools: the cloned chat already carries the user's base tools
+    # (registered via $register_tool() / $set_tools() on the provider's
+    # ellmer_chat).  Prompt-level tools are layered on top for this request
+    # only.  When there are no prompt tools we leave the registry untouched.
     prompt_tools <- params$.ellmer_tools %||% list()
-    all_tools <- c(base_tools, prompt_tools)
-    if (is.function(ch$set_tools)) {
-      ch$set_tools(all_tools)
-    } else {
-      for (td in all_tools) {
-        ch$register_tool(td)
+    if (length(prompt_tools)) {
+      base_tools <- tryCatch(
+        {
+          gt <- ch$get_tools
+          if (is.function(gt)) gt() else list()
+        },
+        error = function(e) list()
+      )
+      all_tools <- c(base_tools, prompt_tools)
+      if (is.function(ch$set_tools)) {
+        ch$set_tools(all_tools)
+      } else {
+        for (td in prompt_tools) {
+          ch$register_tool(td)
+        }
       }
     }
 
@@ -1867,17 +1876,6 @@ llm_provider_ellmer <- function(
   provider$ellmer_chat <- chat
   # Initial sync so $parameters$model reflects the chat's current model
   provider$.__enclos_env__$private$sync_model()
-
-  # Capture tools already registered on the chat so they are preserved
-  # across calls.  Prompt-level tools (from answer_using_tools) are
-  # layered on top of these each request and do not persist.
-  provider$parameters$.ellmer_base_tools <- tryCatch(
-    {
-      gt <- chat$get_tools
-      if (is.function(gt)) gt() else list()
-    },
-    error = function(e) list()
-  )
 
   provider
 }

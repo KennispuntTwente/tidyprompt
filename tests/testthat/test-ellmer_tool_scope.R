@@ -137,3 +137,53 @@ test_that("prompt-level tools do not leak through persistent_chat", {
   expect_length(res2$ellmer_chat$get_tools(), 1)
   expect_identical(res2$ellmer_chat$get_tools()[[1]]$name, "base_tool")
 })
+
+test_that("tools registered after provider construction are seen", {
+  fake_chat <- fake_ellmer_chat()
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  # Register a tool AFTER construction
+  provider$ellmer_chat$set_tools(list(list(name = "late_tool")))
+
+  # Plain call -- should see the late tool
+  res1 <- "Hello" |>
+    send_prompt(provider, verbose = FALSE, return_mode = "full")
+
+  expect_length(res1$ellmer_chat$get_tools(), 1)
+  expect_identical(res1$ellmer_chat$get_tools()[[1]]$name, "late_tool")
+
+  # Call with prompt tool -- should see late_tool + prompt_tool
+  prompt_with_tool <- "Use tool" |>
+    prompt_wrap(parameter_fn = function(llm_provider) {
+      list(.ellmer_tools = list(list(name = "prompt_tool")))
+    })
+
+  res2 <- send_prompt(
+    prompt_with_tool,
+    provider,
+    verbose = FALSE,
+    return_mode = "full"
+  )
+
+  expect_length(res2$ellmer_chat$get_tools(), 2)
+  tool_names <- vapply(
+    res2$ellmer_chat$get_tools(),
+    `[[`,
+    character(1),
+    "name"
+  )
+  expect_true("late_tool" %in% tool_names)
+  expect_true("prompt_tool" %in% tool_names)
+
+  # Follow-up plain call -- back to late_tool only
+  res3 <- "Again" |>
+    send_prompt(provider, verbose = FALSE, return_mode = "full")
+
+  expect_length(res3$ellmer_chat$get_tools(), 1)
+  expect_identical(res3$ellmer_chat$get_tools()[[1]]$name, "late_tool")
+})
