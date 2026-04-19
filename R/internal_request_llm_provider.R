@@ -66,11 +66,13 @@ chat_history_to_send <- function(chat_history) {
     keep_rows <- keep_rows & !tool_call_rows
   }
 
+  source_rows <- which(keep_rows)
   chat_history <- chat_history[keep_rows, , drop = FALSE]
   if ("hidden_from_llm" %in% names(chat_history)) {
     chat_history$hidden_from_llm <- NULL
   }
 
+  attr(chat_history, "source_rows") <- source_rows
   chat_history
 }
 

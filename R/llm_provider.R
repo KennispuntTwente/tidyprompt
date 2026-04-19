@@ -255,6 +255,9 @@ NULL
       }
 
       if (nrow(chat_history_request) < nrow(chat_history)) {
+        source_rows <- attr(chat_history_request, "source_rows") %||%
+          seq_len(nrow(chat_history_request))
+
         new_rows_start <- nrow(chat_history_request) + 1L
         new_rows <- if (nrow(response$completed) >= new_rows_start) {
           response$completed[
@@ -266,7 +269,25 @@ NULL
           response$completed[0, , drop = FALSE]
         }
 
-        response$completed <- dplyr::bind_rows(chat_history, new_rows)
+        # Merge provider-side metadata updates on sent rows back into
+        # the full history so that native_turn_id / native_turn_role /
+        # native_contents etc. are not discarded.
+        sent_count <- min(length(source_rows), nrow(response$completed))
+        if (sent_count > 0L) {
+          updated <- dplyr::bind_rows(
+            chat_history,
+            response$completed[0, , drop = FALSE]
+          )
+          updated <- updated[seq_len(nrow(chat_history)), , drop = FALSE]
+          resp_cols <- names(response$completed)
+          updated[
+            source_rows[seq_len(sent_count)],
+            resp_cols
+          ] <- response$completed[seq_len(sent_count), , drop = FALSE]
+          response$completed <- dplyr::bind_rows(updated, new_rows)
+        } else {
+          response$completed <- dplyr::bind_rows(chat_history, new_rows)
+        }
       }
 
       response$completed <- normalize_chat_history_metadata(response$completed)
