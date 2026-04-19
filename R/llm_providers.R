@@ -1102,8 +1102,12 @@ llm_provider_ellmer <- function(
         history$native_contents <- vector("list", nrow(history))
       }
 
-      history$native_turn_id[row] <- as.character(native_turn_id %||% NA_character_)
-      history$native_turn_role[row] <- as.character(native_turn_role %||% NA_character_)
+      history$native_turn_id[row] <- as.character(
+        native_turn_id %||% NA_character_
+      )
+      history$native_turn_role[row] <- as.character(
+        native_turn_role %||% NA_character_
+      )
       history$native_contents[[row]] <- if (is.null(native_contents)) {
         list()
       } else if (is_ellmer_content_object(native_contents)) {
@@ -1413,14 +1417,22 @@ llm_provider_ellmer <- function(
               # If ellmer can't build from a temp file (for example because
               # an image helper dependency is unavailable), fall back to an
               # inline ellmer content object instead of an OpenAI-style payload.
-              if (exists("ContentImageInline", envir = ellmer_ns, inherits = FALSE)) {
+              if (
+                exists(
+                  "ContentImageInline",
+                  envir = ellmer_ns,
+                  inherits = FALSE
+                )
+              ) {
                 return(ellmer_ns$ContentImageInline(
                   type = mime,
                   data = b64
                 ))
               }
 
-              if (exists("content_image_url", envir = ellmer_ns, inherits = FALSE)) {
+              if (
+                exists("content_image_url", envir = ellmer_ns, inherits = FALSE)
+              ) {
                 return(ellmer::content_image_url(
                   url = paste0("data:", mime, ";base64,", b64),
                   detail = p$detail %||% "auto"
@@ -1542,8 +1554,12 @@ llm_provider_ellmer <- function(
     # Prompt = last message (may be converted to multimodal contents below)
     prompt <- chat_history$content[nrow(chat_history)] %||% ""
     prompt <- if (!is.na(prompt)) as.character(prompt) else ""
-    # Register tools
-    if (!is.null(params$.ellmer_tools)) {
+    # Reset tools to only the current prompt's set so that tools from
+    # earlier calls (via persistent_chat or repeated send_prompt) do not
+    # leak into subsequent requests.
+    if (is.function(ch$set_tools)) {
+      ch$set_tools(params$.ellmer_tools %||% list())
+    } else if (!is.null(params$.ellmer_tools)) {
       for (td in params$.ellmer_tools) {
         ch$register_tool(td)
       }
@@ -1760,16 +1776,20 @@ llm_provider_ellmer <- function(
         chat_history,
         row = nrow(chat_history),
         native_turn_id = paste0("ellmer-turn-", prompt_turn_index),
-        native_turn_role = prompt_props$role %||% chat_history$role[nrow(chat_history)],
+        native_turn_role = prompt_props$role %||%
+          chat_history$role[nrow(chat_history)],
         native_contents = prompt_props$contents %||% list()
       )
     }
 
     first_new_turn <- length(prior_turns) + 2L
     if (length(native_turns) >= first_new_turn) {
-      native_rows <- native_turns_to_history(native_turns[
-        first_new_turn:length(native_turns)
-      ], start_index = first_new_turn)
+      native_rows <- native_turns_to_history(
+        native_turns[
+          first_new_turn:length(native_turns)
+        ],
+        start_index = first_new_turn
+      )
       if (!is.null(native_rows) && nrow(native_rows)) {
         completed <- dplyr::bind_rows(chat_history, native_rows)
       }

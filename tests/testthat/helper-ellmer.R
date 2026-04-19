@@ -11,13 +11,23 @@ fake_ellmer_chat <- function(turns = list()) {
   }
   env$get_turns <- function() env$turns
   env$get_model <- function() "fake-model"
-  env$register_tool <- function(tool) invisible(NULL)
+  env$._tools <- list()
+  env$register_tool <- function(tool) {
+    env$._tools[[length(env$._tools) + 1L]] <- tool
+    invisible(NULL)
+  }
+  env$set_tools <- function(tools) {
+    env$._tools <- tools
+    invisible(NULL)
+  }
+  env$get_tools <- function() env$._tools
 
   env$clone <- function() {
     copy <- fake_ellmer_chat(turns = env$turns)
     copy$turns <- env$turns
     copy$last_method <- env$last_method
     copy$set_turns_calls <- env$set_turns_calls
+    copy$._tools <- env$._tools
     copy
   }
 
