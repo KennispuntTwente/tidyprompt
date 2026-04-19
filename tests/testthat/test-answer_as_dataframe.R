@@ -348,3 +348,18 @@ test_that("answer_as_dataframe_row_schema preserves row schema with array<object
   expect_equal(row_schema$properties$id$type, "integer")
   expect_equal(row_schema$properties$rows$type, "array")
 })
+
+test_that("answer_as_dataframe_wrapper_schema emits required as array", {
+  row_schema <- list(
+    type = "object",
+    properties = list(name = list(type = "string"))
+  )
+  wrapper <- answer_as_dataframe_wrapper_schema(row_schema)
+
+  expect_equal(wrapper$required, list("rows"))
+  # When serialized with auto_unbox, must produce a JSON array
+  json <- jsonlite::toJSON(wrapper, auto_unbox = TRUE)
+  parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
+  expect_true(is.list(parsed$required))
+  expect_equal(parsed$required[[1]], "rows")
+})

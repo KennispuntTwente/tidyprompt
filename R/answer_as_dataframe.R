@@ -193,7 +193,7 @@ answer_as_dataframe_wrapper_schema <- function(row_schema) {
         items = row_schema
       )
     ),
-    required = "rows",
+    required = list("rows"),
     additionalProperties = FALSE
   )
 }
