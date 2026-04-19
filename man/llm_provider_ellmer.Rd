@@ -32,6 +32,17 @@ Please note that this function is experimental. This provider type may show diff
 other LLM providers, and may not function optimally.
 }
 \details{
+\strong{ellmer version compatibility:} tidyprompt requires ellmer >= 0.3.0.
+Some features are only fully available with ellmer >= 0.4.0; on older
+versions they degrade gracefully:
+\itemize{
+\item Built-in tools (\code{ToolBuiltIn}, e.g. \code{claude_tool_web_search()})
+require ellmer >= 0.4.0.
+\item \code{type_ignore()} for ignored tool arguments requires ellmer >= 0.4.0;
+on older versions, ignored arguments fall back to optional string
+parameters.
+}
+
 Unlike other LLM provider classes,
 most LLM provider settings need to be managed in the \code{ellmer::chat()} object
 (and not in the \verb{$parameters} list). \verb{$get_chat()} and \verb{$set_chat()} may be used

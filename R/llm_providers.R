@@ -866,6 +866,17 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #' other LLM providers, and may not function optimally.
 #'
 #' @details
+#' **ellmer version compatibility:** tidyprompt requires ellmer >= 0.3.0.
+#' Some features are only fully available with ellmer >= 0.4.0; on older
+#' versions they degrade gracefully:
+#' \itemize{
+#'   \item Built-in tools (`ToolBuiltIn`, e.g. `claude_tool_web_search()`)
+#'     require ellmer >= 0.4.0.
+#'   \item `type_ignore()` for ignored tool arguments requires ellmer >= 0.4.0;
+#'     on older versions, ignored arguments fall back to optional string
+#'     parameters.
+#' }
+#'
 #' Unlike other LLM provider classes,
 #' most LLM provider settings need to be managed in the `ellmer::chat()` object
 #' (and not in the `$parameters` list). `$get_chat()` and `$set_chat()` may be used
