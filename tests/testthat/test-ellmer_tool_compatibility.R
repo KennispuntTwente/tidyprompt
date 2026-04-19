@@ -78,6 +78,63 @@ ellmer_tool_prop_schemas <- function(tooldef, strict = TRUE) {
   lapply(props, function(p) ellmer_type_to_json_schema(p, strict = strict))
 }
 
+# ---- Cache resilience -------------------------------------------------------
+
+testthat::test_that("tooldef cache retries after initial unavailability", {
+  # Reset the cache to simulate a fresh session
+  .ellmer_tool_sig_env$tooldef <- NULL
+  .ellmer_tool_sig_env$tooldef_resolved <- FALSE
+  on.exit({
+    .ellmer_tool_sig_env$tooldef <- NULL
+    .ellmer_tool_sig_env$tooldef_resolved <- FALSE
+  })
+
+  # Stub ellmer_available to return FALSE on first call
+  call_n <- 0L
+  local_mocked_bindings(
+    ellmer_available = function() {
+      call_n <<- call_n + 1L
+      call_n > 1L
+    }
+  )
+
+  # First call: ellmer unavailable -> NULL, but cache should NOT be locked
+  result1 <- .get_ellmer_tooldef_sig()
+  testthat::expect_null(result1)
+  testthat::expect_false(.ellmer_tool_sig_env$tooldef_resolved)
+
+  # Second call: ellmer now available -> should resolve
+  result2 <- .get_ellmer_tooldef_sig()
+  testthat::expect_true(.ellmer_tool_sig_env$tooldef_resolved)
+  testthat::expect_true(is.character(result2) && length(result2) > 0)
+})
+
+testthat::test_that("builtin cache retries after initial unavailability", {
+  .ellmer_tool_sig_env$builtin <- NULL
+  .ellmer_tool_sig_env$builtin_resolved <- FALSE
+  on.exit({
+    .ellmer_tool_sig_env$builtin <- NULL
+    .ellmer_tool_sig_env$builtin_resolved <- FALSE
+  })
+
+  call_n <- 0L
+  local_mocked_bindings(
+    ellmer_available = function() {
+      call_n <<- call_n + 1L
+      call_n > 1L
+    }
+  )
+
+  result1 <- .get_ellmer_builtin_sig()
+  testthat::expect_null(result1)
+  testthat::expect_false(.ellmer_tool_sig_env$builtin_resolved)
+
+  result2 <- .get_ellmer_builtin_sig()
+  # ToolBuiltIn may or may not exist in the installed ellmer version;
+  # either way resolved should be TRUE after a successful probe
+  testthat::expect_true(.ellmer_tool_sig_env$builtin_resolved)
+})
+
 # ---- Detection -------------------------------------------------------------
 
 testthat::test_that("is_ellmer_tool detects ToolDef and not plain functions", {

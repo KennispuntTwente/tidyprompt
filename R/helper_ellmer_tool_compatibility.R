@@ -13,7 +13,6 @@
   if (.ellmer_tool_sig_env$tooldef_resolved) {
     return(.ellmer_tool_sig_env$tooldef)
   }
-  .ellmer_tool_sig_env$tooldef_resolved <- TRUE
   if (!ellmer_available()) {
     return(NULL)
   }
@@ -29,6 +28,7 @@
     },
     error = function(e) NULL
   )
+  .ellmer_tool_sig_env$tooldef_resolved <- TRUE
   .ellmer_tool_sig_env$tooldef <- sig
   sig
 }
@@ -37,7 +37,6 @@
   if (.ellmer_tool_sig_env$builtin_resolved) {
     return(.ellmer_tool_sig_env$builtin)
   }
-  .ellmer_tool_sig_env$builtin_resolved <- TRUE
   if (!ellmer_available()) {
     return(NULL)
   }
@@ -51,6 +50,7 @@
     },
     error = function(e) NULL
   )
+  .ellmer_tool_sig_env$builtin_resolved <- TRUE
   .ellmer_tool_sig_env$builtin <- sig
   sig
 }

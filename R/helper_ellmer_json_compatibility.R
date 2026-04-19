@@ -26,7 +26,6 @@ is_json_schema_list <- function(x) {
   if (.ellmer_class_sig_env$resolved) {
     return(.ellmer_class_sig_env$cache)
   }
-  .ellmer_class_sig_env$resolved <- TRUE
   if (!ellmer_available()) {
     return(NULL)
   }
@@ -56,6 +55,7 @@ is_json_schema_list <- function(x) {
     },
     error = function(e) NULL
   )
+  .ellmer_class_sig_env$resolved <- TRUE
   .ellmer_class_sig_env$cache <- sig
   sig
 }

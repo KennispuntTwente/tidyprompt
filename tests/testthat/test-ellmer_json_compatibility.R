@@ -61,6 +61,33 @@ expect_schema_equal <- function(a, b) {
   testthat::expect_equal(canonicalize_schema(a), canonicalize_schema(b))
 }
 
+# ---- Cache resilience -------------------------------------------------------
+
+testthat::test_that("class sig cache retries after initial unavailability", {
+  .ellmer_class_sig_env$cache <- NULL
+  .ellmer_class_sig_env$resolved <- FALSE
+  on.exit({
+    .ellmer_class_sig_env$cache <- NULL
+    .ellmer_class_sig_env$resolved <- FALSE
+  })
+
+  call_n <- 0L
+  local_mocked_bindings(
+    ellmer_available = function() {
+      call_n <<- call_n + 1L
+      call_n > 1L
+    }
+  )
+
+  result1 <- .get_ellmer_class_signatures()
+  testthat::expect_null(result1)
+  testthat::expect_false(.ellmer_class_sig_env$resolved)
+
+  result2 <- .get_ellmer_class_signatures()
+  testthat::expect_true(.ellmer_class_sig_env$resolved)
+  testthat::expect_true(is.list(result2) && length(result2) > 0)
+})
+
 # ---- Basic detectors -------------------------------------------------------
 
 testthat::test_that("is_json_schema_list detects typical shapes", {
