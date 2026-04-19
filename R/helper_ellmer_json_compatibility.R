@@ -116,15 +116,14 @@ as_send_prompt_llm_provider <- function(
     return(llm_provider)
   }
 
+  stream_val <- stream %||% getOption("tidyprompt.stream", TRUE)
   provider <- llm_provider_ellmer(
     llm_provider,
+    parameters = list(stream = stream_val),
     verbose = verbose %||% getOption("tidyprompt.verbose", TRUE)
   )
 
   provider$parameters$.reset_ellmer_chat <- TRUE
-  if (!is.null(stream)) {
-    provider$parameters$stream <- stream
-  }
 
   provider
 }

@@ -431,3 +431,20 @@ test_that("send_prompt does not resend tool call rows on retry", {
     c(FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)
   )
 })
+
+test_that("send_prompt with raw ellmer chat and stream=FALSE does not require coro", {
+  withr::local_options(list(tidyprompt.stream = TRUE))
+
+  # Build a fake chat that has no $stream method (simulating missing coro)
+  raw_chat <- fake_ellmer_chat()
+  raw_chat$stream <- NULL
+
+  # With stream=FALSE passed to send_prompt, the constructor should not
+
+  # check for coro even though the global option defaults to TRUE.
+  result <- "Hello" |>
+    send_prompt(raw_chat, stream = FALSE, return_mode = "full", verbose = FALSE)
+
+  expect_equal(result$response, "chat-response:Hello")
+  expect_identical(result$ellmer_chat$last_method$method, "chat")
+})
