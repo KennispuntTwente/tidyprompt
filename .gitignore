@@ -22,3 +22,4 @@ vignettes/getting_started.html
 vignettes/getting_started.R
 vignettes/sentiment_analysis.html
 vignettes/streaming_shiny_ipc.html
+/.rcmdcheck
