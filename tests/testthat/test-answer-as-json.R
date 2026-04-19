@@ -496,3 +496,54 @@ test_that("answer_as_json + llm_provider_ellmer: arrays of enums and objects com
   expect_true(is.character(fallbacks))
   expect_true(all(fallbacks %in% c("red", "green", "blue")))
 })
+
+test_that("answer_as_json ellmer path falls back to text extraction when ellmer_type is NULL", {
+  skip_if_not_installed("ellmer")
+  withr::local_options(list(
+    tidyprompt.stream = FALSE,
+    tidyprompt.warn.auto.json = FALSE
+  ))
+
+  # Build a fake ellmer provider whose api_type is "ellmer" but where the
+  # schema deliberately fails ellmer type conversion (ellmer_type = NULL).
+  # The LLM returns fenced JSON, which bare jsonlite::fromJSON() would choke on.
+  fenced_json <- "Here is the result:\n```json\n{\"name\":\"Alice\",\"age\":30}\n```"
+
+  fake_chat <- fake_ellmer_chat()
+  fake_chat$chat <- function(...) fenced_json
+  fake_chat$clone <- function() {
+    copy <- fake_ellmer_chat()
+    copy$chat <- function(...) fenced_json
+    copy
+  }
+
+  provider <- llm_provider_ellmer(
+    fake_chat,
+    verbose = FALSE,
+    parameters = list(stream = FALSE)
+  )
+
+  schema <- list(
+    type = "object",
+    properties = list(
+      name = list(type = "string"),
+      age = list(type = "integer")
+    ),
+    required = c("name", "age")
+  )
+
+  # Force ellmer type conversion to fail so sch$ellmer_type is NULL.
+  local_mocked_bindings(
+    json_schema_to_ellmer_type = function(...) stop("nope"),
+    .package = "tidyprompt"
+  )
+
+  result <- "Create a persona" |>
+    answer_as_json(schema, type = "ellmer") |>
+    send_prompt(provider)
+
+  # Should successfully extract from fenced JSON instead of erroring
+  expect_true(is.list(result))
+  expect_equal(result$name, "Alice")
+  expect_equal(result$age, 30)
+})

@@ -286,7 +286,9 @@ answer_as_json <- function(
 
     # In ellmer structured mode, use the native result directly if available,
     # avoiding lossy JSON round-tripping.
-    if (isTRUE(t == "ellmer") && !is.null(schema)) {
+    if (
+      isTRUE(t == "ellmer") && !is.null(schema) && !is.null(sch$ellmer_type)
+    ) {
       native <- llm_provider$parameters$.native_structured_result
       if (!is.null(native)) {
         # Clear it so it's not reused on retries
