@@ -159,6 +159,63 @@ test_that("answer_as_dataframe accepts wrapper-object schemas with extra fields"
   expect_equal(result$name, c("Alice", "Bob"))
 })
 
+test_that("answer_as_dataframe treats row schema with a 'rows' column correctly", {
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      reply <- jsonlite::toJSON(
+        list(
+          rows = list(
+            list(
+              id = 1L,
+              rows = 10L
+            ),
+            list(
+              id = 2L,
+              rows = 20L
+            )
+          )
+        ),
+        auto_unbox = TRUE
+      )
+      reply <- as.character(reply)
+
+      list(
+        completed = dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = reply,
+            stringsAsFactors = FALSE
+          )
+        ),
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    verbose = FALSE
+  )
+
+  # Row schema where "rows" is a regular integer column, not a wrapper
+  schema <- list(
+    type = "object",
+    properties = list(
+      id = list(type = "integer"),
+      rows = list(type = "integer")
+    ),
+    required = c("id", "rows")
+  )
+
+  result <- "Extract data." |>
+    answer_as_dataframe(schema, type = "text-based") |>
+    send_prompt(provider, verbose = FALSE)
+
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 2)
+  expect_true("id" %in% names(result))
+  expect_true("rows" %in% names(result))
+  expect_equal(result$id, c(1L, 2L))
+  expect_equal(result$rows, c(10L, 20L))
+})
+
 test_that("answer_as_dataframe retries when row bounds are violated", {
   state <- new.env(parent = emptyenv())
   state$call_n <- 0L
