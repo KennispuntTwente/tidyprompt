@@ -25,3 +25,4 @@ vignettes/streaming_shiny_ipc.html
 /.rcmdcheck
 /tidyprompt.Rcheck
 tidyprompt_0.3.0.9000.tar.gz
+/check
