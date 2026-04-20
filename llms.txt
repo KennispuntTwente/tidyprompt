@@ -355,8 +355,6 @@ Functions that give LLMs access to tools (function-calling) and code
   : Enable LLM to call R functions (and/or MCP server tools)
 - [`tools_add_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_add_docs.md)
   : Add tidyprompt function documentation to a function
-- [`tools_get_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_get_docs.md)
-  : Extract documentation from a function
 
 ### Miscellaneous
 

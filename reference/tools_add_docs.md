@@ -6,16 +6,14 @@ description, arguments, and return value. This information is used to
 provide an LLM with information about the functions, so that the LLM can
 call R functions. The intended use of this function is to add
 documentation to custom functions that do not have help files;
-[`tools_get_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_get_docs.md)
-may generate documentation from a help file when the function is part of
-base R or a package.
+`tools_get_docs()` may generate documentation from a help file when the
+function is part of base R or a package.
 
 If a function already has documentation, the documentation added by this
 function may overwrite it. If you wish to modify existing documentation,
-you may make a call to
-[`tools_get_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_get_docs.md)
-to extract the existing documentation, modify it, and then call
-`tools_add_docs()` to add the modified documentation.
+you may make a call to `tools_get_docs()` to extract the existing
+documentation, modify it, and then call `tools_add_docs()` to add the
+modified documentation.
 
 ## Usage
 
@@ -80,8 +78,7 @@ The function object with the documentation added as an attribute
 ## See also
 
 Other tools:
-[`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md),
-[`tools_get_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_get_docs.md)
+[`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
 
 ## Examples
 
@@ -149,18 +146,24 @@ temperature_in_location <- function(
 
 # Generate documentation for a function, based on formals & help file
 docs <- tools_get_docs(temperature_in_location)
+#> Error in tools_get_docs(temperature_in_location): could not find function "tools_get_docs"
 
 # The types get inferred from the function's formals
 # However, descriptions are still missing as the function is not from a package
 # We can modify the documentation object to add descriptions:
 docs$description <- "Get the temperature in a location"
+#> Error: object 'docs' not found
 docs$arguments$unit$description <- "Unit in which to return the temperature"
+#> Error: object 'docs' not found
 docs$arguments$location$description <- "Location for which to return the temperature"
+#> Error: object 'docs' not found
 docs$return$description <- "The temperature in the specified location and unit"
+#> Error: object 'docs' not found
 # (See `?tools_add_docs` for more details on the structure of the documentation)
 
 # When we are satisfied with the documentation, we can add it to the function:
 temperature_in_location <- tools_add_docs(temperature_in_location, docs)
+#> Error: object 'docs' not found
 
 prompt_with_weather_function <-
   "What is the weather in Enschede? Give me Celcius degrees" |>
