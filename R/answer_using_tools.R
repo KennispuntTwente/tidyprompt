@@ -968,6 +968,50 @@ tools_add_docs <- function(
 #' @example inst/examples/answer_using_tools.R
 #'
 #' @family tools
+#'
+
+#' Resolve the real symbol name of a function in its home namespace
+#'
+#' When a sanitized alias (e.g., "list_files") is passed as the display name,
+#' help-file lookup needs the original symbol ("list.files").  This helper
+#' searches the function's package namespace for a matching binding.
+#'
+#' @param func A function object
+#' @param fallback The name to return when resolution fails
+#'
+#' @return A single character string: the real symbol name, or `fallback`.
+#' @noRd
+#' @keywords internal
+resolve_function_name <- function(func, fallback) {
+  pkg_env <- environment(func)
+  if (is.null(pkg_env)) {
+    return(fallback)
+  }
+  pkg_name <- environmentName(pkg_env)
+  if (pkg_name == "" || pkg_name == "R_GlobalEnv") {
+    return(fallback)
+  }
+  # Search the namespace for the exact function object
+  ns <- tryCatch(asNamespace(pkg_name), error = function(e) NULL)
+  if (is.null(ns)) {
+    return(fallback)
+  }
+  exports <- tryCatch(getNamespaceExports(ns), error = function(e) NULL)
+  if (is.null(exports)) {
+    return(fallback)
+  }
+  for (sym in exports) {
+    obj <- tryCatch(
+      get(sym, envir = ns, inherits = FALSE),
+      error = function(e) NULL
+    )
+    if (identical(obj, func)) {
+      return(sym)
+    }
+  }
+  fallback
+}
+
 tools_get_docs <- function(func, name = NULL) {
   stopifnot(
     is.function(func),
@@ -1002,7 +1046,12 @@ tools_get_docs <- function(func, name = NULL) {
       docs$name <- caller_name
     }
   } else {
-    docs <- tools_generate_docs(name, func)
+    # Resolve the real function name for help-file lookup.  The caller
+    # may pass a sanitized alias (e.g., "list_files" for list.files);
+    # looking up help with the alias would fail.  We search the function's
+    # home namespace for the original symbol.
+    help_name <- resolve_function_name(func, name)
+    docs <- tools_generate_docs(name, func, help_name = help_name)
   }
 
   # Check that all formal arguments have documentation
@@ -1064,10 +1113,11 @@ tools_get_docs <- function(func, name = NULL) {
 #'
 #' @noRd
 #' @keywords internal
-tools_generate_docs <- function(name, func_object = NULL) {
+tools_generate_docs <- function(name, func_object = NULL, help_name = NULL) {
   # Get the package name and function
+  lookup <- help_name %||% name
   func <- tryCatch(
-    get(name, mode = "function"),
+    get(lookup, mode = "function"),
     error = function(e) {
       NULL
     }
@@ -1084,8 +1134,8 @@ tools_generate_docs <- function(name, func_object = NULL) {
   if (package_name == "R_GlobalEnv" || package_name == "") {
     help_file <- NULL
   } else {
-    # Get the function's help file
-    help_file <- utils::help(name, package = as.character(package_name))
+    # Get the function's help file using the real symbol name
+    help_file <- utils::help(lookup, package = as.character(package_name))
   }
   if (length(help_file) == 0) {
     # No help file found

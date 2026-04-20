@@ -499,3 +499,25 @@ test_that("tool name collision from ellmer @name raises error", {
     "Tool name collision"
   )
 })
+
+test_that("tools_get_docs finds help for dotted function names under sanitized alias", {
+  # list.files is a base R function; sanitize_name() turns it into "list_files"
+  docs <- tools_get_docs(list.files, "list_files")
+
+  expect_equal(docs$name, "list_files")
+  # Should have a description from the help file, not just NULL
+  expect_true(
+    is.character(docs$description) && nzchar(docs$description)
+  )
+  # Should have documented arguments
+  expect_true(length(docs$arguments) > 0)
+})
+
+test_that("tools_get_docs finds help for namespaced dotted names", {
+  docs <- tools_get_docs(utils::download.file, "download_file")
+
+  expect_equal(docs$name, "download_file")
+  expect_true(
+    is.character(docs$description) && nzchar(docs$description)
+  )
+})
