@@ -460,6 +460,81 @@ test_that("partially named list: unnamed ellmer tool gets declared @name", {
   expect_false(grepl("\\btd\\b", prompt_text))
 })
 
+test_that("ellmer path preserves explicit aliases for ToolDefs", {
+  skip_if_not_installed("ellmer")
+
+  add1 <- function(x) x + 1
+  add2 <- function(x) x + 2
+
+  td1 <- ellmer::tool(
+    add1,
+    name = "shared_name",
+    description = "First tool",
+    arguments = list(x = ellmer::type_number())
+  )
+  td2 <- ellmer::tool(
+    add2,
+    name = "shared_name",
+    description = "Second tool",
+    arguments = list(x = ellmer::type_number())
+  )
+
+  provider <- llm_provider_ellmer(
+    fake_ellmer_chat(),
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  result <- "Use the tools" |>
+    answer_using_tools(
+      tools = list(alias_one = td1, alias_two = td2),
+      type = "ellmer"
+    ) |>
+    send_prompt(provider, verbose = FALSE, return_mode = "full")
+
+  registered_tools <- result$ellmer_chat$get_tools()
+  registered_names <- vapply(
+    registered_tools,
+    ellmer_tool_name,
+    character(1)
+  )
+
+  expect_length(registered_tools, 2)
+  expect_equal(registered_names, c("alias_one", "alias_two"))
+})
+
+test_that("ellmer path preserves explicit aliases for regular functions", {
+  skip_if_not_installed("ellmer")
+
+  increment <- function(x) x + 1
+  increment <- tools_add_docs(
+    increment,
+    list(
+      name = "increment",
+      description = "Increment a number",
+      arguments = list(x = list(type = "numeric"))
+    )
+  )
+
+  provider <- llm_provider_ellmer(
+    fake_ellmer_chat(),
+    parameters = list(stream = FALSE),
+    verbose = FALSE
+  )
+
+  result <- "Use the tool" |>
+    answer_using_tools(
+      tools = list(custom_alias = increment),
+      type = "ellmer"
+    ) |>
+    send_prompt(provider, verbose = FALSE, return_mode = "full")
+
+  registered_tools <- result$ellmer_chat$get_tools()
+
+  expect_length(registered_tools, 1)
+  expect_equal(ellmer_tool_name(registered_tools[[1]]), "custom_alias")
+})
+
 test_that("tool name collision from sanitization raises error", {
   f1 <- function(x) x + 1
   f2 <- function(x) x + 2

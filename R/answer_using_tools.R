@@ -268,10 +268,39 @@ answer_using_tools <- function(
         for (nm in missing_defs) {
           # convert tidyprompt tool -> ellmer ToolDef
           ell_tool <- tryCatch(
-            tidyprompt_tool_to_ellmer(tp_tools[[nm]]),
+            tidyprompt_tool_to_ellmer(tp_tools[[nm]], name = nm),
             error = function(e) NULL
           )
           if (!is.null(ell_tool)) ellmer_tools[[nm]] <- ell_tool
+        }
+      }
+
+      if (length(ellmer_tools)) {
+        for (nm in names(ellmer_tools)) {
+          if (is_ellmer_tool(ellmer_tools[[nm]])) {
+            ellmer_tools[[nm]] <- rename_ellmer_tool(ellmer_tools[[nm]], nm)
+          }
+        }
+
+        effective_names <- vapply(
+          names(ellmer_tools),
+          function(nm) {
+            tool <- ellmer_tools[[nm]]
+            if (is_ellmer_builtin_tool(tool)) {
+              return(ellmer_tool_name(tool, fallback = nm))
+            }
+            nm
+          },
+          character(1)
+        )
+        dup_native_names <- unique(effective_names[duplicated(effective_names)])
+        if (length(dup_native_names) > 0L) {
+          stop(
+            "Tool name collision on native ellmer path: ",
+            paste0("'", dup_native_names, "'", collapse = ", "),
+            ". Built-in ellmer tools keep their provider-defined names.",
+            call. = FALSE
+          )
         }
       }
 

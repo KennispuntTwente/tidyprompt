@@ -75,6 +75,56 @@ is_ellmer_any_tool <- function(x) {
   is_ellmer_tool(x) || is_ellmer_builtin_tool(x)
 }
 
+ellmer_tool_name <- function(tool, fallback = NULL) {
+  props <- tryCatch(
+    S7::props(tool),
+    error = function(e) NULL
+  )
+  name <- props$name %||%
+    attr(tool, "name", exact = TRUE) %||%
+    fallback
+
+  if (is.null(name)) {
+    return(NULL)
+  }
+
+  as.character(name)
+}
+
+rename_ellmer_tool <- function(tooldef, name) {
+  stopifnot(is_ellmer_tool(tooldef))
+
+  name <- as.character(name)
+  if (!length(name) || !nzchar(name)) {
+    stop("`name` must be a non-empty string.")
+  }
+
+  current_name <- ellmer_tool_name(tooldef)
+  if (identical(current_name, name)) {
+    return(tooldef)
+  }
+
+  props <- tryCatch(
+    S7::props(tooldef),
+    error = function(e) list()
+  )
+
+  ellmer::tool(
+    tooldef,
+    name = name,
+    description = props$description %||%
+      attr(tooldef, "description", exact = TRUE) %||%
+      "",
+    arguments = .ellmer_tool_properties(tooldef),
+    convert = props$convert %||%
+      attr(tooldef, "convert", exact = TRUE) %||%
+      TRUE,
+    annotations = props$annotations %||%
+      attr(tooldef, "annotations", exact = TRUE) %||%
+      list()
+  )
+}
+
 # Internal: pull the list of <Type>s from a ToolDef's argument object
 .ellmer_tool_properties <- function(tooldef) {
   # Prefer S7 slot if available, then fall back to attributes
@@ -287,6 +337,7 @@ ellmer_tool_to_tidyprompt <- function(tooldef) {
 tidyprompt_docs_to_ellmer_tool <- function(
   fun,
   docs,
+  name = docs$name %||% NULL,
   convert = TRUE,
   annotations = list(),
   strict = TRUE
@@ -368,7 +419,7 @@ tidyprompt_docs_to_ellmer_tool <- function(
 
   ellmer::tool(
     fun,
-    name = docs$name %||% NULL,
+    name = name,
     description = docs$description %||% "",
     arguments = props,
     convert = convert,
@@ -379,15 +430,17 @@ tidyprompt_docs_to_ellmer_tool <- function(
 # Convenience: take a tidyprompt-style tool function and return an ellmer ToolDef
 tidyprompt_tool_to_ellmer <- function(
   fun,
+  name = NULL,
   convert = TRUE,
   annotations = list(),
   strict = TRUE
 ) {
   stopifnot(is.function(fun))
-  docs <- tools_get_docs(fun)
+  docs <- tools_get_docs(fun, name = name %||% NULL)
   tidyprompt_docs_to_ellmer_tool(
     fun,
     docs,
+    name = name %||% docs$name %||% NULL,
     convert = convert,
     annotations = annotations,
     strict = strict
