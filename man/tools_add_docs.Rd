@@ -234,7 +234,6 @@ prompt_with_weather_function_ellmer <-
 }
 \seealso{
 Other tools: 
-\code{\link{answer_using_tools}()},
-\code{\link{tools_get_docs}()}
+\code{\link{answer_using_tools}()}
 }
 \concept{tools}
