@@ -74,7 +74,7 @@ testthat::test_that("llm_provider_ellmer streams multimodal prompts when support
 })
 
 testthat::test_that("ellmer follow-up calls replay multimodal turns with native content", {
-  testthat::skip_if_not_installed("ellmer")
+  skip_if_no_ellmer_turn_classes()
 
   make_multimodal_fake_chat <- function(turns = list()) {
     chat_env <- fake_ellmer_chat(turns = turns)

@@ -51,7 +51,7 @@ test_that("persistent_chat syncs ellmer_chat after each turn", {
 })
 
 test_that("persistent_chat replays native tool results on follow-up turns", {
-  skip_if_not_installed("ellmer")
+  skip_if_no_ellmer_turn_classes()
 
   fake_chat <- fake_ellmer_chat()
   fake_chat$chat <- function(...) {

@@ -86,3 +86,12 @@ fake_ellmer_chat <- function(turns = list()) {
 
   env
 }
+
+# Helper: skip tests requiring ellmer >= 0.4.0 S7 turn constructors
+skip_if_no_ellmer_turn_classes <- function() {
+  testthat::skip_if_not_installed("ellmer")
+  ns <- asNamespace("ellmer")
+  if (!exists("UserTurn", envir = ns, inherits = FALSE)) {
+    testthat::skip("ellmer >= 0.4.0 required (UserTurn not available)")
+  }
+}

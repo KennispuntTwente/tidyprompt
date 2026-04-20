@@ -108,7 +108,7 @@ testthat::test_that("ellmer provider normalizes tool metadata on plain replies",
 })
 
 testthat::test_that("ellmer provider preserves native tool history in completed rows", {
-  testthat::skip_if_not_installed("ellmer")
+  skip_if_no_ellmer_turn_classes()
 
   fake_chat <- fake_ellmer_chat()
   fake_chat$chat <- function(...) {
@@ -165,7 +165,7 @@ testthat::test_that("ellmer provider preserves native tool history in completed 
 })
 
 testthat::test_that("ellmer provider preserves native thinking content in completed rows", {
-  testthat::skip_if_not_installed("ellmer")
+  skip_if_no_ellmer_turn_classes()
 
   fake_chat <- fake_ellmer_chat()
   fake_chat$chat <- function(...) {
@@ -208,7 +208,7 @@ testthat::test_that("ellmer provider preserves native thinking content in comple
 })
 
 testthat::test_that("ellmer provider preserves native json content in completed rows", {
-  testthat::skip_if_not_installed("ellmer")
+  skip_if_no_ellmer_turn_classes()
 
   ellmer_ns <- asNamespace("ellmer")
   fake_chat <- fake_ellmer_chat()
@@ -243,7 +243,7 @@ testthat::test_that("ellmer provider preserves native json content in completed 
 })
 
 testthat::test_that("ellmer provider preserves native image tool results in completed rows", {
-  testthat::skip_if_not_installed("ellmer")
+  skip_if_no_ellmer_turn_classes()
 
   ellmer_ns <- asNamespace("ellmer")
   fake_chat <- fake_ellmer_chat()
