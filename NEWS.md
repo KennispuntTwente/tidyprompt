@@ -1,4 +1,4 @@
-# tidyprompt (development version)
+# tidyprompt 0.4.0
 
 * New prompt wrap `answer_as_dataframe()` for extracting tabular results via
 structured output, with support for row schemas, array-of-row schemas,
