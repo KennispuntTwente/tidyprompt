@@ -1,6 +1,6 @@
 # Changelog
 
-## tidyprompt (development version)
+## tidyprompt 0.4.0
 
 - New prompt wrap
   [`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md)
