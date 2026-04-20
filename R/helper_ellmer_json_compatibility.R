@@ -44,7 +44,7 @@ is_json_schema_list <- function(x) {
         ))
       )
       if (exists("type_ignore", envir = asNamespace("ellmer"))) {
-        s$ignore <- class(ellmer::type_ignore())
+        s$ignore <- tryCatch(class(get("type_ignore", envir = asNamespace("ellmer"))()), error = function(e) NULL)
       }
       if (exists("type_from_schema", envir = asNamespace("ellmer"))) {
         s$json_schema <- class(ellmer::type_from_schema(
