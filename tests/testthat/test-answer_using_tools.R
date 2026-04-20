@@ -366,3 +366,96 @@ test_that("tools_get_docs overrides attribute name when caller provides one", {
   docs_override <- tools_get_docs(my_fn, name = "dispatch_key")
   expect_equal(docs_override$name, "dispatch_key")
 })
+
+test_that("partially named tool list preserves explicit aliases", {
+  skip_if_not_installed("ellmer")
+
+  add_xy <- function(x, y) x + y
+
+  td <- ellmer::tool(
+    add_xy,
+    name = "sum_two",
+    description = "Add two numbers",
+    arguments = list(
+      x = ellmer::type_number(),
+      y = ellmer::type_number()
+    )
+  )
+
+  h <- function(x) x + 1
+
+  state <- new.env(parent = emptyenv())
+  state$call_n <- 0L
+
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      state <- self$parameters$.test_state
+      state$call_n <- state$call_n + 1L
+
+      if (state$call_n == 1L) {
+        # Model calls the tool by the user-supplied alias
+        reply <- '{"function": "custom_alias", "arguments": {"x": 3, "y": 4}}'
+      } else {
+        reply <- "The answer is 7"
+      }
+
+      list(
+        completed = dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = reply,
+            stringsAsFactors = FALSE
+          )
+        ),
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    parameters = list(.test_state = state),
+    verbose = FALSE
+  )
+
+  result <- "What is 3 + 4?" |>
+    answer_using_tools(
+      tools = list(custom_alias = td, h = h),
+      type = "text-based"
+    ) |>
+    send_prompt(provider, verbose = FALSE)
+
+  # Dispatch must honour the user alias "custom_alias", not the declared "sum_two"
+  expect_equal(state$call_n, 2L)
+  expect_equal(result, "The answer is 7")
+})
+
+test_that("partially named list: unnamed ellmer tool gets declared @name", {
+  skip_if_not_installed("ellmer")
+
+  add_xy <- function(x, y) x + y
+
+  td <- ellmer::tool(
+    add_xy,
+    name = "sum_two",
+    description = "Add two numbers",
+    arguments = list(
+      x = ellmer::type_number(),
+      y = ellmer::type_number()
+    )
+  )
+
+  h <- function(x) x + 1
+
+  # Build prompt and inspect tool names in the text-based instruction
+  prompt <- "What is 3 + 4?" |>
+    answer_using_tools(
+      tools = list(my_alias = h, td),
+      type = "text-based"
+    )
+
+  prompt_text <- construct_prompt_text(prompt)
+  # The explicit alias must appear
+
+  expect_true(grepl("my_alias", prompt_text))
+  # The unnamed ellmer tool should use its declared @name, not the symbol "td"
+  expect_true(grepl("sum_two", prompt_text))
+  expect_false(grepl("\\btd\\b", prompt_text))
+})

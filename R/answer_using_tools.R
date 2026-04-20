@@ -109,26 +109,25 @@ answer_using_tools <- function(
       length(tools) > 0,
       all(vapply(tools, is_toolish, logical(1)))
     )
-    if (is.null(names(tools)) || !all(nzchar(names(tools)))) {
-      user_named <- rep(FALSE, length(tools))
-      # Try to derive names from the call; else fallback
+    nms <- names(tools) %||% rep("", length(tools))
+    user_named <- nzchar(nms)
+
+    if (!all(user_named)) {
+      # Try to derive names for unnamed positions from the call
       call_elems <- tryCatch(
         as.list(substitute(tools))[-1],
         error = function(e) NULL
       )
-      if (!is.null(call_elems) && length(call_elems) == length(tools)) {
-        names(tools) <- vapply(
-          call_elems,
-          function(e) sanitize_name(deparse(e)),
-          character(1)
-        )
-      } else {
-        names(tools) <- paste0("tool", seq_along(tools))
+      for (i in which(!user_named)) {
+        if (!is.null(call_elems) && length(call_elems) == length(tools)) {
+          nms[i] <- sanitize_name(deparse(call_elems[[i]]))
+        } else {
+          nms[i] <- paste0("tool", i)
+        }
       }
-    } else {
-      user_named <- rep(TRUE, length(tools))
-      names(tools) <- sanitize_name(names(tools))
     }
+
+    names(tools) <- sanitize_name(nms)
   }
 
   # For ellmer ToolDefs that were NOT explicitly named by the user,
