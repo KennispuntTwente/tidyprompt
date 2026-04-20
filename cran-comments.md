@@ -1,6 +1,6 @@
 ## R CMD check results
 
-0 errors | 1 warning | 0 notes
+0 errors | 0 warnings | 1 note
 
 * I am changing the DESCRIPTION file to add a personal e-mail address for the maintainer 
 (old: l.koning@kennispunttwente.nl; new: koningluka@gmail.com), since I leaving my current organization. 
