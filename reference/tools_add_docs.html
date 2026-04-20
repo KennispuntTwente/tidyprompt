@@ -66,11 +66,11 @@ is used to extract information about the function's name, description, arguments
 and return value. This information is used to provide an LLM with information
 about the functions, so that the LLM can call R functions. The intended
 use of this function is to add documentation to custom functions that do not
-have help files; <code>tools_get_docs()</code> may generate documentation from a
+have help files; <code><a href="tools_get_docs.html">tools_get_docs()</a></code> may generate documentation from a
 help file when the function is part of base R or a package.</p>
 <p>If a function already has documentation, the documentation added by this
 function may overwrite it. If you wish to modify existing documentation,
-you may make a call to <code>tools_get_docs()</code> to extract the existing documentation,
+you may make a call to <code><a href="tools_get_docs.html">tools_get_docs()</a></code> to extract the existing documentation,
 modify it, and then call <code>tools_add_docs()</code> to add the modified documentation.</p>
     </div>
 
@@ -127,7 +127,8 @@ function</p></li>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other tools:
-<code><a href="answer_using_tools.html">answer_using_tools()</a></code></p></div>
+<code><a href="answer_using_tools.html">answer_using_tools()</a></code>,
+<code><a href="tools_get_docs.html">tools_get_docs()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -194,25 +195,19 @@ function</p></li>
 <span class="r-in"><span><span class="co"># 1: `tools_add_docs()` --------------------------------------------------------</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Generate documentation for a function, based on formals &amp; help file</span></span></span>
-<span class="r-in"><span><span class="va">docs</span> <span class="op">&lt;-</span> <span class="fu">tools_get_docs</span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in tools_get_docs(temperature_in_location):</span> could not find function "tools_get_docs"</span>
+<span class="r-in"><span><span class="va">docs</span> <span class="op">&lt;-</span> <span class="fu"><a href="tools_get_docs.html">tools_get_docs</a></span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The types get inferred from the function's formals</span></span></span>
 <span class="r-in"><span><span class="co"># However, descriptions are still missing as the function is not from a package</span></span></span>
 <span class="r-in"><span><span class="co"># We can modify the documentation object to add descriptions:</span></span></span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Get the temperature in a location"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">arguments</span><span class="op">$</span><span class="va">unit</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Unit in which to return the temperature"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">arguments</span><span class="op">$</span><span class="va">location</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Location for which to return the temperature"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">return</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"The temperature in the specified location and unit"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="co"># (See `?tools_add_docs` for more details on the structure of the documentation)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># When we are satisfied with the documentation, we can add it to the function:</span></span></span>
 <span class="r-in"><span><span class="va">temperature_in_location</span> <span class="op">&lt;-</span> <span class="fu">tools_add_docs</span><span class="op">(</span><span class="va">temperature_in_location</span>, <span class="va">docs</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">prompt_with_weather_function</span> <span class="op">&lt;-</span></span></span>
 <span class="r-in"><span>  <span class="st">"What is the weather in Enschede? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>

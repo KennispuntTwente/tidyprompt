@@ -143,7 +143,7 @@ Provider-specific 'ellmer' built-in tools are only supported when using an
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="answer_using_r.html">answer_using_r()</a></code> <code>tools_get_docs()</code></p>
+    <div class="dont-index"><p><code><a href="answer_using_r.html">answer_using_r()</a></code> <code><a href="tools_get_docs.html">tools_get_docs()</a></code></p>
 <p>Other pre_built_prompt_wraps:
 <code><a href="add_image.html">add_image()</a></code>,
 <code><a href="add_text.html">add_text()</a></code>,
@@ -169,7 +169,8 @@ Provider-specific 'ellmer' built-in tools are only supported when using an
 <code><a href="answer_using_r.html">answer_using_r()</a></code>,
 <code><a href="answer_using_sql.html">answer_using_sql()</a></code></p>
 <p>Other tools:
-<code><a href="tools_add_docs.html">tools_add_docs()</a></code></p></div>
+<code><a href="tools_add_docs.html">tools_add_docs()</a></code>,
+<code><a href="tools_get_docs.html">tools_get_docs()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -236,25 +237,19 @@ Provider-specific 'ellmer' built-in tools are only supported when using an
 <span class="r-in"><span><span class="co"># 1: `tools_add_docs()` --------------------------------------------------------</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Generate documentation for a function, based on formals &amp; help file</span></span></span>
-<span class="r-in"><span><span class="va">docs</span> <span class="op">&lt;-</span> <span class="fu">tools_get_docs</span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in tools_get_docs(temperature_in_location):</span> could not find function "tools_get_docs"</span>
+<span class="r-in"><span><span class="va">docs</span> <span class="op">&lt;-</span> <span class="fu"><a href="tools_get_docs.html">tools_get_docs</a></span><span class="op">(</span><span class="va">temperature_in_location</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The types get inferred from the function's formals</span></span></span>
 <span class="r-in"><span><span class="co"># However, descriptions are still missing as the function is not from a package</span></span></span>
 <span class="r-in"><span><span class="co"># We can modify the documentation object to add descriptions:</span></span></span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Get the temperature in a location"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">arguments</span><span class="op">$</span><span class="va">unit</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Unit in which to return the temperature"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">arguments</span><span class="op">$</span><span class="va">location</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Location for which to return the temperature"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="va">docs</span><span class="op">$</span><span class="va">return</span><span class="op">$</span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"The temperature in the specified location and unit"</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span><span class="co"># (See `?tools_add_docs` for more details on the structure of the documentation)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># When we are satisfied with the documentation, we can add it to the function:</span></span></span>
 <span class="r-in"><span><span class="va">temperature_in_location</span> <span class="op">&lt;-</span> <span class="fu"><a href="tools_add_docs.html">tools_add_docs</a></span><span class="op">(</span><span class="va">temperature_in_location</span>, <span class="va">docs</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'docs' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">prompt_with_weather_function</span> <span class="op">&lt;-</span></span></span>
 <span class="r-in"><span>  <span class="st">"What is the weather in Enschede? Give me Celcius degrees"</span> <span class="op">|&gt;</span></span></span>

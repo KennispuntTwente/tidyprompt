@@ -100,7 +100,7 @@ object (or an 'ellmer' chat passed directly to
 ## See also
 
 [`answer_using_r()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_r.md)
-`tools_get_docs()`
+[`tools_get_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_get_docs.md)
 
 Other pre_built_prompt_wraps:
 [`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md),
@@ -129,7 +129,8 @@ Other answer_using_prompt_wraps:
 [`answer_using_sql()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_sql.md)
 
 Other tools:
-[`tools_add_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_add_docs.md)
+[`tools_add_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_add_docs.md),
+[`tools_get_docs()`](https://kennispunttwente.github.io/tidyprompt/reference/tools_get_docs.md)
 
 ## Examples
 
@@ -197,24 +198,18 @@ temperature_in_location <- function(
 
 # Generate documentation for a function, based on formals & help file
 docs <- tools_get_docs(temperature_in_location)
-#> Error in tools_get_docs(temperature_in_location): could not find function "tools_get_docs"
 
 # The types get inferred from the function's formals
 # However, descriptions are still missing as the function is not from a package
 # We can modify the documentation object to add descriptions:
 docs$description <- "Get the temperature in a location"
-#> Error: object 'docs' not found
 docs$arguments$unit$description <- "Unit in which to return the temperature"
-#> Error: object 'docs' not found
 docs$arguments$location$description <- "Location for which to return the temperature"
-#> Error: object 'docs' not found
 docs$return$description <- "The temperature in the specified location and unit"
-#> Error: object 'docs' not found
 # (See `?tools_add_docs` for more details on the structure of the documentation)
 
 # When we are satisfied with the documentation, we can add it to the function:
 temperature_in_location <- tools_add_docs(temperature_in_location, docs)
-#> Error: object 'docs' not found
 
 prompt_with_weather_function <-
   "What is the weather in Enschede? Give me Celcius degrees" |>
