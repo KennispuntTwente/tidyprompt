@@ -12,9 +12,6 @@
   for extracting numeric responses, including optional minimum and
   maximum value validation.
 
-- Update e-mail address of maintainer in DESCRIPTION file (change to a
-  personal e-mail address due to leaving the organization).
-
 - [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
   can now directly use an ‘ellmer’ chat object as the `llm_provider` to
   evaluate the prompt with (will build an
@@ -39,6 +36,9 @@
   workflows: `tool` rows are supported, non-replayable native rows (tool
   call and thinking rows) are kept for inspection but not re-sent to the
   LLM provider, and related metadata is normalized more reliably.
+
+- Update e-mail address of maintainer in DESCRIPTION file (change to a
+  personal e-mail address due to leaving the organization).
 
 ## tidyprompt 0.3.0
 
