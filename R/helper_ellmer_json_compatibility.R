@@ -137,7 +137,11 @@ ellmer_type_ignore_compat <- function(description = NULL, required = FALSE) {
     return(ctor(description = description, required = required))
   }
 
-  obj <- ellmer::type_ignore()
+  if (!exists("type_ignore", envir = ellmer_ns, inherits = FALSE)) {
+    stop("Ignored ellmer arguments require ellmer >= 0.4.0.")
+  }
+
+  obj <- get("type_ignore", envir = ellmer_ns, inherits = FALSE)()
   if (!is.null(description)) {
     attr(obj, "description") <- description
   }
