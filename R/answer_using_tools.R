@@ -143,6 +143,18 @@ answer_using_tools <- function(
     }
   }
 
+  # Detect name collisions that would silently discard tools
+  tool_nms <- names(tools)
+  dup_nms <- unique(tool_nms[duplicated(tool_nms)])
+  if (length(dup_nms) > 0L) {
+    stop(
+      "Tool name collision after sanitization: ",
+      paste0("'", dup_nms, "'", collapse = ", "),
+      ". Provide distinct names to avoid tools being silently dropped.",
+      call. = FALSE
+    )
+  }
+
   has_builtin_tools <- any(vapply(tools, is_ellmer_builtin_tool, logical(1)))
   builtin_tool_error <- paste0(
     "Provider-specific ellmer built-in tools can only be used with an ",

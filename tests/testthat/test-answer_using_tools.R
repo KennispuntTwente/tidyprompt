@@ -459,3 +459,43 @@ test_that("partially named list: unnamed ellmer tool gets declared @name", {
   expect_true(grepl("sum_two", prompt_text))
   expect_false(grepl("\\btd\\b", prompt_text))
 })
+
+test_that("tool name collision from sanitization raises error", {
+  f1 <- function(x) x + 1
+  f2 <- function(x) x + 2
+
+  expect_error(
+    "test" |>
+      answer_using_tools(
+        tools = list("a-b" = f1, a_b = f2),
+        type = "text-based"
+      ),
+    "Tool name collision"
+  )
+})
+
+test_that("tool name collision from ellmer @name raises error", {
+  skip_if_not_installed("ellmer")
+
+  add1 <- function(x) x + 1
+  add2 <- function(x) x + 2
+
+  td1 <- ellmer::tool(
+    add1,
+    name = "my_tool",
+    description = "First tool",
+    arguments = list(x = ellmer::type_number())
+  )
+  td2 <- ellmer::tool(
+    add2,
+    name = "my_tool",
+    description = "Second tool",
+    arguments = list(x = ellmer::type_number())
+  )
+
+  expect_error(
+    "test" |>
+      answer_using_tools(tools = list(td1, td2), type = "text-based"),
+    "Tool name collision"
+  )
+})
