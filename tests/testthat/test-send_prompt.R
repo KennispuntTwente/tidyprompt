@@ -448,3 +448,59 @@ test_that("send_prompt with raw ellmer chat and stream=FALSE does not require co
   expect_equal(result$response, "chat-response:Hello")
   expect_identical(result$ellmer_chat$last_method$method, "chat")
 })
+
+# 8. Blank / image-only prompts ------------------------------------------------
+
+test_that("blank prompt does not error and preserves user row", {
+  echo_provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      list(
+        completed = dplyr::bind_rows(
+          chat_history,
+          data.frame(
+            role = "assistant",
+            content = "ok",
+            stringsAsFactors = FALSE
+          )
+        ),
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    verbose = FALSE
+  )
+
+  result <- "" |>
+    send_prompt(echo_provider, return_mode = "full", verbose = FALSE)
+
+  expect_equal(result$response, "ok")
+  # The user row (blank content) must be in the history
+  user_rows <- result$chat_history[result$chat_history$role == "user", ]
+  expect_true(nrow(user_rows) >= 1L)
+})
+
+test_that("empty-content user row is not stripped from completed history", {
+  # Simulates a provider returning a user row with content ""
+  # (e.g., image-only turn); should NOT be dropped by the handler loop.
+  provider <- `llm_provider-class`$new(
+    complete_chat_function = function(chat_history) {
+      list(
+        completed = chat_history |>
+          dplyr::bind_rows(
+            data.frame(
+              role = "assistant",
+              content = "I see the image",
+              stringsAsFactors = FALSE
+            )
+          ),
+        http = list(request = NULL, response = NULL)
+      )
+    },
+    verbose = FALSE
+  )
+
+  result <- "" |>
+    send_prompt(provider, return_mode = "full", verbose = FALSE)
+
+  user_rows <- result$chat_history[result$chat_history$role == "user", ]
+  expect_true(nrow(user_rows) >= 1L)
+})

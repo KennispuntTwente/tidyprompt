@@ -386,10 +386,12 @@ NULL
           )
         )
 
-      # Remove roles with no content
+      # Remove system prompt row when it has no content; keep everything
+      # else (including blank user rows needed for image-only prompts).
       chat_history_construction <- chat_history_construction |>
         dplyr::filter(
-          .data$content != "" & !is.na(.data$content) & !is.null(.data$content)
+          .data$role != "system" |
+            (.data$content != "" & !is.na(.data$content))
         )
 
       chat_history <- chat_history(chat_history_construction)

@@ -1563,8 +1563,16 @@ llm_provider_ellmer <- function(
     }
 
     # Prompt = last message (may be converted to multimodal contents below)
-    prompt <- chat_history$content[nrow(chat_history)] %||% ""
-    prompt <- if (!is.na(prompt)) as.character(prompt) else ""
+    prompt <- if (nrow(chat_history) > 0L) {
+      chat_history$content[nrow(chat_history)]
+    } else {
+      ""
+    }
+    prompt <- if (length(prompt) == 1L && !is.na(prompt)) {
+      as.character(prompt)
+    } else {
+      ""
+    }
     # Merge tools: the cloned chat already carries the user's base tools
     # (registered via $register_tool() / $set_tools() on the provider's
     # ellmer_chat).  Prompt-level tools are layered on top for this request

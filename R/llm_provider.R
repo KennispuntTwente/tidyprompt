@@ -292,9 +292,16 @@ NULL
 
       response$completed <- normalize_chat_history_metadata(response$completed)
 
-      # Filter content with empty string ("") (Ollama tool call)
+      # Filter empty-content tool_call rows (Ollama sends these); keep
+      # user/assistant/system rows so image-only turns are preserved.
+      is_empty <- response$completed$content == ""
+      is_tool_call <- if ("tool_call" %in% names(response$completed)) {
+        as.logical(response$completed$tool_call)
+      } else {
+        rep(FALSE, nrow(response$completed))
+      }
       response$completed <- response$completed[
-        response$completed$content != "",
+        !(is_empty & is_tool_call),
       ]
 
       http <- list()
