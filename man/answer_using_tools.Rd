@@ -266,7 +266,8 @@ Other answer_using_prompt_wraps:
 \code{\link{answer_using_sql}()}
 
 Other tools: 
-\code{\link{tools_add_docs}()}
+\code{\link{tools_add_docs}()},
+\code{\link{tools_get_docs}()}
 }
 \concept{answer_using_prompt_wraps}
 \concept{pre_built_prompt_wraps}

@@ -997,50 +997,6 @@ tools_add_docs <- function(
 #' @example inst/examples/answer_using_tools.R
 #'
 #' @family tools
-#'
-
-#' Resolve the real symbol name of a function in its home namespace
-#'
-#' When a sanitized alias (e.g., "list_files") is passed as the display name,
-#' help-file lookup needs the original symbol ("list.files").  This helper
-#' searches the function's package namespace for a matching binding.
-#'
-#' @param func A function object
-#' @param fallback The name to return when resolution fails
-#'
-#' @return A single character string: the real symbol name, or `fallback`.
-#' @noRd
-#' @keywords internal
-resolve_function_name <- function(func, fallback) {
-  pkg_env <- environment(func)
-  if (is.null(pkg_env)) {
-    return(fallback)
-  }
-  pkg_name <- environmentName(pkg_env)
-  if (pkg_name == "" || pkg_name == "R_GlobalEnv") {
-    return(fallback)
-  }
-  # Search the namespace for the exact function object
-  ns <- tryCatch(asNamespace(pkg_name), error = function(e) NULL)
-  if (is.null(ns)) {
-    return(fallback)
-  }
-  exports <- tryCatch(getNamespaceExports(ns), error = function(e) NULL)
-  if (is.null(exports)) {
-    return(fallback)
-  }
-  for (sym in exports) {
-    obj <- tryCatch(
-      get(sym, envir = ns, inherits = FALSE),
-      error = function(e) NULL
-    )
-    if (identical(obj, func)) {
-      return(sym)
-    }
-  }
-  fallback
-}
-
 tools_get_docs <- function(func, name = NULL) {
   stopifnot(
     is.function(func),
@@ -1124,6 +1080,48 @@ tools_get_docs <- function(func, name = NULL) {
   }
 
   docs
+}
+
+#' Resolve the real symbol name of a function in its home namespace
+#'
+#' When a sanitized alias (e.g., "list_files") is passed as the display name,
+#' help-file lookup needs the original symbol ("list.files"). This helper
+#' searches the function's package namespace for a matching binding.
+#'
+#' @param func A function object
+#' @param fallback The name to return when resolution fails
+#'
+#' @return A single character string: the real symbol name, or `fallback`.
+#' @noRd
+#' @keywords internal
+resolve_function_name <- function(func, fallback) {
+  pkg_env <- environment(func)
+  if (is.null(pkg_env)) {
+    return(fallback)
+  }
+  pkg_name <- environmentName(pkg_env)
+  if (pkg_name == "" || pkg_name == "R_GlobalEnv") {
+    return(fallback)
+  }
+  # Search the namespace for the exact function object
+  ns <- tryCatch(asNamespace(pkg_name), error = function(e) NULL)
+  if (is.null(ns)) {
+    return(fallback)
+  }
+  exports <- tryCatch(getNamespaceExports(ns), error = function(e) NULL)
+  if (is.null(exports)) {
+    return(fallback)
+  }
+  for (sym in exports) {
+    obj <- tryCatch(
+      get(sym, envir = ns, inherits = FALSE),
+      error = function(e) NULL
+    )
+    if (identical(obj, func)) {
+      return(sym)
+    }
+  }
+  fallback
 }
 
 #' Generate function documentation from formals and help file
