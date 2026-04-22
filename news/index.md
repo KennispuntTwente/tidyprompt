@@ -2,6 +2,8 @@
 
 ## tidyprompt 0.4.0
 
+CRAN release: 2026-04-21
+
 - New prompt wrap
   [`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md)
   for extracting tabular results via structured output, with support for
