@@ -1,5 +1,7 @@
 # Changelog
 
+## tidyprompt (development version)
+
 ## tidyprompt 0.4.0
 
 CRAN release: 2026-04-21

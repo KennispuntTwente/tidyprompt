@@ -50,7 +50,7 @@ Install the development version from GitHub:
 remotes::install_github("KennispuntTwente/tidyprompt")
 ```
 
-Or install from CRAN (0.3.0):
+Or install from CRAN (0.4.0):
 
 ``` r
 install.packages("tidyprompt")
@@ -163,9 +163,8 @@ summary(model)
 
 ## More information and contributing
 
-‘tidyprompt’ is developed by Luka Koning
-(<l.koning@kennispunttwente.nl>) and Tjark van de Merwe
-(<t.vandemerwe@kennispunttwente.nl>).
+‘tidyprompt’ is developed by Luka Koning (<koningluka@gmail.com>) and
+Tjark van de Merwe (<t.vandemerwe@kennispunttwente.nl>).
 
 If you encounter issues, have questions, or have suggestions, please
 open an issue in the GitHub repository. You are also welcome to
