@@ -46,6 +46,7 @@ below](#how-does-tidyprompt-relate-to-ellmer-and-tidyllm)).*
 Install the development version from GitHub:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("KennispuntTwente/tidyprompt")
 ```
@@ -53,6 +54,7 @@ remotes::install_github("KennispuntTwente/tidyprompt")
 Or install from CRAN (0.4.0):
 
 ``` r
+
 install.packages("tidyprompt")
 ```
 
@@ -67,6 +69,7 @@ vignette for a detailed introduction to using ‘tidyprompt’.
 Here are some quick examples of what you can do with ‘tidyprompt’:
 
 ``` r
+
 "What is 5+5?" |>
   answer_as_integer() |>
   send_prompt(llm_provider_ollama())
@@ -74,6 +77,7 @@ Here are some quick examples of what you can do with ‘tidyprompt’:
 ```
 
 ``` r
+
 "Are you a large language model?" |>
   answer_as_boolean() |>
   send_prompt(llm_provider_ollama())
@@ -81,6 +85,7 @@ Here are some quick examples of what you can do with ‘tidyprompt’:
 ```
 
 ``` r
+
 "What animal is the biggest?" |>
   answer_as_regex_match("^(cat|dog|elephant)$") |>
   send_prompt(llm_provider_ollama())
@@ -88,6 +93,7 @@ Here are some quick examples of what you can do with ‘tidyprompt’:
 ```
 
 ``` r
+
 # Make LLM use a function from an R package to search Wikipedia for the answer
 "What is something fun that happened in November 2024?" |>
   answer_as_text(max_words = 25) |>
@@ -98,6 +104,7 @@ Here are some quick examples of what you can do with ‘tidyprompt’:
 ```
 
 ``` r
+
 # From prompt to linear model object in R
 model <- paste0(
   "Using my data, create a statistical model",
@@ -137,6 +144,7 @@ summary(model)
 ```
 
 ``` r
+
 # Escape validation on questions that cannot be answered
 "How many years old is my neighbour's dog?" |>
   answer_as_integer() |>
@@ -146,6 +154,7 @@ summary(model)
 ```
 
 ``` r
+
 # LLM in the loop; 
 #   LLM verifies answer of LLM and can provide feedback
 "What is the capital of France?" |>

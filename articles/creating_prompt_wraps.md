@@ -36,6 +36,7 @@ Below is a simple example of a prompt wrap, which just adds some text to
 the base prompt:
 
 ``` r
+
 prompt <- "Hi there!" |>
   prompt_wrap(
     modify_fn = function(base_prompt) {
@@ -47,6 +48,7 @@ prompt <- "Hi there!" |>
 Shorter notation of the above would be:
 
 ``` r
+
 prompt <- "Hi there!" |>
   prompt_wrap(\(x) paste(x, "How are you?", sep = "\n\n"))
 ```
@@ -55,6 +57,7 @@ Often times, it may be preferred to make a function which takes a prompt
 and returns a wrapped prompt:
 
 ``` r
+
 my_prompt_wrap <- function(prompt) {
   modify_fn <- function(base_prompt) {
     paste(base_prompt, "How are you?", sep = "\n\n")
@@ -71,6 +74,7 @@ Take look at the source code of
 which also uses extraction:
 
 ``` r
+
 answer_as_boolean <- function(
     prompt,
     true_definition = NULL,

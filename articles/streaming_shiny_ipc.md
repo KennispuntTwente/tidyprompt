@@ -41,6 +41,7 @@ Below is a minimal example which shows how to achieve this. We will:
   showing a live stream of LLM output.
 
 ``` r
+
 # Install & load required packages
 packages <- c("shiny", "ipc", "future", "promises", "tidyprompt")
 for (pkg in packages) {

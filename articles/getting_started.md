@@ -1,6 +1,7 @@
 # Getting started
 
 ``` r
+
 library(tidyprompt)
 ```
 
@@ -38,6 +39,7 @@ structure of the OpenAI API, you can call
 and change only the URL and the API key to make it work.
 
 ``` r
+
 # Ollama running on local PC
 ollama <- llm_provider_ollama(
   parameters = list(model = "llama3.1:8b"),
@@ -74,6 +76,7 @@ handles the prompt, while verifying that the output is structured and
 valid (including retries with feedback to the LLM if it is not).
 
 ``` r
+
   "Hi there!" |>
     send_prompt(ollama)
 #> --- Sending request to LLM provider (llama3.1:8b): ---
@@ -88,6 +91,7 @@ is a simple example of a prompt wrap. It simply adds some text at the
 end of the base prompt.
 
 ``` r
+
   "Hi there!" |>
     add_text("What is a large language model? Explain in 10 words.") |>
     send_prompt(ollama)
@@ -104,6 +108,7 @@ You can also construct the final prompt text, without sending it to an
 LLM provider.
 
 ``` r
+
   "Hi there!" |>
     add_text("What is a large language model? Explain in 10 words.")
 #> <tidyprompt>
@@ -151,6 +156,7 @@ numeric value, the final output from
 will also be a numeric type.
 
 ``` r
+
   "What is 2 + 2?" |>
     answer_as_integer() |>
     send_prompt(ollama)
@@ -169,6 +175,7 @@ succeed after
 and a retry.
 
 ``` r
+
   "What is 2 + 2?" |>
     add_text("Please write out your reply in words, use no numbers.") |>
     answer_as_integer(add_instruction_to_prompt = FALSE) |>
@@ -228,6 +235,7 @@ LLM to reason step by step, asking it to provide the final answer within
 is returned.
 
 ``` r
+
   "What is 2 + 2?" |>
     answer_by_chain_of_thought() |>
     answer_as_integer() |>
@@ -317,6 +325,7 @@ supports both text-based function calling and native function calling
 structures, and ‘ellmer’ LLM providers).
 
 ``` r
+
   "What are the files in my current directory?" |>
     answer_using_tools(list.files) |>
     send_prompt(ollama)
@@ -400,6 +409,7 @@ the ‘callr’ package). The prompt wrap can also be set to ‘tool mode’
 to the LLM, so that it can be used to formulate a final answer.
 
 ``` r
+
 # From prompt to ggplot
 plot <- paste0(
   "Create a scatter plot of miles per gallon (mpg) versus",
@@ -439,6 +449,7 @@ provider-level prompt wrap either before or after the prompt-specific
 prompt wraps.
 
 ``` r
+
 ollama <- llm_provider_ollama()
 
 # Example: add a "short answer" mode (provider-level post prompt wrap)

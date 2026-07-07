@@ -7,6 +7,7 @@ We will first define a simple dataset of sentences that we will create
 sentiment scores for.
 
 ``` r
+
 sentences_df <- data.frame(
   sentence = c(
     "I love this product!",
@@ -27,6 +28,7 @@ First we will create a connection to a locally running LLM (using
 Ollama)
 
 ``` r
+
 library(tidyprompt)
 
 ollama <- llm_provider_ollama()
@@ -42,6 +44,7 @@ to prompt the LLM for the sentiment score. The latter will force the LLM
 to answer as an integer and extract the integer from its response.
 
 ``` r
+
 library(purrr)
 
 sentences_df$sentiment_score <- map_int(
@@ -73,6 +76,7 @@ sentences_df
 Let’s plot the results!
 
 ``` r
+
 library(ggplot2)
 
 ggplot(sentences_df, aes(x = sentiment_score, y = reorder(sentence, sentiment_score))) +
