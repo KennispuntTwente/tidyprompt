@@ -1,5 +1,13 @@
 # tidyprompt (development version)
 
+* Fixed a connection leak in streaming requests: `req_llm_stream()` (used
+internally when `stream = TRUE`) now closes the underlying `httr2`
+streaming connection once a response has been read. Previously, the
+connection was never closed, so each streamed LLM call permanently used up
+one of R's limited (128) connection slots; after enough streamed calls,
+this would cause unrelated code (e.g. `textConnection()`/`capture.output()`)
+to fail with "all connections are in use".
+
 # tidyprompt 0.4.0
 
 * New prompt wrap `answer_as_dataframe()` for extracting tabular results via

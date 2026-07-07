@@ -203,6 +203,11 @@ req_llm_stream <- function(
     httr2::req_perform_connection(req, verbosity = 0),
     error = function(e) req_llm_handle_error(e)
   )
+  # httr2::req_perform_connection() opens a connection which must be closed
+  # manually once we're done reading from it, or it will leak (R has a
+  # hard-coded limit of 128 open connections). Use on.exit() so the
+  # connection is closed even if an error occurs while streaming.
+  on.exit(try(close(resp), silent = TRUE), add = TRUE)
 
   if (api_type == "ollama") {
     while (!httr2::resp_stream_is_complete(resp)) {
@@ -364,6 +369,14 @@ req_llm_stream <- function(
       }
     }
   }
+
+  # We're done reading from the streaming connection; close it now, while
+  # resp$body still holds the httr2 'StreamingBody' object that close()
+  # needs (below, we overwrite resp$body with a plain list to attach
+  # tool_calls/response_id, after which close() can no longer reach the
+  # underlying connection). The on.exit() registered above remains as a
+  # fallback in case an error occurred before reaching this point.
+  try(close(resp), silent = TRUE)
 
   # attach tool_calls and response_id so the caller can act
   if (!is.list(resp$body)) {

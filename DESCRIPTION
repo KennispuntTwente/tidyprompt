@@ -48,7 +48,8 @@ Suggests:
     coro,
     ggplot2,
     mcptools,
-    grid
+    grid,
+    webfakes
 VignetteBuilder: knitr
 Imports: 
     dplyr,
