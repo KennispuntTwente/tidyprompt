@@ -144,6 +144,22 @@ send_prompt(
     not contain the full chat history when `clean_chat_history = TRUE`
     was used.)
 
+## Request errors
+
+HTTP request failures from the built-in OpenAI-compatible and Ollama
+providers signal a condition of class `tidyprompt_request_error`, for
+both streaming connection setup and non-streaming requests. Its
+`status_code` and `request_id` fields contain HTTP metadata when
+available, and are `NULL` otherwise (for example, a connection failure
+may have no HTTP response). The `parent` field preserves the original
+condition, including its class, call and any attached 'httr2' response.
+A provider's explicit JSON error message is included when available; the
+full response body is not appended. Applications can use these fields in
+their `tryCatch(error = ...)` handlers. The parent may contain request
+data and credentials, so applications should select diagnostic fields
+instead of logging the entire condition object. Errors from custom or
+'ellmer' providers retain those providers' behavior.
+
 ## See also
 
 [tidyprompt](https://kennispunttwente.github.io/tidyprompt/reference/tidyprompt-class.md),

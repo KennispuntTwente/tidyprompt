@@ -144,6 +144,11 @@ prompt_with_dir_function <- "What are the files in my current directory?" |>
 #> (or 'llm_provider$tool_type' if set); this does not consider model compatability
 #> * Manually set argument 'type' if errors occur ("text-based" always works)
 #> * Use `options(tidyprompt.warn.auto.tools = FALSE)` to suppress this warning
+#> Warning: The `.additional_properties` argument of `type_object()` is deprecated as of
+#> ellmer 0.5.0.
+#> ℹ The deprecated feature was likely used in the tidyprompt package.
+#>   Please report the issue at
+#>   <https://github.com/KennispuntTwente/tidyprompt/issues>.
 if (FALSE) { # \dontrun{
   send_prompt(prompt_with_dir_function)
   # --- Sending request to LLM provider (llama3.1:8b): ---

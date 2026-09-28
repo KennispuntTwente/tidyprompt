@@ -164,6 +164,23 @@ was used.)</p></li>
 </ul></li>
 </ul></div>
     <div class="section level2">
+    <h2 id="request-errors">Request errors<a class="anchor" aria-label="anchor" href="#request-errors"></a></h2>
+
+
+<p>HTTP request failures from the built-in OpenAI-compatible and Ollama
+providers signal a condition of class <code>tidyprompt_request_error</code>, for both
+streaming connection setup and non-streaming requests. Its <code>status_code</code>
+and <code>request_id</code> fields contain HTTP metadata when available, and are <code>NULL</code>
+otherwise (for example, a connection failure may have no HTTP response).
+The <code>parent</code> field preserves the original condition, including its class,
+call and any attached 'httr2' response. A provider's explicit JSON error
+message is included when available; the full response body is not appended.
+Applications can use these fields in their <code>tryCatch(error = ...)</code> handlers.
+The parent may contain request data and credentials, so applications should
+select diagnostic fields instead of logging the entire condition object.
+Errors from custom or 'ellmer' providers retain those providers' behavior.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><a href="tidyprompt-class.html">tidyprompt</a>, <code><a href="prompt_wrap.html">prompt_wrap()</a></code>, <a href="llm_provider-class.html">llm_provider</a>, <code><a href="llm_provider_ollama.html">llm_provider_ollama()</a></code>,
 <code><a href="llm_provider_openai.html">llm_provider_openai()</a></code></p>
@@ -232,7 +249,7 @@ was used.)</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
