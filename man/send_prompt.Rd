@@ -100,6 +100,22 @@ is received or the maximum number of interactions is reached. The function will
 apply extraction and validation functions to the LLM response, as specified
 in the prompt wraps (see \code{\link[=prompt_wrap]{prompt_wrap()}}). If the maximum number of interactions
 }
+\section{Request errors}{
+
+HTTP request failures from the built-in OpenAI-compatible and Ollama
+providers signal a condition of class \code{tidyprompt_request_error}, for both
+streaming connection setup and non-streaming requests. Its \code{status_code}
+and \code{request_id} fields contain HTTP metadata when available, and are \code{NULL}
+otherwise (for example, a connection failure may have no HTTP response).
+The \code{parent} field preserves the original condition, including its class,
+call and any attached 'httr2' response. A provider's explicit JSON error
+message is included when available; the full response body is not appended.
+Applications can use these fields in their \code{tryCatch(error = ...)} handlers.
+The parent may contain request data and credentials, so applications should
+select diagnostic fields instead of logging the entire condition object.
+Errors from custom or 'ellmer' providers retain those providers' behavior.
+}
+
 \examples{
 \dontrun{
   "Hi!" |>

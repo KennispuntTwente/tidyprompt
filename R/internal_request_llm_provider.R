@@ -122,29 +122,54 @@ request_llm_provider <- function(
 }
 
 req_llm_handle_error <- function(e) {
-  msg <- paste0(e$message)
-
-  # Try to parse and include JSON body if available
-  body_msg <- tryCatch(
-    {
-      body <- e$resp |>
-        httr2::resp_body_string() |>
-        jsonlite::fromJSON()
-      paste0(
-        "\nResponse body: ",
-        jsonlite::toJSON(body, pretty = TRUE, auto_unbox = TRUE)
-      )
-    },
-    error = function(e) "\n(Could not parse JSON body from response)"
+  # Keep the actual condition as the cause. Converting it to stop(message)
+  # loses its class, response headers and HTTP status before callers see it.
+  resp <- e$resp
+  status_code <- tryCatch(
+    httr2::resp_status(resp),
+    error = function(err) NULL
   )
+  request_id <- NULL
+  for (header in c(
+    "x-request-id", "request-id", "x-ms-request-id",
+    "apim-request-id", "x-amzn-requestid"
+  )) {
+    value <- tryCatch(httr2::resp_header(resp, header), error = function(err) NULL)
+    if (is.character(value) && length(value) == 1L && !is.na(value) && nzchar(value)) {
+      request_id <- value
+      break
+    }
+  }
 
-  msg <- paste0(
-    msg,
-    body_msg,
-    "\nUse 'httr2::last_response()' and 'httr2::last_request()' for more information"
+  # Show only a provider's explicit error message, not the entire JSON body.
+  # Metadata/body parsing must never replace the original request failure.
+  provider_message <- tryCatch({
+    body <- httr2::resp_body_json(resp, simplifyVector = FALSE)
+    value <- NULL
+    if (is.list(body)) {
+      value <- if (is.list(body$error)) body$error$message else body$error
+      if (is.null(value)) value <- body$message
+    }
+    if (is.character(value) && length(value) == 1L &&
+        !is.na(value) && nzchar(value)) {
+      substr(value, 1L, 4000L)
+    } else {
+      NULL
+    }
+  }, error = function(err) NULL)
+
+  message <- "LLM request failed."
+  if (!is.null(provider_message)) {
+    message <- paste0(message, "\nProvider message: ", provider_message)
+  }
+  rlang::abort(
+    message,
+    class = "tidyprompt_request_error",
+    parent = e,
+    status_code = status_code,
+    request_id = request_id,
+    call = NULL
   )
-
-  stop(msg, call. = FALSE)
 }
 
 req_llm_stream <- function(

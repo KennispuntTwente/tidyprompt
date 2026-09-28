@@ -1,5 +1,12 @@
 # tidyprompt (development version)
 
+* Built-in OpenAI-compatible and Ollama request failures now signal
+`tidyprompt_request_error` with the original condition in `parent`, plus
+`status_code` and `request_id` fields when available. This preserves HTTP
+diagnostics through `send_prompt()` for both streaming connection setup and
+non-streaming requests. Error messages include a provider's explicit error
+message instead of appending the entire JSON response body.
+
 * Fixed a connection leak in streaming requests: `req_llm_stream()` (used
 internally when `stream = TRUE`) now closes the underlying `httr2`
 streaming connection once a response has been read. Previously, the
