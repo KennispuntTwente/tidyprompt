@@ -63,6 +63,53 @@ test_that("request diagnostics survive missing headers and non-JSON responses", 
   }
 })
 
+test_that("authentication, rate limits and server errors preserve their HTTP response", {
+  skip_if_not_installed("webfakes")
+  app <- webfakes::new_app()
+  app$post("/error", function(req, res) {
+    status <- as.integer(req$query$status)
+    res$set_status(status)$set_header("X-MS-Request-ID", paste0("request-", status))$
+      set_header("Retry-After", "30")$set_header("Content-Type", "text/html")$
+      send("<html>PRIVATE_PROXY_ERROR_BODY</html>")
+  })
+  server <- webfakes::new_app_process(app)
+  withr::defer(server$stop())
+  for (stream in c(FALSE, TRUE)) {
+    for (status in c(401L, 429L, 500L, 503L)) {
+      provider <- llm_provider_openai(
+        parameters = list(model = "test-model", stream = stream),
+        api_key = "test-only", verbose = FALSE,
+        url = paste0(server$url("/error"), "?status=", status)
+      )
+      error <- tryCatch(send_prompt("test", provider, verbose = FALSE), error = identity)
+      expect_s3_class(error, "tidyprompt_request_error")
+      expect_identical(error$status_code, status)
+      expect_identical(error$request_id, paste0("request-", status))
+      expect_s3_class(error$parent, paste0("httr2_http_", status))
+      expect_identical(httr2::resp_header(error$parent$resp, "retry-after"), "30")
+      expect_false(grepl("PRIVATE_PROXY_ERROR_BODY", conditionMessage(error), fixed = TRUE))
+    }
+  }
+})
+
+test_that("provider messages are bounded and request ID aliases have consistent precedence", {
+  for (header in c("X-Request-ID", "Request-ID", "X-MS-Request-ID", "APIM-Request-ID", "X-Amzn-RequestId")) {
+    headers <- list("content-type" = "application/json")
+    headers[[header]] <- "request-alias"
+    response <- httr2::response(status_code = 400L, headers = headers,
+      body = charToRaw(jsonlite::toJSON(list(error = list(message = strrep("x", 5000))), auto_unbox = TRUE)))
+    original <- structure(list(message = "HTTP 400", call = NULL, resp = response),
+      class = c("httr2_http_400", "error", "condition"))
+    error <- tryCatch(req_llm_handle_error(original), error = identity)
+    expect_identical(error$request_id, "request-alias")
+    expect_lte(nchar(error$message), 4100)
+    expect_match(error$message, strrep("x", 4000), fixed = TRUE)
+    expect_identical(error$parent, original)
+  }
+  original$resp$headers <- list("x-request-id" = "preferred", "apim-request-id" = "secondary")
+  expect_identical(tryCatch(req_llm_handle_error(original), error = identity)$request_id, "preferred")
+})
+
 test_that("transport errors retain their original condition without invented HTTP metadata", {
   original <- structure(
     list(message = "Could not resolve host", call = quote(connect_to_provider())),
