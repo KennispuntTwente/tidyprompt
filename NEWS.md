@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* `limit_ellmer_requests()` bounds native model requests across internal tool
+  loops, structured extraction and tidyprompt feedback rounds.
+
 * Ellmer streams can expose rich content events and accept a stream controller.
   Cancellation and iteration errors retain recoverable partial chat state.
 

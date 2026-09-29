@@ -109,3 +109,35 @@ The condition exposes the working chat and ellmer's partial turn; partial text
 is never treated as a successful answer. Iteration failures do not trigger a
 second model request. Controllers require a streaming-capable path; the
 blocking structured fallback cannot be cancelled with a stream controller.
+
+## Request limits and observability
+
+`max_interactions` limits tidyprompt's outer evaluation loop. Use
+`limit_ellmer_requests(prompt, max_requests = 5)` to bound individual model
+requests across native tool calls and feedback. This requires ellmer 0.5.0 and
+counts the blocking structured path explicitly, because that method bypasses
+ellmer's request hooks. The limit stops before the next model request and raises
+`tidyprompt_request_limit` with the working chat attached. It does not prevent
+execution of tools requested by an already completed model request, or bound
+transport-level retries made within one model request.
+
+```{r}
+prompt <- limit_ellmer_requests("Research this question", 5)
+prompt <- prompt_wrap(prompt, parameter_fn = function(llm_provider) {
+  working <- llm_provider$get_chat()
+  working$conversation_id <- "research-session-123"
+  working$on_request_end(function(turn) {
+    print(turn@tokens)
+    print(turn@cost)
+  })
+  list()
+})
+result <- send_prompt(prompt, chat, return_mode = "full")
+result$ellmer_chat$get_tokens()
+```
+
+Use native turn metadata and ellmer tracing for usage and latency; the adapter's
+HTTP fields do not represent native requests. `on_request_end` itself does not
+fire on the blocking structured path in ellmer 0.5.0; read the returned native
+turns there. Token estimates and recorded cost cannot guarantee a final spending
+cap, because a request may exceed the remaining estimate before it completes.

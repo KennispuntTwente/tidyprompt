@@ -1720,6 +1720,7 @@ llm_provider_ellmer <- function(
     }
 
     if (use_structured && is.null(structured_stream)) {
+      if (is.function(params$.ellmer_request_guard)) params$.ellmer_request_guard()
       if (!is.null(multimodal_args)) {
         reply_struct <- do.call(
           ch$chat_structured,
@@ -1837,6 +1838,7 @@ llm_provider_ellmer <- function(
             }
           }
         ), error = function(e) {
+          if (inherits(e, "tidyprompt_request_limit")) stop(e)
           ellmer_stream_abort(ch, partial_response_env$partial_response, parent = e)
         }, interrupt = function(e) {
           ellmer_stream_abort(ch, partial_response_env$partial_response, parent = e)
