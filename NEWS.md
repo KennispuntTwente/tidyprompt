@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Zero-argument R tools register correctly with ellmer. Failed native tool
+conversions now identify the tool and preserve the original error.
+
 * Renaming ellmer tools preserves ignored arguments, conversion settings and
 annotations without reconstructing their definitions.
 

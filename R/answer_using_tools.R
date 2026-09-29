@@ -269,7 +269,9 @@ answer_using_tools <- function(
           # convert tidyprompt tool -> ellmer ToolDef
           ell_tool <- tryCatch(
             tidyprompt_tool_to_ellmer(tp_tools[[nm]], name = nm),
-            error = function(e) NULL
+            error = function(e) rlang::abort(
+              paste0("Could not convert tool '", nm, "' for ellmer."), parent = e
+            )
           )
           if (!is.null(ell_tool)) ellmer_tools[[nm]] <- ell_tool
         }
@@ -1019,7 +1021,7 @@ tools_get_docs <- function(func, name = NULL) {
       is.character(docs$name) & length(docs$name) == 1,
       is.character(docs$description) & length(docs$description) == 1,
       is.list(docs$arguments),
-      !is.null(names(docs$arguments)),
+      length(docs$arguments) == 0L || !is.null(names(docs$arguments)),
       is.null(docs$return$description) ||
         (is.character(docs$return$description) &
           length(docs$return$description) == 1)
