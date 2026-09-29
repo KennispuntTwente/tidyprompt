@@ -29,7 +29,7 @@ testthat::test_that("native_structured_result is cleared after use", {
   provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
 
   schema <- ellmer::type_object(
-    value = ellmer::type_string(),
+    result = ellmer::type_string(),
     .additional_properties = TRUE
   )
 
@@ -49,7 +49,7 @@ testthat::test_that("ellmer warns when structured output and tools are both requ
   provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
 
   schema <- ellmer::type_object(
-    value = ellmer::type_string(),
+    result = ellmer::type_string(),
     .additional_properties = TRUE
   )
   dummy_tool <- ellmer::tool(

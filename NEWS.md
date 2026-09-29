@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* Rich JSON schemas retain their constraints through ellmer conversion.
+Native structured results are validated without changing their R classes;
+unsupported schemas no longer silently lose enforcement.
+
 * History compacted by ellmer request callbacks is now reflected in returned
 transcripts and subsequent requests instead of restoring removed messages.
 

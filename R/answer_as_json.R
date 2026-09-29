@@ -169,10 +169,7 @@ answer_as_json <- function(
   }
 
   # Normalize once so we can use either representation everywhere
-  sch <- tryCatch(
-    normalize_schema_dual(schema, strict = schema_strict),
-    error = function(e) list(json_schema = NULL, ellmer_type = NULL)
-  )
+  sch <- normalize_schema_dual(schema, strict = schema_strict)
 
   # Will be filled by modify_fn if we inject schema details into the prompt
   schema_instruction <- NULL
@@ -293,10 +290,15 @@ answer_as_json <- function(
       if (!is.null(native)) {
         # Clear it so it's not reused on retries
         llm_provider$parameters$.native_structured_result <- NULL
+        checked <- validate_native_schema(native, sch$json_schema, schema_strict)
+        if (inherits(checked, "llm_feedback")) return(checked)
         return(native)
       }
       # Fallback: parse from the transcript text
-      return(llm_response |> jsonlite::fromJSON())
+      native <- jsonlite::fromJSON(llm_response)
+      checked <- validate_native_schema(native, sch$json_schema, schema_strict)
+      if (inherits(checked, "llm_feedback")) return(checked)
+      return(native)
     }
 
     jsons <- extraction_fn_json(llm_response)

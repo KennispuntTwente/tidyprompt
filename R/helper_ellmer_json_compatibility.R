@@ -20,7 +20,8 @@ ellmer_chat_turns <- function(chat) {
 
 is_json_schema_list <- function(x) {
   is.list(x) &&
-    (any(c("$schema", "type", "properties", "items", "enum") %in% names(x)) ||
+    (any(c("$schema", "$ref", "$defs", "definitions", "type", "properties",
+      "items", "enum", "const", "anyOf", "oneOf", "allOf", "not") %in% names(x)) ||
       # Top-level "name/schema/strict" wrapper we sometimes build:
       identical(sort(names(x)), sort(c("name", "schema", "strict"))) ||
       # Loose heuristic for object schemas:
@@ -166,6 +167,33 @@ ellmer_type_ignore_compat <- function(description = NULL, required = FALSE) {
 
 # --- JSON Schema -> ellmer::type_* -----------------------------------------
 
+schema_json <- function(schema) {
+  arrays <- c("required", "enum", "anyOf", "oneOf", "allOf", "prefixItems", "examples")
+  prepare <- function(x) {
+    if (!is.list(x)) return(x)
+    for (nm in names(x)) {
+      if (nm %in% arrays && is.atomic(x[[nm]])) {
+        x[[nm]] <- as.list(x[[nm]])
+      } else if (is.list(x[[nm]])) {
+        x[[nm]] <- lapply(x[[nm]], prepare)
+        # Also visit schema objects, not just arrays/maps of schemas.
+        if (is_json_schema_list(x[[nm]])) x[[nm]] <- prepare(x[[nm]])
+      }
+    }
+    x
+  }
+  as.character(jsonlite::toJSON(prepare(schema), auto_unbox = TRUE, null = "null"))
+}
+
+schema_requires_native_json <- function(schema) {
+  supported <- c("type", "description", "properties", "required", "items",
+    "enum", "additionalProperties", "x-tidyprompt-ignore")
+  length(setdiff(names(schema), supported)) > 0L ||
+    length(schema$type) > 1L ||
+    (!is.null(schema$enum) && !is.character(schema$enum)) ||
+    is.list(schema$additionalProperties)
+}
+
 json_schema_to_ellmer_type <- function(
   schema,
   required = TRUE,
@@ -194,6 +222,13 @@ json_schema_to_ellmer_type <- function(
       description = schema$description %||% NULL,
       required = FALSE
     ))
+  }
+
+  if (schema_requires_native_json(schema)) {
+    result <- ellmer::type_from_schema(text = schema_json(schema))
+    S7::prop(result, "required") <- required
+    attr(result, "tidyprompt_schema") <- schema
+    return(result)
   }
 
   # Handle enum
@@ -300,7 +335,8 @@ ellmer_type_to_json_schema <- function(x, strict = FALSE, description = NULL) {
 
   # --- type_from_schema: already carries a JSON schema, extract it --------
   if (!is.null(sig$json_schema) && has_all_classes(x, sig$json_schema)) {
-    schema <- attr(x, "json", exact = TRUE) %||%
+    schema <- attr(x, "tidyprompt_schema", exact = TRUE) %||%
+      attr(x, "json", exact = TRUE) %||%
       attr(x, "schema", exact = TRUE)
     if (is.list(schema)) {
       return(schema)
@@ -418,19 +454,14 @@ normalize_schema_dual <- function(schema, strict = FALSE) {
 
   if (is_ellmer_type(schema)) {
     # ellmer type supplied; attempt reverse conversion for OpenAI/Ollama
-    json_s <- tryCatch(
-      ellmer_type_to_json_schema(schema, strict = strict),
-      error = function(e) NULL
-    )
+    json_s <- ellmer_type_to_json_schema(schema, strict = strict)
     return(list(json_schema = json_s, ellmer_type = schema))
   }
 
   if (is_json_schema_list(schema)) {
     # JSON Schema supplied; convert forward for ellmer
-    ellmer_t <- tryCatch(
-      json_schema_to_ellmer_type(schema, required = TRUE, strict = strict),
-      error = function(e) NULL
-    )
+    ellmer_t <- if (ellmer_available())
+      json_schema_to_ellmer_type(schema, required = TRUE, strict = strict) else NULL
     return(list(json_schema = schema, ellmer_type = ellmer_t))
   }
 
