@@ -106,6 +106,7 @@ testthat::test_that("is_json_schema_list detects typical shapes", {
 
 test_that("object respects additionalProperties flag", {
   testthat::skip_if_not_installed("ellmer")
+  withr::local_options(lifecycle_verbosity = "error")
 
   s <- list(
     type = "object",
@@ -317,15 +318,11 @@ testthat::test_that("optional vs required fields preserved across roundtrip", {
 
   ty <- json_schema_to_ellmer_type(schema, strict = FALSE)
 
-  # Inspect required attributes on child ellmer nodes
-  atts <- attributes(ty)
-  atts_a <- atts$properties$a |> attributes()
-  a_req <- atts_a$required
-  atts_b <- atts$properties$b |> attributes()
-  b_req <- atts_b$required
-
-  testthat::expect_identical(a_req, FALSE)
-  testthat::expect_true(isTRUE(b_req))
+  # Open objects retain required flags in raw JSON Schema. Closed objects
+  # continue to expose them on native type properties.
+  closed <- json_schema_to_ellmer_type(schema, strict = TRUE)
+  testthat::expect_false(closed@properties$a@required)
+  testthat::expect_true(closed@properties$b@required)
 
   # Back to JSON: only "b" should be required
   back <- ellmer_type_to_json_schema(ty, strict = FALSE)

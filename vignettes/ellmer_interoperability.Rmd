@@ -42,3 +42,18 @@ result$ellmer_chat$get_turns()
 Callbacks require the corresponding methods in your ellmer version. The
 adapter honors history replacement performed by request callbacks, including
 compaction, when preparing later feedback turns.
+
+## Schemas and tool results
+
+Closed objects use ellmer's native types. Open objects and constraints such as
+numeric bounds or schema composition use `ellmer::type_from_schema()` to preserve
+the schema. Provider/model support for these schemas still varies. Raw schemas
+return JSON-shaped R values rather than ellmer's typed factors and data frames.
+Install `jsonvalidate` to validate constraints locally; tidyprompt requires it
+when a schema has constraints beyond the basic native types.
+
+Tidyprompt-created tools serialize lists as JSON objects/arrays and data frames
+as arrays of row objects. Return an explicit JSON string to control serialization.
+Native ellmer tools retain their own result contract. Rich content results and
+tools using `ellmer::tool_context()` need native ellmer execution. Cross-provider
+tool conversion preserves nested argument schemas and the native `convert` policy.

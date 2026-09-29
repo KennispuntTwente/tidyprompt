@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Schema conversion no longer calls ellmer's deprecated `.additional_properties`
+  argument. Open-object schemas are preserved using `type_from_schema()`.
+
 * Ellmer chats now deep-clone callback registries for each evaluation. The new
   interoperability vignette explains how to bind hooks to the working chat.
 

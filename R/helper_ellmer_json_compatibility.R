@@ -51,10 +51,7 @@ is_json_schema_list <- function(x) {
         boolean = class(ellmer::type_boolean()),
         enum = class(ellmer::type_enum(c("a", "b"))),
         array = class(ellmer::type_array(ellmer::type_string())),
-        object = class(ellmer::type_object(
-          .description = "probe",
-          .additional_properties = TRUE
-        ))
+        object = class(ellmer::type_object(.description = "probe"))
       )
       if (exists("type_ignore", envir = asNamespace("ellmer"))) {
         s$ignore <- tryCatch(
@@ -298,11 +295,21 @@ json_schema_to_ellmer_type <- function(
     addl <- schema$additionalProperties
     addl_flag <- if (is.null(addl)) !isTRUE(strict) else isTRUE(addl)
 
+    if (addl_flag) {
+      # Open objects are no longer part of type_object()'s supported API.
+      # Preserve them explicitly as raw JSON Schema rather than closing them.
+      schema$properties <- lapply(ellmer_fields, ellmer_type_to_json_schema, strict = strict)
+      schema$additionalProperties <- TRUE
+      result <- ellmer::type_from_schema(text = schema_json(schema))
+      S7::prop(result, "required") <- required
+      attr(result, "tidyprompt_schema") <- schema
+      return(result)
+    }
+
     args <- c(
       ellmer_fields,
       list(
         .description = schema$description %||% NULL,
-        .additional_properties = addl_flag,
         .required = required
       )
     )
@@ -313,19 +320,11 @@ json_schema_to_ellmer_type <- function(
     return(do.call(ellmer::type_object, args))
   }
 
-  # Fallback: use type_from_schema() if available, else permissive object
-  if (
-    ellmer_available() &&
-      exists("type_from_schema", envir = asNamespace("ellmer"))
-  ) {
-    json_str <- jsonlite::toJSON(schema, auto_unbox = TRUE)
-    return(ellmer::type_from_schema(json_str))
-  }
-  ellmer::type_object(
-    .description = schema$description %||% NULL,
-    .additional_properties = TRUE,
-    .required = required
-  )
+  # All supported ellmer versions accept raw schemas.
+  result <- ellmer::type_from_schema(text = schema_json(schema))
+  S7::prop(result, "required") <- required
+  attr(result, "tidyprompt_schema") <- schema
+  result
 }
 
 # --- ellmer::type_* -> JSON Schema (best-effort) ----------------------------
