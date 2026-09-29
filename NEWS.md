@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* `add_content()` attaches native ellmer content, including documents and file
+  references, to prompts and preserves it across feedback turns.
+
 * CI now pins ellmer 0.5.0 alongside the minimum version and checks ellmer
   regressions with lifecycle deprecations treated as errors.
 

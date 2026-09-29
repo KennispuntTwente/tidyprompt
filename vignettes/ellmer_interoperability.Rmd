@@ -57,3 +57,16 @@ as arrays of row objects. Return an explicit JSON string to control serializatio
 Native ellmer tools retain their own result contract. Rich content results and
 tools using `ellmer::tool_context()` need native ellmer execution. Cross-provider
 tool conversion preserves nested argument schemas and the native `convert` policy.
+
+## Documents and uploaded files
+
+Use `add_content()` for any native ellmer Content object, including documents,
+PDFs and uploaded-file references. Ellmer remains responsible for file uploads,
+expiry and provider restrictions. Attachments work with structured output and
+streaming, and stay in native history during feedback without being reattached.
+
+```{r}
+document <- ellmer::content_document_file("report.txt")
+result <- add_content("Summarize this document", document) |>
+  send_prompt(chat, return_mode = "full")
+```

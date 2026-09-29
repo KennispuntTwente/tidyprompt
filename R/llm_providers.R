@@ -945,6 +945,7 @@ llm_provider_ellmer <- function(
       ".ellmer_tools",
       ".ellmer_structured_type",
       ".add_image_parts",
+      ".ellmer_content",
       ".reset_ellmer_chat"
     )
 
@@ -1653,8 +1654,9 @@ llm_provider_ellmer <- function(
     # translate those parts into ellmer content objects.
     add_parts <- self$parameters$.add_image_parts %||% NULL
 
+    content_parts <- params$.ellmer_content %||% list()
     multimodal_contents <- list()
-    use_multimodal <- length(add_parts) > 0
+    use_multimodal <- length(add_parts) > 0 || length(content_parts) > 0
 
     if (use_multimodal) {
       text_content <- as_content_text(prompt)
@@ -1668,6 +1670,7 @@ llm_provider_ellmer <- function(
           multimodal_contents[[length(multimodal_contents) + 1]] <- ic
         }
       }
+      multimodal_contents <- c(multimodal_contents, content_parts)
 
       if (length(multimodal_contents) == 0L) {
         use_multimodal <- FALSE
@@ -1817,6 +1820,8 @@ llm_provider_ellmer <- function(
       assistant_text <- as.character(reply_any)
     }
 
+    # Further feedback turns replay these attachments from native history.
+    self$parameters$.ellmer_content <- NULL
     completed <- NULL
 
     native_turns <- tryCatch(
