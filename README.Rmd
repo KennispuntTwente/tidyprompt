@@ -243,9 +243,11 @@ LLM APIs.
 'ellmer' specifically has surfaced as the most popular R package for interfacing
 with LLM APIs. Therefore, 'tidyprompt' now supports 'ellmer' chat objects as LLM providers. 
 Users can pass an 'ellmer' chat object directly to `send_prompt()`, or use the `llm_provider_ellmer()`
-function to create an LLM provider from an 'ellmer' chat object. This allows users to use any
-LLM provider that can be configured with 'ellmer', including the respective 
-configuration and features from the 'ellmer' package.
+function to create an LLM provider from an 'ellmer' chat object. Provider and model
+configuration remains with ellmer. The adapter supports native tools, structured
+output, content attachments, and streaming; availability depends on the ellmer
+version and provider. See [Working with ellmer](vignettes/ellmer_interoperability.Rmd)
+for the capability matrix, request limits, callbacks and recovery behavior.
 
 Furthermore, `answer_as_json()` and `answer_using_tools()` support
 'ellmer' definitions for structured output and tools. When using an 'ellmer' LLM provider,

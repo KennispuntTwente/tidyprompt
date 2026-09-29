@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* The ellmer interoperability vignette now documents supported capabilities,
+  a tools-then-extraction workflow, and async/batch boundaries.
+
 * `limit_ellmer_requests()` bounds native model requests across internal tool
   loops, structured extraction and tidyprompt feedback rounds.
 
