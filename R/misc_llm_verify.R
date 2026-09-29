@@ -22,6 +22,12 @@
 #' that no redundant validation is performed by the evaluating LLM on
 #' instructions which have already been validated by functions in those
 #' prompt wraps.
+#' The verifier receives the complete answer: text is sent directly, and other
+#' R values are serialized with [base::dput()], including all rows, columns and
+#' nested values. Console printing and tibble display limits do not apply.
+#' No size limit or automatic truncation is applied here; the complete answer
+#' must fit within the verifier model's context window. To review selected fields
+#' or chunks instead, split or select them explicitly before verification.
 #'
 #' @param prompt A single string or a [tidyprompt-class] object
 #'
@@ -96,7 +102,7 @@ llm_verify <- function(
       prompt_text <- wrap$modify_fn(prompt_text, answer_provider)
     }
 
-    result_as_text <- utils::capture.output(print(response))
+    result_as_text <- llm_verify_serialize(response)
 
     satisfied <- glue::glue(
       ">>> An assistant was asked:\n\n",
@@ -149,4 +155,16 @@ llm_verify <- function(
     validation_fn = validation_fn,
     type = "check"
   )
+}
+
+llm_verify_serialize <- function(response) {
+  if (is.character(response) && length(response) == 1L && !is.na(response)) {
+    return(response)
+  }
+  # dput() represents the full value independently of print methods, max.print,
+  # tibble dimensions and pillar options. Preserve types, attributes and NA.
+  paste(utils::capture.output(dput(
+    response,
+    control = c("keepNA", "keepInteger", "niceNames", "showAttributes", "digits17")
+  )), collapse = "\n")
 }

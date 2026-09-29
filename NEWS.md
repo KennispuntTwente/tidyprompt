@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* `llm_verify()` now sends complete structured answers using deterministic R
+  serialization, including every tibble row and nested value. It no longer
+  silently substitutes a truncated console preview for the answer.
+
 * Returned `chat_history_clean` now preserves native 'ellmer' tool requests
   together with their results, so cleaned conversations can be resumed safely.
 

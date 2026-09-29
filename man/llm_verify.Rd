@@ -58,6 +58,12 @@ but do not have an extraction or validation function. This is to ensure
 that no redundant validation is performed by the evaluating LLM on
 instructions which have already been validated by functions in those
 prompt wraps.
+The verifier receives the complete answer: text is sent directly, and other
+R values are serialized with \code{\link[base:dput]{base::dput()}}, including all rows, columns and
+nested values. Console printing and tibble display limits do not apply.
+No size limit or automatic truncation is applied here; the complete answer
+must fit within the verifier model's context window. To review selected fields
+or chunks instead, split or select them explicitly before verification.
 }
 \examples{
 \dontrun{

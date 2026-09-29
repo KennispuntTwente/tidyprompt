@@ -28,6 +28,38 @@ composition_provider <- function(replies) {
   list(provider = provider, state = state)
 }
 
+test_that("verification receives all rows and nested fields independent of print options", {
+  response <- dplyr::tibble(
+    id = seq_len(100L),
+    nested = lapply(seq_len(100L), function(i) list(value = paste0("row-", i)))
+  )
+  response$nested[[100]] <- list(value = "problem-in-last-row")
+  expected <- llm_verify_serialize(response)
+  withr::local_options(list(max.print = 5L, tibble.print_max = 2L, pillar.width = 10L))
+  fixture <- composition_provider(c("answer", "FINISH[TRUE]"))
+  prompt <- prompt_wrap("Question", extraction_fn = function(x) response) |>
+    llm_verify()
+  expect_identical(send_prompt(prompt, fixture$provider), response)
+  judge_prompt <- tail(fixture$state$requests[[2]]$history$content, 1L)
+  expect_match(judge_prompt, "problem-in-last-row", fixed = TRUE)
+  expect_match(judge_prompt, expected, fixed = TRUE)
+  expect_identical(eval(parse(text = expected)), response)
+})
+
+test_that("verification serialization preserves complete structured R values", {
+  values <- list(
+    list(empty = list(), missing = NULL, nested = list(c("a", "b"))),
+    matrix(seq_len(200L), nrow = 100L),
+    list(number = pi, special = c(NA_real_, NaN, Inf)),
+    data.frame(day = as.Date("2026-09-29"), group = factor("a")),
+    c("first", "last"), NULL
+  )
+  for (value in values) {
+    expect_identical(eval(parse(text = llm_verify_serialize(value))), value)
+  }
+  expect_identical(llm_verify_serialize("full\ntext"), "full\ntext")
+})
+
 test_that("the first and last permitted answers are evaluated", {
   for (replies in list("42", c("invalid", "42"))) {
     fixture <- composition_provider(replies)
