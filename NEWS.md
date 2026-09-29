@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* History compacted by ellmer request callbacks is now reflected in returned
+transcripts and subsequent requests instead of restoring removed messages.
+
 * Ellmer follow-up requests preserve complete native turns, including tool
 request/result pairs, reasoning blocks, usage metadata and partial-turn classes.
 Native protocol content is retained when cleaning an ellmer conversation.

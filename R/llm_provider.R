@@ -256,7 +256,8 @@ NULL
         self$parameters$.native_structured_result <- response$native_structured_result
       }
 
-      if (nrow(chat_history_request) < nrow(chat_history)) {
+      if (!isTRUE(response$history_replaced) &&
+          nrow(chat_history_request) < nrow(chat_history)) {
         source_rows <- attr(chat_history_request, "source_rows") %||%
           seq_len(nrow(chat_history_request))
 

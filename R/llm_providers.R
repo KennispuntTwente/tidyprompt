@@ -1828,8 +1828,12 @@ llm_provider_ellmer <- function(
 
     # Transcript rows also contain citations, tools and thinking. They are not
     # interchangeable with the final assistant answer.
+    history_replaced <- length(before_turns) > 0L &&
+      !identical(utils::head(native_turns, length(before_turns)), before_turns) &&
+      inherits(ch, "Chat")
     citations <- list()
-    if (length(native_turns) > length(before_turns)) {
+    if (length(native_turns) > length(before_turns) ||
+        (history_replaced && length(native_turns))) {
       last_props <- ellmer_object_props(utils::tail(native_turns, 1)[[1]])
       last_contents <- last_props$contents %||% list()
       citations <- Filter(function(x) {
@@ -1884,8 +1888,15 @@ llm_provider_ellmer <- function(
       )
     }
 
+    # Request hooks may replace/compact prior turns. Positional merging would
+    # restore deleted messages and attach new content to the wrong rows.
+    if (history_replaced) {
+      completed <- native_turns_to_history(native_turns)
+    }
+
     list(
       completed = completed,
+      history_replaced = history_replaced,
       response = assistant_text,
       citations = citations,
       http = list(request = NULL, response = NULL),

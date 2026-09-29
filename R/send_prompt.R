@@ -248,7 +248,7 @@ send_prompt <- function(
       response <- llm_provider$complete_chat(
         list(chat_history = cleaned_chat_history)
       )
-      chat_history <<- merge_completed_chat_history(
+      chat_history <<- if (isTRUE(response$history_replaced)) response$completed else merge_completed_chat_history(
         chat_history,
         response$completed,
         attr(cleaned_chat_history, "source_rows") %||%
@@ -256,7 +256,7 @@ send_prompt <- function(
       )
     } else {
       response <- llm_provider$complete_chat(list(chat_history = chat_history))
-      chat_history <<- merge_completed_chat_history(
+      chat_history <<- if (isTRUE(response$history_replaced)) response$completed else merge_completed_chat_history(
         chat_history,
         response$completed,
         seq_len(nrow(chat_history))
