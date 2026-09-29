@@ -290,13 +290,13 @@ answer_as_json <- function(
       if (!is.null(native)) {
         # Clear it so it's not reused on retries
         llm_provider$parameters$.native_structured_result <- NULL
-        checked <- validate_native_schema(native, sch$json_schema, schema_strict)
+        checked <- validate_native_schema(native, sch$json_schema, schema_strict, sch$ellmer_type)
         if (inherits(checked, "llm_feedback")) return(checked)
         return(native)
       }
       # Fallback: parse from the transcript text
       native <- jsonlite::fromJSON(llm_response)
-      checked <- validate_native_schema(native, sch$json_schema, schema_strict)
+      checked <- validate_native_schema(native, sch$json_schema, schema_strict, sch$ellmer_type)
       if (inherits(checked, "llm_feedback")) return(checked)
       return(native)
     }

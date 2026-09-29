@@ -33,3 +33,30 @@ test_that("native results enforce bounds while retaining native R shapes", {
   expect_true(validate_native_schema(rows, array_schema))
   expect_s3_class(validate_native_schema(data.frame(x = -1L), array_schema), "llm_feedback")
 })
+
+test_that("native optional fields and empty objects retain their JSON shape", {
+  skip_if_not_installed("jsonvalidate")
+  schema <- list(type = "object", properties = list(x = list(type = "string")),
+    additionalProperties = FALSE)
+  expect_true(validate_native_schema(list(x = NULL), schema))
+  expect_true(validate_native_schema(list(x = NA_character_), schema))
+  expect_true(validate_native_schema(list(), schema))
+  schema$required <- "x"
+  expect_s3_class(validate_native_schema(list(x = NULL), schema), "llm_feedback")
+  empty <- list(type = "object", properties = list(), additionalProperties = FALSE)
+  expect_true(validate_native_schema(list(), empty))
+  expect_match(schema_json(empty), '"properties":{}', fixed = TRUE)
+})
+
+test_that("raw schemas retain invalid scalar shapes and explicit nullable fields", {
+  skip_if_not_installed("ellmer")
+  skip_if_not_installed("jsonvalidate")
+  schema <- list(type = "array", items = list(type = "number"), minItems = 1L)
+  ty <- json_schema_to_ellmer_type(schema)
+  expect_true(validate_native_schema(list(1), schema, native_type = ty))
+  expect_s3_class(validate_native_schema(1, schema, native_type = ty), "llm_feedback")
+  schema <- list(type = "object", minProperties = 1L,
+    properties = list(x = list(type = c("string", "null"))))
+  ty <- json_schema_to_ellmer_type(schema)
+  expect_true(validate_native_schema(list(x = NULL), schema, native_type = ty))
+})

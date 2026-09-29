@@ -173,7 +173,10 @@ schema_json <- function(schema) {
   prepare <- function(x) {
     if (!is.list(x)) return(x)
     for (nm in names(x)) {
-      if (nm %in% arrays && is.atomic(x[[nm]])) {
+      if (nm %in% c("properties", "patternProperties", "$defs", "definitions") &&
+          is.list(x[[nm]]) && !length(x[[nm]])) {
+        names(x[[nm]]) <- character()
+      } else if (nm %in% arrays && is.atomic(x[[nm]])) {
         x[[nm]] <- as.list(x[[nm]])
       } else if (is.list(x[[nm]])) {
         x[[nm]] <- lapply(x[[nm]], prepare)

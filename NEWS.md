@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Native schema validation preserves empty objects and ellmer's absent optional
+  fields instead of incorrectly treating them as arrays or explicit nulls.
+
 * The ellmer interoperability vignette now documents supported capabilities,
   a tools-then-extraction workflow, and async/batch boundaries.
 
