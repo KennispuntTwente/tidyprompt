@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Returned `chat_history_clean` now preserves native 'ellmer' tool requests
+  together with their results, so cleaned conversations can be resumed safely.
+
 * `answer_as_dataframe()` keeps nested arrays and objects in list columns for
   raw JSON schemas and `ellmer::type_from_schema()`, preventing silent row
   expansion. Final row counts are checked against the input and schema limits.

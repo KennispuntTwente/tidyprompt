@@ -38,6 +38,8 @@
 #' first and last message from the user, the last message from the assistant,
 #' all messages from the system, and all tool results are kept in a 'clean'
 #' chat history. This clean chat history is used when requesting a new chat completion.
+#' With 'ellmer', native tool requests, results and associated turn content are
+#' preserved together, including in the returned `chat_history_clean`.
 #' Rows marked as non-replayable are excluded from new requests regardless of
 #' this setting, so the returned transcript may contain more rows than the model
 #' actually sees on a retry or follow-up call.
@@ -546,7 +548,10 @@ send_prompt <- function(
     return_list$chat_history <- chat_history
 
     if (clean_chat_history) {
-      return_list$chat_history_clean <- clean_chat_history(chat_history)
+      return_list$chat_history_clean <- clean_chat_history(
+        chat_history,
+        preserve_native = identical(llm_provider$api_type, "ellmer")
+      )
     }
 
     return_list$start_time <- start_time
