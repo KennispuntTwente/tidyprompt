@@ -96,6 +96,10 @@ is_ellmer_chat <- function(x) {
     is.function(x$chat)
 }
 
+ellmer_chat_clone <- function(chat) {
+  if ("deep" %in% names(formals(chat$clone))) chat$clone(deep = TRUE) else chat$clone()
+}
+
 ellmer_chat_clone_reset <- function(
   chat,
   context = "This ellmer chat object"
@@ -115,7 +119,7 @@ ellmer_chat_clone_reset <- function(
     stop(paste0(context, " must support `$set_turns()`."))
   }
 
-  chat <- chat$clone()
+  chat <- ellmer_chat_clone(chat)
   if (!is_ellmer_chat(chat)) {
     stop(paste0(context, " `$clone()` did not return a valid ellmer chat."))
   }

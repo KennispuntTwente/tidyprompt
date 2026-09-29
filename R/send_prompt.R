@@ -146,7 +146,7 @@ send_prompt <- function(
       )
       llm_provider$parameters$.reset_ellmer_chat <- NULL
     } else if (is.function(llm_provider$ellmer_chat$clone)) {
-      llm_provider$ellmer_chat <- llm_provider$ellmer_chat$clone()
+      llm_provider$ellmer_chat <- ellmer_chat_clone(llm_provider$ellmer_chat)
     }
   }
   if (!is.null(verbose)) {

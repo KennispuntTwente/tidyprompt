@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Ellmer chats now deep-clone callback registries for each evaluation. The new
+  interoperability vignette explains how to bind hooks to the working chat.
+
 * Tool results now serialize lists and data frames as JSON, preserving nested
   data and satisfying ellmer's result contract. Native content results are retained.
 

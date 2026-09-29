@@ -118,3 +118,24 @@ test_that("request-hook compaction becomes authoritative for subsequent requests
   result <- send_prompt(prompt, provider, verbose = FALSE, return_mode = "full")
   expect_equal(result$chat_history$content, c("New question", "The answer is 42."))
 })
+
+test_that("send_prompt isolates callback registries and configures the working clone", {
+  local_ellmer_response(citations = FALSE)
+  ch <- ellmer::chat_openai(model = "gpt-4.1-mini",
+    credentials = function() "test-only", echo = "none")
+  seen <- 0L
+  prompt <- prompt_wrap("Question", parameter_fn = function(llm_provider) {
+    working <- llm_provider$get_chat()
+    working$on_request_start(function(turns) {
+      seen <<- seen + 1L
+      working$set_turns(list())
+    })
+    list()
+  })
+  for (i in 1:2) send_prompt(prompt, ch, stream = FALSE, verbose = FALSE)
+  expect_equal(seen, 2L)
+  expect_length(ch$get_turns(), 0L)
+  ch$chat("Direct request")
+  expect_equal(seen, 2L)
+  expect_length(ch$get_turns(), 2L)
+})

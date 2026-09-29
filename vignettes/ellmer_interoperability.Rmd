@@ -1,0 +1,44 @@
+---
+title: "Working with ellmer"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Working with ellmer}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+`send_prompt()` accepts an ellmer Chat directly or an `llm_provider_ellmer()`.
+Pin the model when creating the chat if reproducibility matters; provider
+defaults can change. The adapter preserves native turns, content, usage, cost
+and citations in the full result.
+
+## Callbacks and chat ownership
+
+Each `send_prompt()` evaluation deep-clones its native chat. Callback registries,
+tools and conversation state on that working chat are independent of the original.
+A callback's R closure still refers to the variables it originally captured.
+Register callbacks that modify history on the working chat, inside a prompt
+wrap's `parameter_fn`, which runs after cloning:
+
+```{r}
+library(tidyprompt)
+chat <- ellmer::chat_openai(model = "gpt-4.1-mini")
+prompt <- prompt_wrap("Summarize the discussion", parameter_fn = function(llm_provider) {
+  working <- llm_provider$get_chat()
+  working$on_request_start(function(turns) {
+    # Inspect `turns` and, if needed, call working$set_turns(...).
+    message("Starting a model request")
+  })
+  list()
+})
+result <- send_prompt(prompt, chat, return_mode = "full")
+result$ellmer_chat$get_turns()
+```
+
+Callbacks require the corresponding methods in your ellmer version. The
+adapter honors history replacement performed by request callbacks, including
+compaction, when preparing later feedback turns.
