@@ -179,7 +179,13 @@ answer_as_json <- function(
 
     if (t == "ellmer") {
       if (!is.null(sch$ellmer_type)) {
-        return(list(.ellmer_structured_type = sch$ellmer_type))
+        if (isTRUE(llm_provider$parameters$.structured_output_wrap)) {
+          stop("Use only one native structured-output wrap per evaluation.")
+        }
+        return(list(
+          .ellmer_structured_type = sch$ellmer_type,
+          .structured_output_wrap = TRUE
+        ))
       } else {
         cli::cli_alert_warning(
           "{.strong `answer_as_json()`}: ellmer type not available; falling back."
@@ -348,7 +354,10 @@ answer_as_json <- function(
           llm_feedback(
             paste0(
               "Your response did not match the expected JSON schema.\n\n",
-              df_to_string(error_details),
+              paste(
+                utils::capture.output(print(error_details)),
+                collapse = "\n"
+              ),
               if (!is.null(schema_instruction)) {
                 paste0("\n\n", schema_instruction)
               } else {

@@ -1638,9 +1638,12 @@ llm_provider_ellmer <- function(
           error = function(e) list()
         )
       }
-      all_tools <- c(private$.base_tools_snapshot, prompt_tools)
+      all_tools <- merge_ellmer_tools(
+        private$.base_tools_snapshot,
+        prompt_tools
+      )
       if (is.function(ch$set_tools)) {
-        ch$set_tools(all_tools)
+        ch$set_tools(unname(all_tools))
       } else {
         for (td in prompt_tools) {
           ch$register_tool(td)

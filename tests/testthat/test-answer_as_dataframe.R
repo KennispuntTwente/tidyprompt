@@ -322,7 +322,7 @@ test_that("answer_as_dataframe uses native ellmer structured results", {
   expect_equal(result$age, c(32, 28))
 })
 
-test_that("answer_as_dataframe_row_schema preserves row schema with array<object> 'rows' column", {
+test_that("dataframe normalization preserves row schema with array<object> 'rows' column", {
   # Row schema where "rows" is an array-of-objects column, not a wrapper
   schema <- list(
     type = "object",
@@ -339,7 +339,7 @@ test_that("answer_as_dataframe_row_schema preserves row schema with array<object
     required = c("id", "rows")
   )
 
-  row_schema <- answer_as_dataframe_row_schema(schema)
+  row_schema <- answer_as_dataframe_schema(schema)$properties$rows$items
 
   # The heuristic must NOT unwrap; the row schema should keep both columns
   expect_equal(row_schema$type, "object")
@@ -349,12 +349,12 @@ test_that("answer_as_dataframe_row_schema preserves row schema with array<object
   expect_equal(row_schema$properties$rows$type, "array")
 })
 
-test_that("answer_as_dataframe_wrapper_schema emits required as array", {
+test_that("dataframe normalization emits required as array", {
   row_schema <- list(
     type = "object",
     properties = list(name = list(type = "string"))
   )
-  wrapper <- answer_as_dataframe_wrapper_schema(row_schema)
+  wrapper <- answer_as_dataframe_schema(row_schema)
 
   expect_equal(wrapper$required, list("rows"))
   # When serialized with auto_unbox, must produce a JSON array
@@ -362,4 +362,65 @@ test_that("answer_as_dataframe_wrapper_schema emits required as array", {
   parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
   expect_true(is.list(parsed$required))
   expect_equal(parsed$required[[1]], "rows")
+})
+test_that("array constraints survive dataframe schema normalization", {
+  skip_if_not_installed("ellmer")
+  skip_if_not_installed("jsonvalidate")
+  rows <- list(
+    type = "array",
+    minItems = 2L,
+    maxItems = 2L,
+    uniqueItems = TRUE,
+    items = list(
+      type = "object",
+      properties = list(name = list(type = "string")),
+      required = list("name"),
+      additionalProperties = FALSE
+    )
+  )
+  wrapper <- list(
+    type = "object",
+    properties = list(rows = rows),
+    required = list("rows"),
+    additionalProperties = FALSE
+  )
+  for (schema in list(
+    rows,
+    wrapper,
+    ellmer::type_from_schema(text = schema_json(rows))
+  )) {
+    prompt <- answer_as_dataframe("Question", schema, type = "ellmer")
+    wrap <- prompt$get_prompt_wraps()[[1]]
+    native <- wrap$parameter_fn(list(
+      api_type = "ellmer"
+    ))$.ellmer_structured_type
+    normalized <- ellmer_type_to_json_schema(native)$properties$rows
+    expect_equal(normalized$minItems, 2L)
+    expect_equal(normalized$maxItems, 2L)
+    expect_true(normalized$uniqueItems)
+    provider <- new.env()
+    provider$api_type <- "ellmer"
+    for (value in list(
+      list(list(name = "Alice")),
+      list(list(name = "Alice"), list(name = "Alice"))
+    )) {
+      provider$parameters <- list(
+        .native_structured_result = list(rows = value)
+      )
+      expect_s3_class(wrap$extraction_fn("unused", provider), "llm_feedback")
+    }
+    provider$parameters <- list(
+      .native_structured_result = list(
+        rows = list(
+          list(name = "Alice"),
+          list(name = "Bob")
+        )
+      )
+    )
+    expect_equal(wrap$extraction_fn("unused", provider)$name, c("Alice", "Bob"))
+    expect_error(
+      answer_as_dataframe("Question", schema, min_rows = 3, type = "ellmer"),
+      "row limits"
+    )
+  }
 })

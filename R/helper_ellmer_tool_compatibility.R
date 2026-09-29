@@ -75,6 +75,30 @@ is_ellmer_any_tool <- function(x) {
   is_ellmer_tool(x) || is_ellmer_builtin_tool(x)
 }
 
+# Keep tool objects intact; recursive parameter merging is not tool registration.
+merge_ellmer_tools <- function(existing, added) {
+  out <- list()
+  for (tool in c(existing, added)) {
+    name <- ellmer_tool_name(
+      tool,
+      fallback = if (is.list(tool)) tool$name else NULL
+    )
+    if (is.null(name)) {
+      stop("An ellmer tool must have a name.")
+    }
+    if (!is.null(out[[name]]) && !identical(out[[name]], tool)) {
+      stop(
+        "Tool name collision: '",
+        name,
+        "'. Use distinct names across tool wraps.",
+        call. = FALSE
+      )
+    }
+    out[[name]] <- tool
+  }
+  out
+}
+
 ellmer_tool_name <- function(tool, fallback = NULL) {
   props <- tryCatch(
     S7::props(tool),

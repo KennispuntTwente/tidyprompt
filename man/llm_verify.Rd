@@ -22,7 +22,10 @@ the result of the prompt will be accepted; if FALSE, the result will be declined
 \item{llm_provider}{A \linkS4class{llm_provider} object
 which will be used to verify the evaluation led to a satisfactory result.
 If not provided, the same LLM provider as the prompt was originally
-evaluated with will be used}
+evaluated with will be used
+(with its base configuration, without the answer's prompt-specific settings).
+Verification and feedback-summary requests share the original evaluation's
+request limit, including when a separate verifier provider is supplied.}
 
 \item{max_words_feedback}{The maximum number of words allowed in the summary of
 why the result was declined.

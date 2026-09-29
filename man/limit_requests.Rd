@@ -16,6 +16,8 @@ Count model requests across initial responses, tool follow-ups and feedback
 rounds, for regular tidyprompt providers and 'ellmer'. The counter resets for
 each \code{\link[=send_prompt]{send_prompt()}} evaluation. Streaming chunks and transport-level retries
 within a model request do not count as additional model requests.
+Nested \code{\link[=llm_verify]{llm_verify()}} evaluations, including rejection summaries, share the
+outer evaluation's counter.
 }
 \details{
 Alternatively, supply \code{max_requests} directly to \code{\link[=send_prompt]{send_prompt()}}. Both use

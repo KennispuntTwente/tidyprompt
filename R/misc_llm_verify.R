@@ -34,6 +34,9 @@
 #'  which will be used to verify the evaluation led to a satisfactory result.
 #' If not provided, the same LLM provider as the prompt was originally
 #'  evaluated with will be used
+#' (with its base configuration, without the answer's prompt-specific settings).
+#' Verification and feedback-summary requests share the original evaluation's
+#' request limit, including when a separate verifier provider is supplied.
 #'
 #' @param max_words_feedback The maximum number of words allowed in the summary of
 #'  why the result was declined.
@@ -61,10 +64,19 @@ llm_verify <- function(
   super_llm_provider <- llm_provider
 
   validation_fn <- function(response, llm_provider) {
-    if (!is.null(super_llm_provider)) {
-      llm_provider <- super_llm_provider
-    }
-    llm_provider <- llm_provider$clone()
+    answer_provider <- llm_provider
+    request_guard <- llm_provider$parameters$.request_guard
+    source_provider <- super_llm_provider %||% llm_provider
+    llm_provider <- (source_provider$parameters$.evaluation_base_provider %||%
+      source_provider)$clone()
+    # Provider-wide answer wraps must not recursively apply to the judge.
+    llm_provider$pre_prompt_wraps <- list()
+    llm_provider$post_prompt_wraps <- list()
+    llm_provider$parameters$.request_guard <- request_guard
+    llm_provider$parameters$.request_guard_needs_hook <- is.function(
+      request_guard
+    )
+    llm_provider$parameters$.request_limit_cleanup <- NULL
 
     prompt_text <- self$base_prompt
     prompt_wraps <- self$get_prompt_wraps("modification")
@@ -81,10 +93,9 @@ llm_verify <- function(
         next
       }
 
-      prompt_text <- wrap$modify_fn(prompt_text)
+      prompt_text <- wrap$modify_fn(prompt_text, answer_provider)
     }
 
-    original_prompt <- self$construct_prompt_text()
     result_as_text <- utils::capture.output(print(response))
 
     satisfied <- glue::glue(
@@ -101,15 +112,20 @@ llm_verify <- function(
       answer_by_chain_of_thought() |>
       send_prompt(llm_provider, return_mode = "full")
 
-    if (satisfied$response) {
+    if (isTRUE(satisfied$response)) {
       return(TRUE)
+    }
+    if (!identical(satisfied$response, FALSE)) {
+      return(llm_feedback(
+        "The verifier could not reach a decision. Check your answer."
+      ))
     }
 
     # Create summary of why the response was declined
     feedback <- glue::glue(
       "An assistant's answer was declined by another assistant.",
       "The declining assistant provided their chain of thought:\n\n",
-      satisfied$chat_history_clean |>
+      satisfied$chat_history |>
         dplyr::select(c("role", "content")) |>
         df_to_string(),
       "\n\n",

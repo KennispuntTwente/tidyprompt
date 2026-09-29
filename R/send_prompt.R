@@ -29,6 +29,7 @@
 #' LLM provider. Default is 10. If the maximum number of interactions is reached
 #' without a successful response, 'NULL' is returned as the response (see return
 #' value). The first interaction is the initial chat completion.
+#' Every response is extracted and validated, including the last allowed response.
 #' This controls the outer extraction, validation and feedback loop; it does not
 #' count individual model requests within provider tool loops. Use `max_requests`
 #' to also bound those requests.
@@ -54,8 +55,9 @@
 #' during this evaluation, equivalent to applying [limit_requests()] to `prompt`.
 #' The default, `NULL`, adds no request limit and preserves any limit already
 #' attached to the prompt. If both are supplied, the smaller limit applies.
-#' Counts the initial request, tool follow-ups and feedback requests, excluding
-#' streaming chunks and transport-level retries. Attempting another request
+#' Counts the initial request, tool follow-ups, feedback requests and nested
+#' [llm_verify()] requests, excluding streaming chunks and transport-level retries.
+#' Attempting another request
 #' after the limit raises a `tidyprompt_request_limit` error. See [limit_requests()]
 #' for provider requirements and counting details.
 #' @return \itemize{
@@ -172,6 +174,17 @@ send_prompt <- function(
   ) {
     llm_provider$parameters$stream <- stream
   }
+  # Nested evaluations may borrow a guard, but never own the parent's cleanup.
+  llm_provider$parameters$.request_limit_cleanup <- NULL
+  llm_provider$parameters$.evaluation_base_provider <- NULL
+  llm_provider$parameters$.structured_output_wrap <- NULL
+  base_provider <- llm_provider$clone()
+  if (!is.null(base_provider[["ellmer_chat"]])) {
+    base_provider$ellmer_chat <- ellmer_chat_clone(base_provider$ellmer_chat)
+  }
+  base_provider$parameters$.request_guard <- NULL
+  base_provider$parameters$.request_guard_needs_hook <- NULL
+  llm_provider$parameters$.evaluation_base_provider <- base_provider
   # Request limits belong to this evaluation, including when its returned native
   # chat is reused later. Remove only the callbacks installed by the limit wrap.
   on.exit(
@@ -181,6 +194,19 @@ send_prompt <- function(
     },
     add = TRUE
   )
+  if (isTRUE(llm_provider$parameters$.request_guard_needs_hook)) {
+    llm_provider$parameters$.request_guard_needs_hook <- NULL
+    if (identical(llm_provider$api_type, "ellmer")) {
+      working <- llm_provider$get_chat()
+      if (!is.function(working$on_request_start)) {
+        stop("Nested request limits require 'ellmer' 0.5.0 request hooks.")
+      }
+      inherited_guard <- llm_provider$parameters$.request_guard
+      llm_provider$parameters$.request_limit_cleanup <- working$on_request_start(
+        function(turns) inherited_guard()
+      )
+    }
+  }
 
   # Apply parameter_fn's to the llm_provider
   for (prompt_wrap in get_prompt_wraps(prompt)) {
@@ -324,9 +350,10 @@ send_prompt <- function(
 
   interactions <- 1
   success <- FALSE
-  while (interactions < max_interactions && !success) {
-    interactions <- interactions + 1
-
+  allow_retries <- TRUE
+  while (!success) {
+    feedback <- NULL
+    feedback_tool_result <- FALSE
     if (length(prompt_wraps) == 0) {
       success <- TRUE
     }
@@ -358,19 +385,18 @@ send_prompt <- function(
           inherits(extraction_result, "llm_feedback") ||
             inherits(extraction_result, "llm_feedback_tool_result")
         ) {
-          if (inherits(extraction_result, "llm_feedback_tool_result")) {
-            # This ensures tool results are not filtered out when cleaning
-            #   the context window in send_prompt()
-            response <- send_chat(extraction_result, tool_result = TRUE)
-          } else {
-            response <- send_chat(extraction_result, tool_result = FALSE)
-          }
+          feedback <- extraction_result
+          feedback_tool_result <- inherits(
+            extraction_result,
+            "llm_feedback_tool_result"
+          )
           any_prompt_wrap_not_done <- TRUE
           break
         }
 
         if (inherits(extraction_result, "llm_break_soft")) {
-          interactions <- max_interactions
+          allow_retries <- FALSE
+          extraction_result <- extraction_result$object_to_return
         }
 
         if (inherits(extraction_result, "llm_break")) {
@@ -384,19 +410,22 @@ send_prompt <- function(
               if (prompt_wrap_remaining$type == "check") {
                 check_result <-
                   prompt_wrap_remaining$validation_fn(
-                    response,
+                    extraction_result$object_to_return,
                     llm_provider,
                     http
                   )
                 if (inherits(check_result, "llm_feedback")) {
-                  response <- send_chat(check_result, tool_result = TRUE)
+                  feedback <- check_result
+                  feedback_tool_result <- TRUE
                   any_prompt_wrap_not_done <- TRUE
                   break
                 }
               }
             }
           }
-
+          if (!is.null(feedback)) {
+            break
+          }
           if (!extraction_result$success) {
             any_prompt_wrap_not_done <- TRUE # Will result in no success
           } else {
@@ -424,13 +453,15 @@ send_prompt <- function(
             tool_result <- TRUE
           }
 
-          response <- send_chat(validation_result, tool_result = tool_result)
+          feedback <- validation_result
+          feedback_tool_result <- tool_result
           any_prompt_wrap_not_done <- TRUE
           break
         }
 
         if (inherits(validation_result, "llm_break_soft")) {
-          interactions <- max_interactions
+          allow_retries <- FALSE
+          response <- validation_result$object_to_return
         }
 
         if (inherits(validation_result, "llm_break")) {
@@ -444,19 +475,22 @@ send_prompt <- function(
               if (prompt_wrap_remaining$type == "check") {
                 check_result <-
                   prompt_wrap_remaining$validation_fn(
-                    response,
+                    validation_result$object_to_return,
                     llm_provider,
                     http
                   )
                 if (inherits(check_result, "llm_feedback")) {
-                  response <- send_chat(check_result, tool_result = TRUE)
+                  feedback <- check_result
+                  feedback_tool_result <- TRUE
                   any_prompt_wrap_not_done <- TRUE
                   break
                 }
               }
             }
           }
-
+          if (!is.null(feedback)) {
+            break
+          }
           if (!validation_result$success) {
             any_prompt_wrap_not_done <- TRUE # Will result in no success
           } else {
@@ -473,7 +507,16 @@ send_prompt <- function(
       success <- TRUE
     }
 
-    if (llm_break) break
+    if (
+      llm_break ||
+        is.null(feedback) ||
+        !allow_retries ||
+        interactions >= max_interactions
+    ) {
+      break
+    }
+    response <- send_chat(feedback, tool_result = feedback_tool_result)
+    interactions <- interactions + 1
   }
 
   ## 5 Final evaluation

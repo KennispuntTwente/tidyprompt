@@ -322,7 +322,10 @@ answer_using_tools <- function(
       #     for (td in params$.ellmer_tools) chat$register_tool(td)
       #   }
       if (length(ellmer_tools)) {
-        parameters$.ellmer_tools <- unname(ellmer_tools)
+        parameters$.ellmer_tools <- merge_ellmer_tools(
+          llm_provider$parameters$.ellmer_tools %||% list(),
+          unname(ellmer_tools)
+        )
       }
     }
 

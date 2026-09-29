@@ -31,7 +31,14 @@ validate_native_schema <- function(
     }
     if (identical(s$type, "array")) {
       if (is.data.frame(x)) {
-        x <- lapply(seq_len(nrow(x)), function(i) as.list(x[i, , drop = FALSE]))
+        # Extract cells, not one-row columns: list and data-frame columns
+        # otherwise introduce an extra JSON array around each nested value.
+        row_value <- function(data, i) {
+          lapply(data, function(column) {
+            if (is.data.frame(column)) row_value(column, i) else column[[i]]
+          })
+        }
+        x <- lapply(seq_len(nrow(x)), function(i) row_value(x, i))
       }
       return(lapply(
         as.list(x),

@@ -71,6 +71,8 @@ alongside \code{rows} are treated as row schemas, not wrappers.
 Regardless of which of these forms you supply, \code{answer_as_dataframe()}
 normalizes it to a row-oriented structured-output schema before delegating to
 \code{\link[=answer_as_json]{answer_as_json()}}.
+Array constraints in the supplied schema are retained. Explicit row limits
+further restrict those constraints; contradictory limits raise an error.
 }
 \examples{
 # `answer_as_dataframe()` accepts multiple schema shapes.

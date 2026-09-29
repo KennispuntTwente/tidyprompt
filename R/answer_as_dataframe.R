@@ -30,6 +30,8 @@
 #' Regardless of which of these forms you supply, `answer_as_dataframe()`
 #' normalizes it to a row-oriented structured-output schema before delegating to
 #' [answer_as_json()].
+#' Array constraints in the supplied schema are retained. Explicit row limits
+#' further restrict those constraints; contradictory limits raise an error.
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #' @param schema A JSON schema list or an 'ellmer' type definition describing a
@@ -74,8 +76,14 @@ answer_as_dataframe <- function(
   schema_in_prompt_as <- match.arg(schema_in_prompt_as)
   type <- match.arg(type)
 
-  row_schema <- answer_as_dataframe_row_schema(schema, strict = schema_strict)
-  wrapped_schema <- answer_as_dataframe_wrapper_schema(row_schema)
+  wrapped_schema <- answer_as_dataframe_schema(schema, strict = schema_strict)
+  rows <- wrapped_schema$properties$rows
+  minimum <- max(rows$minItems %||% 0, min_rows %||% 0)
+  maximum <- min(rows$maxItems %||% Inf, max_rows %||% Inf)
+  if (minimum > maximum) {
+    stop("The schema and supplied row limits are contradictory.")
+  }
+  row_schema <- rows$items
   json_wrap <- answer_as_dataframe_json_wrap(
     wrapped_schema = wrapped_schema,
     schema_strict = schema_strict,
@@ -131,7 +139,7 @@ answer_as_dataframe_json_wrap <- function(
   wraps[[length(wraps)]]
 }
 
-answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
+answer_as_dataframe_schema <- function(schema, strict = FALSE) {
   normalized <- normalize_schema_dual(schema, strict = strict)
   json_schema <- normalized$json_schema
 
@@ -147,11 +155,8 @@ answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
   # Detect a wrapper object whose `rows` field is an array of row objects.
 
   # We require that rows.items looks like a row schema (has properties)
-  # AND that `rows` is the ONLY property -- a genuine wrapper produced by
-
-  # answer_as_dataframe_wrapper_schema() never has sibling columns.  When
-
-  # a row schema itself has a column named "rows" (e.g. array<object>),
+  # AND that `rows` is the ONLY property. Our generated wrapper has no siblings.
+  # When a row schema itself has a column named "rows" (e.g. array<object>),
   # sibling columns will be present and we leave the schema alone.
   if (
     identical(json_schema$type %||% NULL, "object") &&
@@ -163,16 +168,24 @@ answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
       (identical(json_schema$properties$rows$items$type %||% NULL, "object") ||
         is.list(json_schema$properties$rows$items$properties))
   ) {
-    json_schema <- json_schema$properties$rows$items
+    return(json_schema)
   }
 
   if (identical(json_schema$type %||% NULL, "array")) {
-    json_schema <- json_schema$items
+    array_schema <- json_schema
+    row_schema <- json_schema$items
+  } else {
+    row_schema <- json_schema
+    array_schema <- list(
+      type = "array",
+      description = "Rows of the data frame.",
+      items = row_schema
+    )
   }
 
   if (
-    !identical(json_schema$type %||% NULL, "object") &&
-      is.null(json_schema$properties)
+    !identical(row_schema$type %||% NULL, "object") &&
+      is.null(row_schema$properties)
   ) {
     stop(
       "The 'schema' for `answer_as_dataframe()` must describe row objects, ",
@@ -180,19 +193,9 @@ answer_as_dataframe_row_schema <- function(schema, strict = FALSE) {
     )
   }
 
-  json_schema
-}
-
-answer_as_dataframe_wrapper_schema <- function(row_schema) {
   list(
     type = "object",
-    properties = list(
-      rows = list(
-        type = "array",
-        description = "Rows of the data frame.",
-        items = row_schema
-      )
-    ),
+    properties = list(rows = array_schema),
     required = list("rows"),
     additionalProperties = FALSE
   )

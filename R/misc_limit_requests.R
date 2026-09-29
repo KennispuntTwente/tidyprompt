@@ -4,6 +4,8 @@
 #' rounds, for regular tidyprompt providers and 'ellmer'. The counter resets for
 #' each [send_prompt()] evaluation. Streaming chunks and transport-level retries
 #' within a model request do not count as additional model requests.
+#' Nested [llm_verify()] evaluations, including rejection summaries, share the
+#' outer evaluation's counter.
 #'
 #' @details
 #' Alternatively, supply `max_requests` directly to [send_prompt()]. Both use
