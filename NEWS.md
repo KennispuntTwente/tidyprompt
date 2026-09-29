@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Renaming ellmer tools preserves ignored arguments, conversion settings and
+annotations without reconstructing their definitions.
+
 * Rich JSON schemas retain their constraints through ellmer conversion.
 Native structured results are validated without changing their R classes;
 unsupported schemas no longer silently lose enforcement.

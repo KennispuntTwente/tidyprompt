@@ -104,25 +104,10 @@ rename_ellmer_tool <- function(tooldef, name) {
     return(tooldef)
   }
 
-  props <- tryCatch(
-    S7::props(tooldef),
-    error = function(e) list()
-  )
-
-  ellmer::tool(
-    tooldef,
-    name = name,
-    description = props$description %||%
-      attr(tooldef, "description", exact = TRUE) %||%
-      "",
-    arguments = .ellmer_tool_properties(tooldef),
-    convert = props$convert %||%
-      attr(tooldef, "convert", exact = TRUE) %||%
-      TRUE,
-    annotations = props$annotations %||%
-      attr(tooldef, "annotations", exact = TRUE) %||%
-      list()
-  )
+  # ToolDef is a value object. Reconstructing it from visible arguments loses
+  # ignored formals and can change conversion or annotation metadata.
+  S7::prop(tooldef, "name") <- name
+  tooldef
 }
 
 # Internal: pull the list of <Type>s from a ToolDef's argument object
