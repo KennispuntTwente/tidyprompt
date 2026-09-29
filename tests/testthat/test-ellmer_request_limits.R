@@ -115,7 +115,9 @@ test_that("returned native chats do not retain an exhausted evaluation limit", {
     echo = "none"
   )
   callbacks <- 0L
-  ch$on_request_start(function(turns) callbacks <<- callbacks + 1L)
+  ch$on_request_start(function(turns) {
+    callbacks <<- callbacks + 1L
+  })
   first <- send_prompt(
     limit_requests("Question", 1),
     ch,
