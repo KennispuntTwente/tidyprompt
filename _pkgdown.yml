@@ -45,6 +45,8 @@ reference:
 - contents:
   - add_text
   - add_image
+  - add_content
+  - limit_requests
   - quit_if
   - user_verify
   - llm_verify
