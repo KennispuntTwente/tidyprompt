@@ -61,3 +61,28 @@ test_that("context-aware tools explain their native-provider requirement", {
   expect_error(invoke_tidyprompt_tool(ellmer_tool_to_tidyprompt(td), list()),
     "require an ellmer-backed provider", fixed = TRUE)
 })
+
+test_that("generated native tools serialize collections without losing rich content", {
+  skip_if_not_installed("ellmer")
+  fn <- tools_add_docs(function(x = 2) list(nested = list(value = x)),
+    list(name = "nested", description = "Nested result",
+      arguments = list(x = list(type = "numeric", description = "A value", required = FALSE))))
+  td <- tidyprompt_tool_to_ellmer(fn)
+  expect_equal(jsonlite::fromJSON(td()), list(nested = list(value = 2)))
+  value <- 3
+  expect_equal(jsonlite::fromJSON(td(value)), list(nested = list(value = 3)))
+  expect_equal(normalize_tidyprompt_tool_result(data.frame(x = c(1, 2))),
+    jsonlite::toJSON(data.frame(x = c(1, 2)), auto_unbox = TRUE))
+  content <- ellmer::ContentText(text = "rich")
+  expect_identical(normalize_tidyprompt_tool_result(content), content)
+  expect_identical(normalize_tidyprompt_tool_result(list(content)), list(content))
+  expect_error(normalize_tidyprompt_tool_result(content, native = FALSE), "require native ellmer")
+  prompt <- answer_using_tools("x", tools = list(nested = fn), type = "text-based")
+  result <- prompt$get_prompt_wraps()[[1]]$extraction_fn(
+    '{"function":"nested","arguments":{"x":4}}', list(api_type = "fake"))
+  expect_match(result$text, 'result: {"nested":{"value":4}}', fixed = TRUE)
+  # Exercise ellmer's own result normalizer with lifecycle warnings as errors.
+  withr::local_options(lifecycle_verbosity = "error")
+  normalize <- get("normalize_tool_result", asNamespace("ellmer"))
+  expect_identical(normalize(td()), td())
+})

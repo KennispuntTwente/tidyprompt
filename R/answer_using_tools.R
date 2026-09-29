@@ -404,18 +404,11 @@ answer_using_tools <- function(
           result <- glue::glue("Error: tool '{tool_name}' not registered")
         } else {
           result <- tryCatch(
-            invoke_tidyprompt_tool(tool, arguments),
+            normalize_tidyprompt_tool_result(invoke_tidyprompt_tool(tool, arguments), native = FALSE),
             error = function(e) glue::glue("Error: {e$message}")
           )
         }
 
-        # Normalize result to character
-        if (length(result) > 0) {
-          result <- paste(result, collapse = ", ")
-        }
-        if (length(result) == 0) {
-          result <- ""
-        }
         result <- as.character(result)
 
         # Add tool result to next request messages
@@ -525,19 +518,12 @@ answer_using_tools <- function(
 
         result <- tryCatch(
           {
-            invoke_tidyprompt_tool(tool_function, arguments)
+            normalize_tidyprompt_tool_result(invoke_tidyprompt_tool(tool_function, arguments), native = FALSE)
           },
           error = function(e) {
             glue::glue("Error in {e$message}")
           }
         )
-
-        if (length(result) > 0) {
-          result <- paste(result, collapse = ", ")
-        }
-        if (length(result) == 0) {
-          result <- ""
-        }
 
         string_of_named_arguments <-
           paste(names(arguments), arguments, sep = " = ") |>

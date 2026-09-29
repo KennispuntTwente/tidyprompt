@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Tool results now serialize lists and data frames as JSON, preserving nested
+  data and satisfying ellmer's result contract. Native content results are retained.
+
 * Ellmer tools retain nested argument schemas and input conversion semantics
 when used with other providers. Context-aware tools explicitly require the
 native ellmer path, and direct converted-tool calls evaluate R arguments normally.

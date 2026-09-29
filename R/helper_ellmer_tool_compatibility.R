@@ -428,13 +428,47 @@ tidyprompt_tool_to_ellmer <- function(
   }
   docs <- tools_get_docs(fun, name = name %||% NULL)
   tidyprompt_docs_to_ellmer_tool(
-    fun,
+    ellmer_tool_result_wrapper(fun),
     docs,
     name = name %||% docs$name %||% NULL,
     convert = convert,
     annotations = annotations,
     strict = strict
   )
+}
+
+is_native_tool_content <- function(x) {
+  ellmer_available() && S7::S7_inherits(x, ellmer::Content)
+}
+
+normalize_tidyprompt_tool_result <- function(result, native = TRUE) {
+  rich <- is_native_tool_content(result) ||
+    (is.list(result) && length(result) > 0L &&
+      all(vapply(result, is_native_tool_content, logical(1))))
+  pending <- inherits(result, "promise")
+  if (rich || pending) {
+    if (!native) {
+      stop("Rich content and asynchronous tool results require native ellmer execution.")
+    }
+    return(result)
+  }
+  if (is.null(result)) return(if (native) NULL else "")
+  if (inherits(result, "json")) return(result)
+  if (is.character(result)) return(paste(result, collapse = "\n"))
+  # Serialize collections once, before ellmer's result contract is applied.
+  # Named lists become objects; data frames become arrays of row objects.
+  jsonlite::toJSON(result, auto_unbox = TRUE, dataframe = "rows", null = "null")
+}
+
+ellmer_tool_result_wrapper <- function(fun) {
+  force(fun)
+  wrapper <- function() {
+    args <- as.list(match.call())[-1L]
+    args <- lapply(args, eval, envir = parent.frame())
+    normalize_tidyprompt_tool_result(do.call(fun, args))
+  }
+  formals(wrapper) <- formals(fun)
+  wrapper
 }
 
 invoke_tidyprompt_tool <- function(tool, arguments) {
