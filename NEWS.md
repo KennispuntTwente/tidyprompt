@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Native structured output can now stream with ellmer 0.5.0, retaining native R
+  coercion and falling back for providers that require tool-based extraction.
+
 * `add_content()` attaches native ellmer content, including documents and file
   references, to prompts and preserves it across feedback turns.
 

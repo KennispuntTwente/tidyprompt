@@ -1694,8 +1694,11 @@ llm_provider_ellmer <- function(
     # Store the native structured result (if any) so downstream extraction
     # can use it directly without lossy JSON round-tripping.
     native_structured_result <- NULL
+    structured_stream <- if (use_structured && isTRUE(params$stream)) {
+      ellmer_structured_stream(ch, structured_type)
+    } else NULL
 
-    if (use_structured) {
+    if (use_structured && is.null(structured_stream)) {
       if (!is.null(multimodal_args)) {
         reply_struct <- do.call(
           ch$chat_structured,
@@ -1716,12 +1719,10 @@ llm_provider_ellmer <- function(
       stream_error <- NULL
       assistant_text <- NULL
 
+      stream_args <- multimodal_args %||% list(prompt_for_model)
+      if (!is.null(structured_stream)) stream_args$type <- structured_type
       stream <- tryCatch(
-        if (!is.null(multimodal_args)) {
-          do.call(ch$stream, multimodal_args)
-        } else {
-          ch$stream(prompt_for_model)
-        },
+        do.call(ch$stream, stream_args),
         error = function(e) {
           stream_error <<- e
           NULL
@@ -1732,7 +1733,10 @@ llm_provider_ellmer <- function(
         # Streaming failed to initialise; fall back to non-streaming chat.
         # (Multimodal paths already did this; now also try for plain text.)
         reply_any <- tryCatch(
-          if (use_multimodal) {
+          if (!is.null(structured_stream)) {
+            native_structured_result <- do.call(ch$chat_structured, stream_args)
+            as.character(jsonlite::toJSON(native_structured_result, auto_unbox = TRUE))
+          } else if (use_multimodal) {
             do.call(ch$chat, multimodal_args)
           } else {
             ch$chat(prompt_for_model)
@@ -1809,6 +1813,10 @@ llm_provider_ellmer <- function(
         assistant_text <- sub("^\n", "", assistant_text)
         # If it ends with '\n', strip that
         assistant_text <- sub("\n$", "", assistant_text)
+        if (!is.null(structured_stream)) {
+          native_structured_result <- structured_stream$extract()
+          assistant_text <- as.character(jsonlite::toJSON(native_structured_result, auto_unbox = TRUE))
+        }
       }
     } else {
       # Regular, non-streaming chat

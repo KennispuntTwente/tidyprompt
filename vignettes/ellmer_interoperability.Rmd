@@ -70,3 +70,11 @@ document <- ellmer::content_document_file("report.txt")
 result <- add_content("Summarize this document", document) |>
   send_prompt(chat, return_mode = "full")
 ```
+
+## Structured streams
+
+With ellmer 0.5.0, `answer_as_json()` and `stream = TRUE` stream raw JSON chunks
+through the usual `stream_callback(chunk, meta)`. Final extraction keeps ellmer's
+R coercion, including data frames and factors. Providers/models that use
+tool-based structured output, older ellmer versions, and custom adapters without
+the required capabilities use blocking `chat_structured()` instead.
