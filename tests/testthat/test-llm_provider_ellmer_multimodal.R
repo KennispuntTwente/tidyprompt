@@ -152,15 +152,15 @@ testthat::test_that("ellmer follow-up calls replay multimodal turns with native 
   )))
 
   testthat::expect_equal(prior_turns[[2]]@role, "assistant")
-  testthat::expect_length(prior_turns[[2]]@contents, 2)
-  testthat::expect_false(any(vapply(
+  testthat::expect_length(prior_turns[[2]]@contents, 3)
+  testthat::expect_true(any(vapply(
     prior_turns[[2]]@contents,
     function(x) any(grepl("ContentThinking", class(x))),
     logical(1)
   )))
   testthat::expect_true(any(grepl(
     "ContentImageRemote",
-    class(prior_turns[[2]]@contents[[1]])
+    class(prior_turns[[2]]@contents[[2]])
   )))
-  testthat::expect_equal(prior_turns[[2]]@contents[[2]]@text, "A cat")
+  testthat::expect_equal(prior_turns[[2]]@contents[[3]]@text, "A cat")
 })
