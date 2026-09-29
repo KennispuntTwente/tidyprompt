@@ -229,10 +229,13 @@ directly to
 [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md),
 or use the
 [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-function to create an LLM provider from an ‘ellmer’ chat object. This
-allows users to use any LLM provider that can be configured with
-‘ellmer’, including the respective configuration and features from the
-‘ellmer’ package.
+function to create an LLM provider from an ‘ellmer’ chat object.
+Provider and model configuration remains with ellmer. The adapter
+supports native tools, structured output, content attachments, and
+streaming; availability depends on the ellmer version and provider. See
+[Working with
+ellmer](https://kennispunttwente.github.io/tidyprompt/vignettes/ellmer_interoperability.Rmd)
+for request limits, callbacks and recovery behavior.
 
 Furthermore,
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)

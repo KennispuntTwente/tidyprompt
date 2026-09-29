@@ -2,6 +2,49 @@
 
 ## tidyprompt (development version)
 
+- [`limit_requests()`](https://kennispunttwente.github.io/tidyprompt/reference/limit_requests.md)
+  and `send_prompt(max_requests = ...)` bound model requests across
+  initial responses, tool follow-ups and feedback rounds for both
+  regular and ‘ellmer’ providers. The counter resets for each
+  [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
+  evaluation. If both limits are supplied, the smaller applies;
+  `max_interactions` separately controls the outer evaluation loop.
+
+- ‘ellmer’ compatability fixes & improvements:
+
+  - Streaming: structured output now streams with ‘ellmer’ 0.5.0 when
+    the provider supports it, with blocking extraction as a fallback.
+    Streams expose rich content events, support cancellation and retain
+    partial results after errors.
+
+  - Attachments: use
+    [`add_content()`](https://kennispunttwente.github.io/tidyprompt/reference/add_content.md)
+    to attach native ‘ellmer’ content, including documents and file
+    references. It requires an ‘ellmer’ provider and retains attachments
+    across feedback turns.
+
+  - Answers and history:
+    [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
+    now returns complete assistant replies and includes `$citations`
+    when `return_mode = "full"`. It preserves native tool and reasoning
+    turns and usage metadata, respects history compaction, assigns
+    messages to the correct roles, and isolates callbacks between
+    evaluations.
+
+  - Schemas: conversion now preserves JSON Schema constraints and
+    singleton arrays without deprecated schema calls. Validation retains
+    R classes and correctly handles optional fields and empty objects.
+
+  - Tools: renaming ‘ellmer’ tools or converting them for other
+    providers now preserves argument schemas and defaults. Tools with no
+    arguments register correctly, list and data-frame results serialize
+    as JSON, and native content results stay intact. Conversion errors
+    identify the affected tool.
+
+  - Documentation: new interoperability vignette explains how to
+    configure callbacks, limit requests, stream responses and use tools
+    before structured extraction.
+
 - Built-in OpenAI-compatible and Ollama request failures now signal
   `tidyprompt_request_error` with the original condition in `parent`,
   plus `status_code` and `request_id` fields when available. This
@@ -44,17 +87,17 @@ CRAN release: 2026-04-21
   was improved to better synchronize with the native ‘ellmer’ state, for
   instance for streaming, multimodal/image content, and persistent
   chats, with clearer warnings when settings need to be configured on
-  the underlying `ellmer` chat object.
+  the underlying ‘ellmer’ chat object.
 
 - [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
   and
   [`answer_using_tools()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_using_tools.md)
-  have broader ellmer compatibility, including
+  have broader ‘ellmer’ compatibility, including
   [`ellmer::type_from_schema()`](https://ellmer.tidyverse.org/reference/type_boolean.html),
-  ellmer built-in tools, and better handling of optional or ignored tool
-  arguments.
+  ‘ellmer’ built-in tools, and better handling of optional or ignored
+  tool arguments.
 
-- Chat history handling is more robust for tool and ellmer-native
+- Chat history handling is more robust for tool and native ‘ellmer’
   workflows: `tool` rows are supported, non-replayable native rows (tool
   call and thinking rows) are kept for inspection but not re-sent to the
   LLM provider, and related metadata is normalized more reliably.
@@ -98,8 +141,8 @@ CRAN release: 2025-08-25
   support ‘ellmer’ definitions of structured output (e.g.,
   [`ellmer::type_object()`](https://ellmer.tidyverse.org/reference/type_boolean.html)).
   [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
-  can convert between ellmer definitions and the previous R list objects
-  which represent JSON schemas; thus, ‘ellmer’ and R list object
+  can convert between ‘ellmer’ definitions and the previous R list
+  objects which represent JSON schemas; thus, ‘ellmer’ and R list object
   definitions work with both regular and ‘ellmer’ LLM providers. When
   using an
   [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md),
@@ -191,7 +234,7 @@ CRAN release: 2025-08-18
 
 - New experimental provider
   [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-  for `ellmer` chat objects
+  for ‘ellmer’ chat objects
 
 - Ollama provider gains `num_ctx` parameter to control context window
   size

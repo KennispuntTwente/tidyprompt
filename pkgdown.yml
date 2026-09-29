@@ -3,10 +3,11 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   creating_prompt_wraps: creating_prompt_wraps.html
+  ellmer_interoperability: ellmer_interoperability.html
   getting_started: getting_started.html
   sentiment_analysis: sentiment_analysis.html
   streaming_shiny_ipc: streaming_shiny_ipc.html
-last_built: 2026-09-28T18:12Z
+last_built: 2026-09-29T16:11Z
 urls:
   reference: https://kennispunttwente.github.io/tidyprompt/reference
   article: https://kennispunttwente.github.io/tidyprompt/articles

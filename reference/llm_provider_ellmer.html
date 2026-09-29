@@ -29,6 +29,7 @@ other LLM providers, and may not function optimally."></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/creating_prompt_wraps.html">Creating prompt wraps</a></li>
+    <li><a class="dropdown-item" href="../articles/ellmer_interoperability.html">Working with ellmer</a></li>
     <li><a class="dropdown-item" href="../articles/getting_started.html">Getting started</a></li>
     <li><a class="dropdown-item" href="../articles/sentiment_analysis.html">Sentiment analysis in R with a LLM and 'tidyprompt'</a></li>
     <li><a class="dropdown-item" href="../articles/streaming_shiny_ipc.html">Streaming LLM responses to Shiny apps</a></li>
@@ -111,6 +112,13 @@ this parameter is used to specify a structured output format. This should be a '
 structured type (e.g., <code><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">ellmer::type_object</a></code>; see https://ellmer.tidyverse.org/articles/structured-data.html).
 <code><a href="answer_as_json.html">answer_as_json()</a></code> sets this parameter to obtain structured output
 (it is not recommended to set this parameter manually, but it is possible).</p></li>
+<li><p>With ellmer 0.5.0, <code>stream_content = TRUE</code> adds native Content objects to
+callback metadata (<code>meta$content</code> and <code>meta$content_type</code>). Non-text events
+have an empty string chunk and do not change <code>meta$partial_response</code>.
+<code>stream_controller</code> accepts an <code><a href="https://ellmer.tidyverse.org/reference/stream_controller.html" class="external-link">ellmer::stream_controller()</a></code> for cancellation.
+Cancellation raises <code>tidyprompt_stream_cancelled</code>; iteration failures raise
+<code>tidyprompt_stream_error</code>. Both carry <code>ellmer_chat</code>, <code>partial_turn</code> and
+<code>partial_response</code> for recovery and stop the evaluation without retrying.</p></li>
 </ol></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

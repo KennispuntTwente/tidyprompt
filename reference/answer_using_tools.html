@@ -11,7 +11,8 @@ Model Context Protocol (MCP) tools from MCP servers, as returned from
 mcptools::mcp_tools(), may also be used. Regular ellmer::tool()
 definitions are converted as needed and can work with both 'ellmer' and
 regular LLM providers. Provider-specific 'ellmer' built-in tools
-(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
+(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
+Tools using ellmer::tool_context() also require an ellmer-backed provider."><meta property="og:description" content="This function adds the ability for the a LLM to call R functions.
 Users can specify a list of functions that the LLM can call, and the
 prompt will be modified to include information, as well as an
 accompanying extraction function to call the functions (handled by
@@ -23,7 +24,8 @@ Model Context Protocol (MCP) tools from MCP servers, as returned from
 mcptools::mcp_tools(), may also be used. Regular ellmer::tool()
 definitions are converted as needed and can work with both 'ellmer' and
 regular LLM providers. Provider-specific 'ellmer' built-in tools
-(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers."></head><body>
+(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
+Tools using ellmer::tool_context() also require an ellmer-backed provider."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -43,6 +45,7 @@ regular LLM providers. Provider-specific 'ellmer' built-in tools
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/creating_prompt_wraps.html">Creating prompt wraps</a></li>
+    <li><a class="dropdown-item" href="../articles/ellmer_interoperability.html">Working with ellmer</a></li>
     <li><a class="dropdown-item" href="../articles/getting_started.html">Getting started</a></li>
     <li><a class="dropdown-item" href="../articles/sentiment_analysis.html">Sentiment analysis in R with a LLM and 'tidyprompt'</a></li>
     <li><a class="dropdown-item" href="../articles/streaming_shiny_ipc.html">Streaming LLM responses to Shiny apps</a></li>
@@ -77,7 +80,8 @@ Model Context Protocol (MCP) tools from MCP servers, as returned from
 <code><a href="https://posit-dev.github.io/mcptools/reference/client.html" class="external-link">mcptools::mcp_tools()</a></code>, may also be used. Regular <code><a href="https://ellmer.tidyverse.org/reference/tool.html" class="external-link">ellmer::tool()</a></code>
 definitions are converted as needed and can work with both 'ellmer' and
 regular LLM providers. Provider-specific 'ellmer' built-in tools
-(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.</p>
+(i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
+Tools using <code><a href="https://ellmer.tidyverse.org/reference/tool_context.html" class="external-link">ellmer::tool_context()</a></code> also require an ellmer-backed provider.</p>
     </div>
 
     <div class="section level2">
@@ -184,11 +188,6 @@ Provider-specific 'ellmer' built-in tools are only supported when using an
 <span class="r-msg co"><span class="r-pr">#&gt;</span> (or 'llm_provider$tool_type' if set); this does not consider model compatability</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> * Manually set argument 'type' if errors occur ("text-based" always works)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> * Use `options(tidyprompt.warn.auto.tools = FALSE)` to suppress this warning</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The `.additional_properties` argument of `type_object()` is deprecated as of</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> ellmer 0.5.0.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">tidyprompt</span> package.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   Please report the issue at</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/KennispuntTwente/tidyprompt/issues&gt;</span>.</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">prompt_with_dir_function</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="co"># --- Sending request to LLM provider (llama3.1:8b): ---</span></span></span>

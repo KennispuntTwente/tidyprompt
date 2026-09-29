@@ -3,6 +3,7 @@
 <url><loc>https://kennispunttwente.github.io/tidyprompt/LICENSE-text.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/LICENSE.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/articles/creating_prompt_wraps.html</loc></url>
+<url><loc>https://kennispunttwente.github.io/tidyprompt/articles/ellmer_interoperability.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/articles/getting_started.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/articles/index.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/articles/sentiment_analysis.html</loc></url>
@@ -11,6 +12,7 @@
 <url><loc>https://kennispunttwente.github.io/tidyprompt/copilot-instructions.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/index.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/news/index.html</loc></url>
+<url><loc>https://kennispunttwente.github.io/tidyprompt/reference/add_content.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/add_image.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/add_msg_to_chat_history.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/add_text.html</loc></url>
@@ -42,6 +44,7 @@
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/get_prompt_wraps.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/index.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/is_tidyprompt.html</loc></url>
+<url><loc>https://kennispunttwente.github.io/tidyprompt/reference/limit_requests.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/llm_break.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/llm_break_soft.html</loc></url>
 <url><loc>https://kennispunttwente.github.io/tidyprompt/reference/llm_feedback.html</loc></url>

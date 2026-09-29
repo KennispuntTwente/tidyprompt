@@ -89,6 +89,17 @@ are documented below.
     sets this parameter to obtain structured output (it is not
     recommended to set this parameter manually, but it is possible).
 
+3.  With ellmer 0.5.0, `stream_content = TRUE` adds native Content
+    objects to callback metadata (`meta$content` and
+    `meta$content_type`). Non-text events have an empty string chunk and
+    do not change `meta$partial_response`. `stream_controller` accepts
+    an
+    [`ellmer::stream_controller()`](https://ellmer.tidyverse.org/reference/stream_controller.html)
+    for cancellation. Cancellation raises `tidyprompt_stream_cancelled`;
+    iteration failures raise `tidyprompt_stream_error`. Both carry
+    `ellmer_chat`, `partial_turn` and `partial_response` for recovery
+    and stop the evaluation without retrying.
+
 ## See also
 
 Other llm_provider:

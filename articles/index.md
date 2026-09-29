@@ -4,6 +4,8 @@
 
 - [Creating prompt
   wraps](https://kennispunttwente.github.io/tidyprompt/articles/creating_prompt_wraps.md):
+- [Working with
+  ellmer](https://kennispunttwente.github.io/tidyprompt/articles/ellmer_interoperability.md):
 - [Getting
   started](https://kennispunttwente.github.io/tidyprompt/articles/getting_started.md):
 - [Sentiment analysis in R with a LLM and

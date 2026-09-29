@@ -119,6 +119,10 @@ Functions that give LLMs access to tools (function-calling) and code
   : Add text to a tidyprompt
 - [`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md)
   **\[experimental\]** : Add an image to a tidyprompt (multimodal)
+- [`add_content()`](https://kennispunttwente.github.io/tidyprompt/reference/add_content.md)
+  : Attach native ellmer content to a prompt
+- [`limit_requests()`](https://kennispunttwente.github.io/tidyprompt/reference/limit_requests.md)
+  : Limit model requests during a prompt evaluation
 - [`quit_if()`](https://kennispunttwente.github.io/tidyprompt/reference/quit_if.md)
   : Make evaluation of a prompt stop if LLM gives a specific response
 - [`user_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/user_verify.md)

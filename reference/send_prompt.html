@@ -27,6 +27,7 @@ in the prompt wraps (see prompt_wrap()). If the maximum number of interactions">
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/creating_prompt_wraps.html">Creating prompt wraps</a></li>
+    <li><a class="dropdown-item" href="../articles/ellmer_interoperability.html">Working with ellmer</a></li>
     <li><a class="dropdown-item" href="../articles/getting_started.html">Getting started</a></li>
     <li><a class="dropdown-item" href="../articles/sentiment_analysis.html">Sentiment analysis in R with a LLM and 'tidyprompt'</a></li>
     <li><a class="dropdown-item" href="../articles/streaming_shiny_ipc.html">Streaming LLM responses to Shiny apps</a></li>
@@ -65,7 +66,8 @@ in the prompt wraps (see <code><a href="prompt_wrap.html">prompt_wrap()</a></cod
 <span>  clean_chat_history <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stream <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  return_mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"only_response"</span>, <span class="st">"full"</span><span class="op">)</span></span>
+<span>  return_mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"only_response"</span>, <span class="st">"full"</span><span class="op">)</span>,</span>
+<span>  max_requests <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -98,7 +100,10 @@ functions which can set parameters in the llm_provider object
 <dd><p>Maximum number of interactions allowed with the
 LLM provider. Default is 10. If the maximum number of interactions is reached
 without a successful response, 'NULL' is returned as the response (see return
-value). The first interaction is the initial chat completion</p></dd>
+value). The first interaction is the initial chat completion.
+This controls the outer extraction, validation and feedback loop; it does not
+count individual model requests within provider tool loops. Use <code>max_requests</code>
+to also bound those requests.</p></dd>
 
 
 <dt id="arg-clean-chat-history">clean_chat_history<a class="anchor" aria-label="anchor" href="#arg-clean-chat-history"></a></dt>
@@ -129,6 +134,17 @@ that when 'verbose' is set to FALSE, the 'stream' setting will be ignored</p></d
 
 <dt id="arg-return-mode">return_mode<a class="anchor" aria-label="anchor" href="#arg-return-mode"></a></dt>
 <dd><p>One of 'full' or 'only_response'. See return value</p></dd>
+
+
+<dt id="arg-max-requests">max_requests<a class="anchor" aria-label="anchor" href="#arg-max-requests"></a></dt>
+<dd><p>Optional positive whole number of model requests allowed
+during this evaluation, equivalent to applying <code><a href="limit_requests.html">limit_requests()</a></code> to <code>prompt</code>.
+The default, <code>NULL</code>, adds no request limit and preserves any limit already
+attached to the prompt. If both are supplied, the smaller limit applies.
+Counts the initial request, tool follow-ups and feedback requests, excluding
+streaming chunks and transport-level retries. Attempting another request
+after the limit raises a <code>tidyprompt_request_limit</code> error. See <code><a href="limit_requests.html">limit_requests()</a></code>
+for provider requirements and counting details.</p></dd>
 
 </dl></div>
     <div class="section level2">

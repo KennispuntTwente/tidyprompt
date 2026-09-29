@@ -229,10 +229,13 @@ directly to
 [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md),
 or use the
 [`llm_provider_ellmer()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider_ellmer.md)
-function to create an LLM provider from an ‘ellmer’ chat object. This
-allows users to use any LLM provider that can be configured with
-‘ellmer’, including the respective configuration and features from the
-‘ellmer’ package.
+function to create an LLM provider from an ‘ellmer’ chat object.
+Provider and model configuration remains with ellmer. The adapter
+supports native tools, structured output, content attachments, and
+streaming; availability depends on the ellmer version and provider. See
+[Working with
+ellmer](https://kennispunttwente.github.io/tidyprompt/vignettes/ellmer_interoperability.Rmd)
+for request limits, callbacks and recovery behavior.
 
 Furthermore,
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md)
@@ -372,6 +375,10 @@ Functions that give LLMs access to tools (function-calling) and code
   : Add text to a tidyprompt
 - [`add_image()`](https://kennispunttwente.github.io/tidyprompt/reference/add_image.md)
   **\[experimental\]** : Add an image to a tidyprompt (multimodal)
+- [`add_content()`](https://kennispunttwente.github.io/tidyprompt/reference/add_content.md)
+  : Attach native ellmer content to a prompt
+- [`limit_requests()`](https://kennispunttwente.github.io/tidyprompt/reference/limit_requests.md)
+  : Limit model requests during a prompt evaluation
 - [`quit_if()`](https://kennispunttwente.github.io/tidyprompt/reference/quit_if.md)
   : Make evaluation of a prompt stop if LLM gives a specific response
 - [`user_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/user_verify.md)
@@ -462,6 +469,8 @@ Functions to create text to be used in prompts.
 
 - [Creating prompt
   wraps](https://kennispunttwente.github.io/tidyprompt/articles/creating_prompt_wraps.md):
+- [Working with
+  ellmer](https://kennispunttwente.github.io/tidyprompt/articles/ellmer_interoperability.md):
 - [Getting
   started](https://kennispunttwente.github.io/tidyprompt/articles/getting_started.md):
 - [Sentiment analysis in R with a LLM and
