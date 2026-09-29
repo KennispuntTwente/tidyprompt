@@ -1656,17 +1656,20 @@ llm_provider_ellmer <- function(
     use_structured <- !is.null(structured_type) &&
       is.function(ch$chat_structured)
 
-    # Warn if both tools and structured output are requested:
-    # ellmer's chat_structured() suppresses tool use, so both cannot
-    # work simultaneously in a single request.
-    if (use_structured && !is.null(params$.ellmer_tools)) {
+    # Both blocking and streaming extraction suppress the entire tool registry,
+    # including tools registered directly on the caller's Chat.
+    registered_tools <- if (is.function(ch$get_tools)) ch$get_tools() else prompt_tools
+    if (use_structured && length(registered_tools) > 0L) {
       cli::cli_alert_warning(
         paste0(
           "{.strong `llm_provider_ellmer()`}:\n",
           "* Both structured output and tool use are requested;\n",
-          "ellmer's {.fn chat_structured} suppresses tool use, ",
+          "ellmer's native structured extraction suppresses tool use ",
+          "(including structured streaming), ",
           "so tools will not be called in this request\n",
-          "* Consider using {.code type = \"text-based\"} for one of them"
+          "* Use tools in a first evaluation, then clear the tools on a cloned ",
+          "chat for structured extraction; or use {.code type = \"text-based\"} ",
+          "for one of them"
         )
       )
     }

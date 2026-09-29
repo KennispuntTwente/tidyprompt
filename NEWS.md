@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* Native structured-output diagnostics now also detect tools registered directly
+  on an 'ellmer' Chat, including when streaming. The interoperability vignette
+  shows how to use tools before structured extraction in separate evaluations.
+
 * `llm_verify()` now sends complete structured answers using deterministic R
   serialization, including every tibble row and nested value. It no longer
   silently substitutes a truncated console preview for the answer.
