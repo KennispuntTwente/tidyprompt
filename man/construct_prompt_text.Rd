@@ -9,7 +9,7 @@ construct_prompt_text(x, llm_provider = NULL)
 \arguments{
 \item{x}{A \linkS4class{tidyprompt} object}
 
-\item{llm_provider}{An optional \linkS4class{llm_provider} object.
+\item{llm_provider}{An optional \linkS4class{llm_provider} object or 'ellmer' Chat.
 This may sometimes affect the prompt text construction}
 }
 \value{

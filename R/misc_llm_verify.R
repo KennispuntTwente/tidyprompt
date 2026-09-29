@@ -36,13 +36,15 @@
 #' The LLM will be asked to provide a boolean answer to this question. If TRUE,
 #' the result of the prompt will be accepted; if FALSE, the result will be declined
 #'
-#' @param llm_provider A [llm_provider-class] object
+#' @param llm_provider A [llm_provider-class] object or an 'ellmer' Chat
 #'  which will be used to verify the evaluation led to a satisfactory result.
 #' If not provided, the same LLM provider as the prompt was originally
 #'  evaluated with will be used
 #' (with its base configuration, without the answer's prompt-specific settings).
 #' Verification and feedback-summary requests share the original evaluation's
 #' request limit, including when a separate verifier provider is supplied.
+#' Raw Chats are cloned and their existing turns cleared for verification, as
+#' in [send_prompt()]; the caller's Chat is unchanged.
 #'
 #' @param max_words_feedback The maximum number of words allowed in the summary of
 #'  why the result was declined.
@@ -64,6 +66,7 @@ llm_verify <- function(
   prompt <- tidyprompt(prompt)
 
   # Verify & install provided LLM provider
+  llm_provider <- as_llm_provider(llm_provider)
   stopifnot(
     is.null(llm_provider) || inherits(llm_provider, "LlmProvider")
   )

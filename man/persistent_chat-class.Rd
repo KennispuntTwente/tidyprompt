@@ -92,7 +92,9 @@ Initialize the PersistentChat object
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{llm_provider}}{A \linkS4class{llm_provider} object}
+\item{\code{llm_provider}}{A \linkS4class{llm_provider} object or an 'ellmer' Chat.
+A raw Chat is cloned and its existing turns cleared, as in \code{\link[=send_prompt]{send_prompt()}}.
+Supply \code{chat_history} to resume a conversation; the caller's Chat is unchanged.}
 
 \item{\code{chat_history}}{(optional) A \code{\link[=chat_history]{chat_history()}} object}
 }

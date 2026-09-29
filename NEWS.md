@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* Raw 'ellmer' Chats are now accepted by `llm_verify()`,
+  `persistent_chat-class$new()` and prompt rendering, consistently with
+  `send_prompt()`. Verifiers and persistent chats use isolated Chat clones.
+
 * Native structured-output diagnostics now also detect tools registered directly
   on an 'ellmer' Chat, including when streaming. The interoperability vignette
   shows how to use tools before structured extraction in separate evaluations.

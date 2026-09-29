@@ -135,7 +135,7 @@ send_prompt <- function(
     prompt <- limit_requests(prompt, max_requests)
   }
   return_mode <- match.arg(return_mode)
-  llm_provider <- as_send_prompt_llm_provider(llm_provider, verbose, stream)
+  llm_provider <- as_llm_provider(llm_provider, verbose, stream)
   stopifnot(
     inherits(llm_provider, "LlmProvider"),
     max_interactions > 0,

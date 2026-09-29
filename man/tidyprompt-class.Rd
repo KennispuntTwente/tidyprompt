@@ -231,7 +231,7 @@ Construct the complete prompt text.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{llm_provider}}{Optional \linkS4class{llm_provider} object.
+\item{\code{llm_provider}}{Optional \linkS4class{llm_provider} object or 'ellmer' Chat.
 This may sometimes affect the prompt text construction}
 
 \item{\code{apply_provider_prompt_wraps}}{Logical. Whether to apply
@@ -286,7 +286,7 @@ the base prompt as the last message with role 'user'.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{llm_provider}}{An optional \linkS4class{llm_provider} object.
+\item{\code{llm_provider}}{An optional \linkS4class{llm_provider} object or 'ellmer' Chat.
 This may sometimes affect the prompt text construction}
 }
 \if{html}{\out{</div>}}

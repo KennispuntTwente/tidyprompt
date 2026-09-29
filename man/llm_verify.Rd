@@ -19,13 +19,15 @@ The LLM will be presented the original prompt, its result, and this question.
 The LLM will be asked to provide a boolean answer to this question. If TRUE,
 the result of the prompt will be accepted; if FALSE, the result will be declined}
 
-\item{llm_provider}{A \linkS4class{llm_provider} object
+\item{llm_provider}{A \linkS4class{llm_provider} object or an 'ellmer' Chat
 which will be used to verify the evaluation led to a satisfactory result.
 If not provided, the same LLM provider as the prompt was originally
 evaluated with will be used
 (with its base configuration, without the answer's prompt-specific settings).
 Verification and feedback-summary requests share the original evaluation's
-request limit, including when a separate verifier provider is supplied.}
+request limit, including when a separate verifier provider is supplied.
+Raw Chats are cloned and their existing turns cleared for verification, as
+in \code{\link[=send_prompt]{send_prompt()}}; the caller's Chat is unchanged.}
 
 \item{max_words_feedback}{The maximum number of words allowed in the summary of
 why the result was declined.

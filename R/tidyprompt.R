@@ -288,7 +288,7 @@ NULL
     #' @description
     #' Construct the complete prompt text.
     #'
-    #' @param llm_provider Optional [llm_provider-class] object.
+    #' @param llm_provider Optional [llm_provider-class] object or 'ellmer' Chat.
     #' This may sometimes affect the prompt text construction
     #' @param apply_provider_prompt_wraps Logical. Whether to apply
     #' provider-specific pre/post prompt wraps when constructing the prompt text
@@ -299,6 +299,7 @@ NULL
       apply_provider_prompt_wraps = FALSE
     ) {
       private$validate_tidyprompt()
+      llm_provider <- as_llm_provider(llm_provider)
       prompt_text <- self$base_prompt
 
       # Add provider-specific pre/post prompt wraps
@@ -367,7 +368,7 @@ NULL
     #' with the system prompt as the first message with role 'system' and the
     #' the base prompt as the last message with role 'user'.
     #'
-    #' @param llm_provider An optional [llm_provider-class] object.
+    #' @param llm_provider An optional [llm_provider-class] object or 'ellmer' Chat.
     #' This may sometimes affect the prompt text construction
     #'
     #' @return A dataframe containing the chat history
@@ -481,7 +482,7 @@ get_prompt_wraps <- function(
 #' Construct prompt text from a [tidyprompt-class] object
 #'
 #' @param x A [tidyprompt-class] object
-#' @param llm_provider An optional [llm_provider-class] object.
+#' @param llm_provider An optional [llm_provider-class] object or 'ellmer' Chat.
 #' This may sometimes affect the prompt text construction
 #'
 #' @return The constructed prompt text

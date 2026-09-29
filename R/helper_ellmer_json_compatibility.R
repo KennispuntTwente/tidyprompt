@@ -146,7 +146,7 @@ ellmer_chat_clone_reset <- function(
   chat$set_turns(list())
 }
 
-as_send_prompt_llm_provider <- function(
+as_llm_provider <- function(
   llm_provider,
   verbose = NULL,
   stream = NULL

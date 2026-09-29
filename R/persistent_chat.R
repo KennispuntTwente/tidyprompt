@@ -27,7 +27,9 @@ NULL
 
     #' @description Initialize the PersistentChat object
     #'
-    #' @param llm_provider A [llm_provider-class] object
+    #' @param llm_provider A [llm_provider-class] object or an 'ellmer' Chat.
+    #' A raw Chat is cloned and its existing turns cleared, as in [send_prompt()].
+    #' Supply `chat_history` to resume a conversation; the caller's Chat is unchanged.
     #' @param chat_history (optional) A [chat_history()] object
     #'
     #' @return The initialized PersistentChat object
@@ -48,8 +50,13 @@ NULL
         self$chat_history <- chat_history
       }
 
+      llm_provider <- as_llm_provider(llm_provider)
       if (!inherits(llm_provider, "LlmProvider")) {
-        stop("The 'llm_provider' argument must be of class 'LlmProvider'")
+        stop("The 'llm_provider' argument must be a 'LlmProvider' or an ellmer Chat")
+      }
+      if (isTRUE(llm_provider$parameters$.reset_ellmer_chat)) {
+        llm_provider$ellmer_chat <- ellmer_chat_clone_reset(llm_provider$ellmer_chat)
+        llm_provider$parameters$.reset_ellmer_chat <- NULL
       }
 
       self$llm_provider <- llm_provider
