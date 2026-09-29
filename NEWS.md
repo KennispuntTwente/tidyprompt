@@ -1,66 +1,68 @@
 # tidyprompt (development version)
 
-* Cross-provider schemas preserve singleton `required` and `enum` arrays during
-  HTTP serialization instead of unboxing them into invalid scalar keywords.
+* 'ellmer' compatability fixes & improvements:
 
-* Native schema validation preserves empty objects and ellmer's absent optional
-  fields instead of incorrectly treating them as arrays or explicit nulls.
+  * Cross-provider schemas preserve singleton `required` and `enum` arrays during
+    HTTP serialization instead of unboxing them into invalid scalar keywords.
 
-* The ellmer interoperability vignette now documents supported capabilities,
-  a tools-then-extraction workflow, and async/batch boundaries.
+  * Native schema validation preserves empty objects and absent optional fields
+    from 'ellmer' instead of incorrectly treating them as arrays or explicit nulls.
 
-* `limit_ellmer_requests()` bounds native model requests across internal tool
-  loops, structured extraction and tidyprompt feedback rounds.
+  * The 'ellmer' interoperability vignette now documents supported capabilities,
+    a tools-then-extraction workflow, and async/batch boundaries.
 
-* Ellmer streams can expose rich content events and accept a stream controller.
-  Cancellation and iteration errors retain recoverable partial chat state.
+  * `limit_ellmer_requests()` bounds native model requests across internal tool
+    loops, structured extraction and tidyprompt feedback rounds.
 
-* Native structured output can now stream with ellmer 0.5.0, retaining native R
-  coercion and falling back for providers that require tool-based extraction.
+  * 'ellmer' streams can expose rich content events and accept a stream controller.
+    Cancellation and iteration errors retain recoverable partial chat state.
 
-* `add_content()` attaches native ellmer content, including documents and file
-  references, to prompts and preserves it across feedback turns.
+  * Native structured output can now stream with 'ellmer' 0.5.0, retaining native R
+    coercion and falling back for providers that require tool-based extraction.
 
-* CI now pins ellmer 0.5.0 alongside the minimum version and checks ellmer
-  regressions with lifecycle deprecations treated as errors.
+  * `add_content()` attaches native 'ellmer' content, including documents and file
+    references, to prompts and preserves it across feedback turns.
 
-* Schema conversion no longer calls ellmer's deprecated `.additional_properties`
-  argument. Open-object schemas are preserved using `type_from_schema()`.
+  * CI now pins 'ellmer' 0.5.0 alongside the minimum version and checks 'ellmer'
+    regressions with lifecycle deprecations treated as errors.
 
-* Ellmer chats now deep-clone callback registries for each evaluation. The new
-  interoperability vignette explains how to bind hooks to the working chat.
+  * Schema conversion no longer calls the deprecated `.additional_properties`
+    argument in 'ellmer'. Open-object schemas are preserved using `type_from_schema()`.
 
-* Tool results now serialize lists and data frames as JSON, preserving nested
-  data and satisfying ellmer's result contract. Native content results are retained.
+  * 'ellmer' chats now deep-clone callback registries for each evaluation. The new
+    interoperability vignette explains how to bind hooks to the working chat.
 
-* Ellmer tools retain nested argument schemas and input conversion semantics
-when used with other providers. Context-aware tools explicitly require the
-native ellmer path, and direct converted-tool calls evaluate R arguments normally.
+  * Tool results now serialize lists and data frames as JSON, preserving nested
+    data and satisfying the 'ellmer' result contract. Native content results are retained.
 
-* Zero-argument R tools register correctly with ellmer. Failed native tool
-conversions now identify the tool and preserve the original error.
+  * 'ellmer' tools retain nested argument schemas and input conversion semantics
+    when used with other providers. Context-aware tools explicitly require the
+    native 'ellmer' path, and direct converted-tool calls evaluate R arguments normally.
 
-* Renaming ellmer tools preserves ignored arguments, conversion settings and
-annotations without reconstructing their definitions.
+  * Zero-argument R tools register correctly with 'ellmer'. Failed native tool
+    conversions now identify the tool and preserve the original error.
 
-* Rich JSON schemas retain their constraints through ellmer conversion.
-Native structured results are validated without changing their R classes;
-unsupported schemas no longer silently lose enforcement.
+  * Renaming 'ellmer' tools preserves ignored arguments, conversion settings and
+    annotations without reconstructing their definitions.
 
-* History compacted by ellmer request callbacks is now reflected in returned
-transcripts and subsequent requests instead of restoring removed messages.
+  * Rich JSON schemas retain their constraints through 'ellmer' conversion.
+    Native structured results are validated without changing their R classes;
+    unsupported schemas no longer silently lose enforcement.
 
-* Ellmer follow-up requests preserve complete native turns, including tool
-request/result pairs, reasoning blocks, usage metadata and partial-turn classes.
-Native protocol content is retained when cleaning an ellmer conversation.
+  * History compacted by 'ellmer' request callbacks is now reflected in returned
+    transcripts and subsequent requests instead of restoring removed messages.
 
-* Ellmer history indexing now handles both tidyprompt system rows and system
-prompts configured on the native chat without assigning assistant content to
-user messages.
+  * 'ellmer' follow-up requests preserve complete native turns, including tool
+    request/result pairs, reasoning blocks, usage metadata and partial-turn classes.
+    Native protocol content is retained when cleaning an 'ellmer' conversation.
 
-* Ellmer replies now use the complete final assistant text rather than the
-last transcript row. Citations no longer replace the answer and are available
-in `$citations` when `return_mode = "full"`.
+  * 'ellmer' history indexing now handles both tidyprompt system rows and system
+    prompts configured on the native chat without assigning assistant content to
+    user messages.
+
+  * 'ellmer' replies now use the complete final assistant text rather than the
+    last transcript row. Citations no longer replace the answer and are available
+    in `$citations` when `return_mode = "full"`.
 
 * Built-in OpenAI-compatible and Ollama request failures now signal
 `tidyprompt_request_error` with the original condition in `parent`, plus
@@ -93,13 +95,13 @@ an `llm_provider_ellmer()` under the hood)
 * `llm_provider_ellmer()` was improved to better synchronize with 
 the native 'ellmer' state, for instance for streaming, multimodal/image
 content, and persistent chats, with clearer warnings when settings need to
-be configured on the underlying `ellmer` chat object.
+be configured on the underlying 'ellmer' chat object.
 
-* `answer_as_json()` and `answer_using_tools()` have broader ellmer
-compatibility, including `ellmer::type_from_schema()`, ellmer built-in tools,
+* `answer_as_json()` and `answer_using_tools()` have broader 'ellmer'
+compatibility, including `ellmer::type_from_schema()`, 'ellmer' built-in tools,
 and better handling of optional or ignored tool arguments.
 
-* Chat history handling is more robust for tool and ellmer-native workflows:
+* Chat history handling is more robust for tool and native 'ellmer' workflows:
 `tool` rows are supported, non-replayable native rows (tool call and thinking rows)
 are kept for inspection but not re-sent to the LLM provider, and related
 metadata is normalized more reliably.
@@ -132,7 +134,7 @@ certain behavior for various prompts, without having to re-apply the same
 prompt wrap to each prompt
 
 * `answer_as_json()`: support 'ellmer' definitions of structured output
-(e.g., `ellmer::type_object()`). `answer_as_json()` can convert between ellmer
+(e.g., `ellmer::type_object()`). `answer_as_json()` can convert between 'ellmer'
 definitions and the previous R list objects which represent JSON schemas; thus,
 'ellmer' and R list object definitions work with both regular and 'ellmer'
 LLM providers. When using an `llm_provider_ellmer()`, `answer_as_json()` will 
@@ -189,7 +191,7 @@ constructing prompt text based on the LLM provider type
 
 * New `llm_break_soft()` interrupts prompt evaluation without error
 
-* New experimental provider `llm_provider_ellmer()` for `ellmer` chat objects
+* New experimental provider `llm_provider_ellmer()` for 'ellmer' chat objects
 
 * Ollama provider gains `num_ctx` parameter to control context window size
 
