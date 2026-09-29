@@ -47,7 +47,11 @@ llm_verify(
   [llm_provider](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider-class.md)
   object which will be used to verify the evaluation led to a
   satisfactory result. If not provided, the same LLM provider as the
-  prompt was originally evaluated with will be used
+  prompt was originally evaluated with will be used (with its base
+  configuration, without the answer's prompt-specific settings).
+  Verification and feedback-summary requests share the original
+  evaluation's request limit, including when a separate verifier
+  provider is supplied.
 
 - max_words_feedback:
 

@@ -98,6 +98,9 @@ Regardless of which of these forms you supply, `answer_as_dataframe()`
 normalizes it to a row-oriented structured-output schema before
 delegating to
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md).
+Array constraints in the supplied schema are retained. Explicit row
+limits further restrict those constraints; contradictory limits raise an
+error.
 
 ## See also
 

@@ -5,7 +5,10 @@ feedback rounds, for regular tidyprompt providers and 'ellmer'. The
 counter resets for each
 [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
 evaluation. Streaming chunks and transport-level retries within a model
-request do not count as additional model requests.
+request do not count as additional model requests. Nested
+[`llm_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_verify.md)
+evaluations, including rejection summaries, share the outer evaluation's
+counter.
 
 ## Usage
 

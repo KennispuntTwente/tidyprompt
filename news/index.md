@@ -10,6 +10,25 @@
   evaluation. If both limits are supplied, the smaller applies;
   `max_interactions` separately controls the outer evaluation loop.
 
+- Prompt composition and nested evaluation fixes:
+
+  - [`llm_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_verify.md)
+    isolates the verifier from answer-specific wraps, schemas and
+    handlers. Verification and rejection summaries share the outer
+    request budget without removing its request-limit hooks. Rejection
+    summaries now use the available chat history.
+  - Multiple native ‘ellmer’ tool wraps accumulate tools and reject
+    conflicting names. Multiple native structured-output wraps fail
+    before requesting a reply.
+  - Native schema validation handles list columns and nested data-frame
+    columns.
+    [`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md)
+    retains array constraints from the supplied schema.
+  - [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md)
+    evaluates every permitted response, including when
+    `max_interactions = 1`, and respects feedback from checks after a
+    break.
+
 - ‘ellmer’ compatability fixes & improvements:
 
   - Streaming: structured output now streams with ‘ellmer’ 0.5.0 when

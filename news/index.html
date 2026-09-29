@@ -44,6 +44,15 @@
 <h2 class="pkg-version" data-toc-text="development version" id="tidyprompt-development-version">tidyprompt (development version)<a class="anchor" aria-label="anchor" href="#tidyprompt-development-version"></a></h2>
 <ul><li><p><code><a href="../reference/limit_requests.html">limit_requests()</a></code> and <code>send_prompt(max_requests = ...)</code> bound model requests across initial responses, tool follow-ups and feedback rounds for both regular and ‘ellmer’ providers. The counter resets for each <code><a href="../reference/send_prompt.html">send_prompt()</a></code> evaluation. If both limits are supplied, the smaller applies; <code>max_interactions</code> separately controls the outer evaluation loop.</p></li>
 <li>
+<p>Prompt composition and nested evaluation fixes:</p>
+<ul><li>
+<code><a href="../reference/llm_verify.html">llm_verify()</a></code> isolates the verifier from answer-specific wraps, schemas and handlers. Verification and rejection summaries share the outer request budget without removing its request-limit hooks. Rejection summaries now use the available chat history.</li>
+<li>Multiple native ‘ellmer’ tool wraps accumulate tools and reject conflicting names. Multiple native structured-output wraps fail before requesting a reply.</li>
+<li>Native schema validation handles list columns and nested data-frame columns. <code><a href="../reference/answer_as_dataframe.html">answer_as_dataframe()</a></code> retains array constraints from the supplied schema.</li>
+<li>
+<code><a href="../reference/send_prompt.html">send_prompt()</a></code> evaluates every permitted response, including when <code>max_interactions = 1</code>, and respects feedback from checks after a break.</li>
+</ul></li>
+<li>
 <p>‘ellmer’ compatability fixes &amp; improvements:</p>
 <ul><li><p>Streaming: structured output now streams with ‘ellmer’ 0.5.0 when the provider supports it, with blocking extraction as a fallback. Streams expose rich content events, support cancellation and retain partial results after errors.</p></li>
 <li><p>Attachments: use <code><a href="../reference/add_content.html">add_content()</a></code> to attach native ‘ellmer’ content, including documents and file references. It requires an ‘ellmer’ provider and retains attachments across feedback turns.</p></li>

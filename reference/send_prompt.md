@@ -64,10 +64,11 @@ send_prompt(
   Maximum number of interactions allowed with the LLM provider. Default
   is 10. If the maximum number of interactions is reached without a
   successful response, 'NULL' is returned as the response (see return
-  value). The first interaction is the initial chat completion. This
-  controls the outer extraction, validation and feedback loop; it does
-  not count individual model requests within provider tool loops. Use
-  `max_requests` to also bound those requests.
+  value). The first interaction is the initial chat completion. Every
+  response is extracted and validated, including the last allowed
+  response. This controls the outer extraction, validation and feedback
+  loop; it does not count individual model requests within provider tool
+  loops. Use `max_requests` to also bound those requests.
 
 - clean_chat_history:
 
@@ -106,9 +107,11 @@ send_prompt(
   [`limit_requests()`](https://kennispunttwente.github.io/tidyprompt/reference/limit_requests.md)
   to `prompt`. The default, `NULL`, adds no request limit and preserves
   any limit already attached to the prompt. If both are supplied, the
-  smaller limit applies. Counts the initial request, tool follow-ups and
-  feedback requests, excluding streaming chunks and transport-level
-  retries. Attempting another request after the limit raises a
+  smaller limit applies. Counts the initial request, tool follow-ups,
+  feedback requests and nested
+  [`llm_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_verify.md)
+  requests, excluding streaming chunks and transport-level retries.
+  Attempting another request after the limit raises a
   `tidyprompt_request_limit` error. See
   [`limit_requests()`](https://kennispunttwente.github.io/tidyprompt/reference/limit_requests.md)
   for provider requirements and counting details.

@@ -107,7 +107,10 @@ the result of the prompt will be accepted; if FALSE, the result will be declined
 <dd><p>A <a href="llm_provider-class.html">llm_provider</a> object
 which will be used to verify the evaluation led to a satisfactory result.
 If not provided, the same LLM provider as the prompt was originally
-evaluated with will be used</p></dd>
+evaluated with will be used
+(with its base configuration, without the answer's prompt-specific settings).
+Verification and feedback-summary requests share the original evaluation's
+request limit, including when a separate verifier provider is supplied.</p></dd>
 
 
 <dt id="arg-max-words-feedback">max_words_feedback<a class="anchor" aria-label="anchor" href="#arg-max-words-feedback"></a></dt>
