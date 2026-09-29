@@ -24,7 +24,7 @@ and citations in the full result.
 | Generic attachments | `add_content()`; content classes and provider support vary |
 | Structured streaming | ellmer 0.5.0 with native provider support; blocking fallback otherwise |
 | Rich stream events and cancellation | ellmer 0.5.0 |
-| Request hooks and `limit_ellmer_requests()` | ellmer 0.5.0 |
+| Request hooks and `limit_requests()` with an 'ellmer' provider | 'ellmer' 0.5.0 |
 | Context-aware tools | Native ellmer execution only |
 | Native async, parallel and batch evaluation | Not exposed by `send_prompt()` |
 
@@ -125,16 +125,18 @@ blocking structured fallback cannot be cancelled with a stream controller.
 ## Request limits and observability
 
 `max_interactions` limits tidyprompt's outer evaluation loop. Use
-`limit_ellmer_requests(prompt, max_requests = 5)` to bound individual model
-requests across native tool calls and feedback. This requires ellmer 0.5.0 and
-counts the blocking structured path explicitly, because that method bypasses
-ellmer's request hooks. The limit stops before the next model request and raises
-`tidyprompt_request_limit` with the working chat attached. It does not prevent
+`limit_requests(prompt, max_requests = 5)` to bound individual model requests
+across tool calls and feedback for regular tidyprompt providers and 'ellmer'.
+With an 'ellmer' provider, this requires 'ellmer' 0.5.0 and counts the blocking
+structured path explicitly, because that method bypasses its request hooks.
+The limit stops before the next model request and raises
+`tidyprompt_request_limit` with the working provider (and native chat when
+applicable) attached. It does not prevent
 execution of tools requested by an already completed model request, or bound
 transport-level retries made within one model request.
 
 ```{r}
-prompt <- limit_ellmer_requests("Research this question", 5)
+prompt <- limit_requests("Research this question", 5)
 prompt <- prompt_wrap(prompt, parameter_fn = function(llm_provider) {
   working <- llm_provider$get_chat()
   working$conversation_id <- "research-session-123"

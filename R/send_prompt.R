@@ -157,6 +157,13 @@ send_prompt <- function(
   ) {
     llm_provider$parameters$stream <- stream
   }
+  # Request limits belong to this evaluation, including when its returned native
+  # chat is reused later. Remove only the callbacks installed by the limit wrap.
+  on.exit({
+    cleanup <- llm_provider$parameters$.request_limit_cleanup
+    if (is.function(cleanup)) cleanup()
+  }, add = TRUE)
+
   # Apply parameter_fn's to the llm_provider
   for (prompt_wrap in get_prompt_wraps(prompt)) {
     if (!is.null(prompt_wrap$parameter_fn)) {

@@ -7,7 +7,7 @@ test_that("request limits span feedback rounds and reset between evaluations", {
       if (structured) prompt <- answer_as_json(prompt, type = "ellmer",
         schema = ellmer::type_object(x = ellmer::type_number()))
       prompt <- prompt_wrap(prompt, validation_fn = function(...) llm_feedback("Again"))
-      prompt <- limit_ellmer_requests(prompt, 1)
+      prompt <- limit_requests(prompt, 1)
       for (i in 1:2) {
         err <- tryCatch(send_prompt(prompt, ch, stream = stream, verbose = FALSE), tidyprompt_request_limit = identity)
         expect_s3_class(err, "tidyprompt_request_limit")
@@ -17,7 +17,7 @@ test_that("request limits span feedback rounds and reset between evaluations", {
     }
   }
   expect_length(ch$get_turns(), 0L)
-  expect_error(limit_ellmer_requests("x", 0), "positive whole")
+  expect_error(limit_requests("x", 0), "positive whole")
 })
 
 test_that("request limits stop ellmer's internal tool loop", {
@@ -33,8 +33,29 @@ test_that("request limits stop ellmer's internal tool loop", {
   }, .package = "ellmer")
   ch <- ellmer::chat_openai(model = "gpt-4.1-mini", credentials = function() "test-only", echo = "none")
   ch$register_tool(ellmer::tool(function() "Data", name = "lookup", description = "Lookup"))
-  err <- tryCatch(send_prompt(limit_ellmer_requests("Question", 1), ch,
+  err <- tryCatch(send_prompt(limit_requests("Question", 1), ch,
     stream = FALSE, verbose = FALSE), tidyprompt_request_limit = identity)
   expect_s3_class(err, "tidyprompt_request_limit")
   expect_equal(requests, 1L)
+})
+
+test_that("returned native chats do not retain an exhausted evaluation limit", {
+  local_ellmer_response(citations = FALSE)
+  ch <- ellmer::chat_openai(model = "gpt-4.1-mini", credentials = function() "test-only", echo = "none")
+  callbacks <- 0L
+  ch$on_request_start(function(turns) callbacks <<- callbacks + 1L)
+  first <- send_prompt(limit_requests("Question", 1), ch,
+    stream = FALSE, verbose = FALSE, return_mode = "full")
+  expect_equal(callbacks, 1L)
+  second <- send_prompt(limit_requests("Another question", 1), first$ellmer_chat,
+    stream = FALSE, verbose = FALSE, return_mode = "full")
+  expect_equal(callbacks, 2L)
+  expect_equal(second$response, "The answer is 42.")
+  prompt <- limit_requests(prompt_wrap("Question",
+    validation_fn = function(...) llm_feedback("Again")), 1)
+  err <- tryCatch(send_prompt(prompt, second$ellmer_chat,
+    stream = FALSE, verbose = FALSE), tidyprompt_request_limit = identity)
+  expect_s3_class(err, "tidyprompt_request_limit")
+  expect_equal(send_prompt("Recovered", err$ellmer_chat, stream = FALSE, verbose = FALSE),
+    "The answer is 42.")
 })

@@ -439,7 +439,8 @@ answer_using_tools <- function(
         new_request,
         stream = llm_provider$parameters$stream,
         verbose = llm_provider$verbose,
-        api_type = llm_provider$api_type
+        api_type = llm_provider$api_type,
+        llm_provider = llm_provider
       )
     }
 

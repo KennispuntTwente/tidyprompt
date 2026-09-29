@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* `limit_requests()` bounds model requests across initial responses, tool
+  follow-ups and feedback rounds for regular tidyprompt providers and 'ellmer'.
+  The counter resets for each `send_prompt()` evaluation.
+
 * 'ellmer' compatability fixes & improvements:
 
   * Cross-provider schemas preserve singleton `required` and `enum` arrays during
@@ -10,9 +14,6 @@
 
   * The 'ellmer' interoperability vignette now documents supported capabilities,
     a tools-then-extraction workflow, and async/batch boundaries.
-
-  * `limit_ellmer_requests()` bounds native model requests across internal tool
-    loops, structured extraction and tidyprompt feedback rounds.
 
   * 'ellmer' streams can expose rich content events and accept a stream controller.
     Cancellation and iteration errors retain recoverable partial chat state.

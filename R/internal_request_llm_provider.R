@@ -97,6 +97,9 @@ request_llm_provider <- function(
   api_type <- match.arg(api_type)
   request <- normalize_openai_request(request, api_type)
 
+  guard <- llm_provider$parameters$.request_guard
+  if (is.function(guard)) guard()
+
   if (!is.null(stream) && stream) {
     req_result <- req_llm_stream(
       req = request,

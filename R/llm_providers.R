@@ -542,9 +542,9 @@ llm_provider_google_gemini <- function(
       contents = formatted_contents
     )
 
-    # Append all other parameters to the body
+    # Internal prompt-wrap parameters are not API request fields.
     for (name in names(self$parameters)) {
-      body[[name]] <- self$parameters[[name]]
+      if (!startsWith(name, ".")) body[[name]] <- self$parameters[[name]]
     }
 
     # Send the POST request with httr2
@@ -1720,7 +1720,7 @@ llm_provider_ellmer <- function(
     }
 
     if (use_structured && is.null(structured_stream)) {
-      if (is.function(params$.ellmer_request_guard)) params$.ellmer_request_guard()
+      if (is.function(params$.request_guard)) params$.request_guard()
       if (!is.null(multimodal_args)) {
         reply_struct <- do.call(
           ch$chat_structured,

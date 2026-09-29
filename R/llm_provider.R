@@ -241,7 +241,9 @@ NULL
       }
 
       environment(private$complete_chat_function) <- environment()
-      response <- private$complete_chat_function(chat_history_request)
+      response <- complete_chat_with_request_limit(
+        self, private$complete_chat_function, chat_history_request
+      )
 
       # If this is an ellmer provider, sync the chat object
       #   This ensures handler_fn can access the current state of the chat
