@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Cross-provider schemas preserve singleton `required` and `enum` arrays during
+  HTTP serialization instead of unboxing them into invalid scalar keywords.
+
 * Native schema validation preserves empty objects and ellmer's absent optional
   fields instead of incorrectly treating them as arrays or explicit nulls.
 

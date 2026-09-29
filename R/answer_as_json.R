@@ -194,7 +194,7 @@ answer_as_json <- function(
         return(list(format = "json"))
       }
       if (!is.null(sch$json_schema)) {
-        js <- sch$json_schema
+        js <- schema_for_request(sch$json_schema)
         js$strict <- schema_strict
         return(list(format = js))
       }
@@ -209,7 +209,7 @@ answer_as_json <- function(
       if (!is.null(sch$json_schema)) {
         json_schema <- list(
           name = "schema",
-          schema = sch$json_schema,
+          schema = schema_for_request(sch$json_schema),
           strict = schema_strict
         )
         return(list(
@@ -269,7 +269,7 @@ answer_as_json <- function(
         # "schema"
         schema_instruction <<- paste0(
           "Your JSON object should match this JSON schema:\n",
-          jsonlite::toJSON(sch$json_schema, auto_unbox = TRUE, pretty = TRUE)
+          schema_json(sch$json_schema)
         )
       }
       prompt_text <- paste0(prompt_text, "\n\n", schema_instruction)
@@ -318,15 +318,12 @@ answer_as_json <- function(
         jsonvalidate_installed()
     ) {
       answer_json <- jsonlite::toJSON(jsons, auto_unbox = TRUE, pretty = TRUE)
-      schema_json <- jsonlite::toJSON(
-        sch$json_schema,
-        auto_unbox = TRUE,
-        pretty = TRUE
-      )
+      schema_text <- schema_json(sch$json_schema)
 
       validation_result <- jsonvalidate::json_validate(
         answer_json,
-        schema_json,
+        schema_text,
+        engine = "ajv",
         strict = schema_strict,
         verbose = TRUE
       )

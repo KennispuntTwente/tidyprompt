@@ -60,3 +60,22 @@ test_that("raw schemas retain invalid scalar shapes and explicit nullable fields
   ty <- json_schema_to_ellmer_type(schema)
   expect_true(validate_native_schema(list(x = NULL), schema, native_type = ty))
 })
+
+test_that("cross-provider schemas retain singleton arrays on the HTTP wire", {
+  skip_if_not_installed("ellmer")
+  type <- ellmer::type_object(status = ellmer::type_enum("ok"))
+  for (provider in c("openai", "ollama")) {
+    prompt <- answer_as_json("Status", schema = type, type = provider)
+    params <- prompt$get_prompt_wraps()[[1]]$parameter_fn(list(api_type = provider))
+    wire <- as.character(jsonlite::toJSON(params, auto_unbox = TRUE))
+    expect_match(wire, '"required":["status"]', fixed = TRUE)
+    expect_match(wire, '"enum":["ok"]', fixed = TRUE)
+  }
+  tool <- ellmer::tool(function(status) status, name = "status", description = "Status",
+    arguments = list(status = ellmer::type_enum("ok")))
+  prompt <- answer_using_tools("Status", tools = tool, type = "openai")
+  params <- prompt$get_prompt_wraps()[[1]]$parameter_fn(list(api_type = "openai"))
+  wire <- as.character(jsonlite::toJSON(params, auto_unbox = TRUE))
+  expect_match(wire, '"required":["status"]', fixed = TRUE)
+  expect_match(wire, '"enum":["ok"]', fixed = TRUE)
+})

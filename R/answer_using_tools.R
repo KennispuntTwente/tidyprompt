@@ -242,11 +242,11 @@ answer_using_tools <- function(
           tool_openai[["function"]]$description <- docs$description
         }
         native <- attr(tool, "ellmer_tool", exact = TRUE)
-        tool_openai[["function"]]$parameters <- if (is.null(native)) {
+        tool_openai[["function"]]$parameters <- schema_for_request(if (is.null(native)) {
           tools_docs_to_r_json_schema(docs)
         } else {
           ellmer_type_to_json_schema(native@arguments)
-        }
+        })
         # Strict mode would force optional arguments to be required on OpenAI.
         tool_openai[["function"]]$strict <- is.null(native)
 

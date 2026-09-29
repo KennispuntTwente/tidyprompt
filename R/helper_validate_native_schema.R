@@ -45,7 +45,7 @@ validate_native_schema <- function(value, schema, strict = FALSE, native_type = 
     verbose = TRUE, strict = strict)
   if (!isTRUE(valid)) {
     return(llm_feedback(paste0("Your response did not match the expected JSON schema.\n",
-      paste(capture.output(print(attr(valid, "errors"))), collapse = "\n"))))
+      paste(utils::capture.output(print(attr(valid, "errors"))), collapse = "\n"))))
   }
   invisible(TRUE)
 }

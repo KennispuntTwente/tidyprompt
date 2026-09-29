@@ -198,6 +198,12 @@ schema_requires_native_json <- function(schema) {
     is.list(schema$additionalProperties)
 }
 
+# httr2 auto-unboxes scalar vectors. Keep JSON Schema array keywords as lists
+# at the HTTP boundary, including one-element required/enum arrays.
+schema_for_request <- function(schema) {
+  jsonlite::fromJSON(schema_json(schema), simplifyVector = FALSE)
+}
+
 json_schema_to_ellmer_type <- function(
   schema,
   required = TRUE,
