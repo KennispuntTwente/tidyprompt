@@ -104,13 +104,15 @@ the result of the prompt will be accepted; if FALSE, the result will be declined
 
 
 <dt id="arg-llm-provider">llm_provider<a class="anchor" aria-label="anchor" href="#arg-llm-provider"></a></dt>
-<dd><p>A <a href="llm_provider-class.html">llm_provider</a> object
+<dd><p>A <a href="llm_provider-class.html">llm_provider</a> object or an 'ellmer' Chat
 which will be used to verify the evaluation led to a satisfactory result.
 If not provided, the same LLM provider as the prompt was originally
 evaluated with will be used
 (with its base configuration, without the answer's prompt-specific settings).
 Verification and feedback-summary requests share the original evaluation's
-request limit, including when a separate verifier provider is supplied.</p></dd>
+request limit, including when a separate verifier provider is supplied.
+Raw Chats are cloned and their existing turns cleared for verification, as
+in <code><a href="send_prompt.html">send_prompt()</a></code>; the caller's Chat is unchanged.</p></dd>
 
 
 <dt id="arg-max-words-feedback">max_words_feedback<a class="anchor" aria-label="anchor" href="#arg-max-words-feedback"></a></dt>
@@ -132,7 +134,13 @@ the base prompt as well as all prompt wraps that have a modify function
 but do not have an extraction or validation function. This is to ensure
 that no redundant validation is performed by the evaluating LLM on
 instructions which have already been validated by functions in those
-prompt wraps.</p>
+prompt wraps.
+The verifier receives the complete answer: text is sent directly, and other
+R values are serialized with <code><a href="https://rdrr.io/r/base/dput.html" class="external-link">base::dput()</a></code>, including all rows, columns and
+nested values. Console printing and tibble display limits do not apply.
+No size limit or automatic truncation is applied here; the complete answer
+must fit within the verifier model's context window. To review selected fields
+or chunks instead, split or select them explicitly before verification.</p>
     </div>
 
     <div class="section level2">

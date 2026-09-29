@@ -63,7 +63,11 @@ Initialize the PersistentChat object
 
   A
   [llm_provider](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider-class.md)
-  object
+  object or an 'ellmer' Chat. A raw Chat is cloned and its existing
+  turns cleared, as in
+  [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md).
+  Supply `chat_history` to resume a conversation; the caller's Chat is
+  unchanged.
 
 - `chat_history`:
 

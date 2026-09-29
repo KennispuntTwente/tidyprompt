@@ -193,7 +193,8 @@ Construct the complete prompt text.
 
   Optional
   [llm_provider](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider-class.md)
-  object. This may sometimes affect the prompt text construction
+  object or 'ellmer' Chat. This may sometimes affect the prompt text
+  construction
 
 - `apply_provider_prompt_wraps`:
 
@@ -252,7 +253,8 @@ prompt as the last message with role 'user'.
 
   An optional
   [llm_provider](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider-class.md)
-  object. This may sometimes affect the prompt text construction
+  object or 'ellmer' Chat. This may sometimes affect the prompt text
+  construction
 
 #### Returns
 

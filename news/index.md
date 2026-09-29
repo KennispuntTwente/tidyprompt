@@ -2,6 +2,34 @@
 
 ## tidyprompt (development version)
 
+- Raw ‘ellmer’ Chats are now accepted by
+  [`llm_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_verify.md),
+  `persistent_chat-class$new()` and prompt rendering, consistently with
+  [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md).
+  Verifiers and persistent chats use isolated Chat clones.
+
+- Native structured-output diagnostics now also detect tools registered
+  directly on an ‘ellmer’ Chat, including when streaming. The
+  interoperability vignette shows how to use tools before structured
+  extraction in separate evaluations.
+
+- [`llm_verify()`](https://kennispunttwente.github.io/tidyprompt/reference/llm_verify.md)
+  now sends complete structured answers using deterministic R
+  serialization, including every tibble row and nested value. It no
+  longer silently substitutes a truncated console preview for the
+  answer.
+
+- Returned `chat_history_clean` now preserves native ‘ellmer’ tool
+  requests together with their results, so cleaned conversations can be
+  resumed safely.
+
+- [`answer_as_dataframe()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_dataframe.md)
+  keeps nested arrays and objects in list columns for raw JSON schemas
+  and
+  [`ellmer::type_from_schema()`](https://ellmer.tidyverse.org/reference/type_boolean.html),
+  preventing silent row expansion. Final row counts are checked against
+  the input and schema limits.
+
 - [`limit_requests()`](https://kennispunttwente.github.io/tidyprompt/reference/limit_requests.md)
   and `send_prompt(max_requests = ...)` bound model requests across
   initial responses, tool follow-ups and feedback rounds for both

@@ -216,19 +216,24 @@ completes.</p>
 <div class="section level2">
 <h2 id="tools-followed-by-structured-extraction">Tools followed by structured extraction<a class="anchor" aria-label="anchor" href="#tools-followed-by-structured-extraction"></a>
 </h2>
-<p>Ellmer suppresses tools during native structured extraction. Use two
-evaluations when a task needs both: first gather information using
-tools, then extract a schema-constrained answer from that
+<p>Ellmer suppresses tools during native structured extraction,
+including structured streaming. Tidyprompt diagnoses this combination
+for both prompt-level tools and tools registered directly on the Chat.
+Use two evaluations when a task needs both: first gather information
+using tools, then extract a schema-constrained answer from that
 conversation.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">research</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/answer_using_tools.html">answer_using_tools</a></span><span class="op">(</span><span class="st">"Find the relevant facts"</span>, tools <span class="op">=</span> <span class="va">my_tools</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"ellmer"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">chat</span>, return_mode <span class="op">=</span> <span class="st">"full"</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Tool results stay in the history; no new tools are needed for extraction.</span></span>
+<span><span class="va">extraction_chat</span> <span class="op">&lt;-</span> <span class="va">research</span><span class="op">$</span><span class="va">ellmer_chat</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">extraction_chat</span><span class="op">$</span><span class="fu">set_tools</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">answer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_msg_to_chat_history.html">add_msg_to_chat_history</a></span><span class="op">(</span><span class="va">research</span><span class="op">$</span><span class="va">chat_history</span>, <span class="st">"Extract the final result"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/answer_as_json.html">answer_as_json</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">type_object</a></span><span class="op">(</span>summary <span class="op">=</span> <span class="fu">ellmer</span><span class="fu">::</span><span class="fu"><a href="https://ellmer.tidyverse.org/reference/type_boolean.html" class="external-link">type_string</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    type <span class="op">=</span> <span class="st">"ellmer"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="fu"><a href="../reference/llm_provider_ellmer.html">llm_provider_ellmer</a></span><span class="op">(</span><span class="va">research</span><span class="op">$</span><span class="va">ellmer_chat</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/send_prompt.html">send_prompt</a></span><span class="op">(</span><span class="va">extraction_chat</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="async-parallel-and-batch-boundaries">Async, parallel and batch boundaries<a class="anchor" aria-label="anchor" href="#async-parallel-and-batch-boundaries"></a>

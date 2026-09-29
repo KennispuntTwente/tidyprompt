@@ -45,13 +45,16 @@ llm_verify(
 
   A
   [llm_provider](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider-class.md)
-  object which will be used to verify the evaluation led to a
-  satisfactory result. If not provided, the same LLM provider as the
-  prompt was originally evaluated with will be used (with its base
-  configuration, without the answer's prompt-specific settings).
+  object or an 'ellmer' Chat which will be used to verify the evaluation
+  led to a satisfactory result. If not provided, the same LLM provider
+  as the prompt was originally evaluated with will be used (with its
+  base configuration, without the answer's prompt-specific settings).
   Verification and feedback-summary requests share the original
   evaluation's request limit, including when a separate verifier
-  provider is supplied.
+  provider is supplied. Raw Chats are cloned and their existing turns
+  cleared for verification, as in
+  [`send_prompt()`](https://kennispunttwente.github.io/tidyprompt/reference/send_prompt.md);
+  the caller's Chat is unchanged.
 
 - max_words_feedback:
 
@@ -75,6 +78,14 @@ as well as all prompt wraps that have a modify function but do not have
 an extraction or validation function. This is to ensure that no
 redundant validation is performed by the evaluating LLM on instructions
 which have already been validated by functions in those prompt wraps.
+The verifier receives the complete answer: text is sent directly, and
+other R values are serialized with
+[`base::dput()`](https://rdrr.io/r/base/dput.html), including all rows,
+columns and nested values. Console printing and tibble display limits do
+not apply. No size limit or automatic truncation is applied here; the
+complete answer must fit within the verifier model's context window. To
+review selected fields or chunks instead, split or select them
+explicitly before verification.
 
 ## Examples
 

@@ -100,7 +100,9 @@ delegating to
 [`answer_as_json()`](https://kennispunttwente.github.io/tidyprompt/reference/answer_as_json.md).
 Array constraints in the supplied schema are retained. Explicit row
 limits further restrict those constraints; contradictory limits raise an
-error.
+error. Each row object becomes exactly one data-frame row. Nested arrays
+and objects are retained as list columns when converting JSON-shaped
+results.
 
 ## See also
 

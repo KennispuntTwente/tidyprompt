@@ -160,7 +160,9 @@ remaining estimate before it completes.
 
 ## Tools followed by structured extraction
 
-Ellmer suppresses tools during native structured extraction. Use two
+Ellmer suppresses tools during native structured extraction, including
+structured streaming. Tidyprompt diagnoses this combination for both
+prompt-level tools and tools registered directly on the Chat. Use two
 evaluations when a task needs both: first gather information using
 tools, then extract a schema-constrained answer from that conversation.
 
@@ -170,10 +172,13 @@ research <- answer_using_tools("Find the relevant facts", tools = my_tools,
   type = "ellmer") |>
   send_prompt(chat, return_mode = "full")
 
+# Tool results stay in the history; no new tools are needed for extraction.
+extraction_chat <- research$ellmer_chat$clone(deep = TRUE)
+extraction_chat$set_tools(list())
 answer <- add_msg_to_chat_history(research$chat_history, "Extract the final result") |>
   answer_as_json(schema = ellmer::type_object(summary = ellmer::type_string()),
     type = "ellmer") |>
-  send_prompt(llm_provider_ellmer(research$ellmer_chat))
+  send_prompt(extraction_chat)
 ```
 
 ## Async, parallel and batch boundaries

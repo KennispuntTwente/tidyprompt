@@ -22,7 +22,8 @@ construct_prompt_text(x, llm_provider = NULL)
 
   An optional
   [llm_provider](https://kennispunttwente.github.io/tidyprompt/reference/llm_provider-class.md)
-  object. This may sometimes affect the prompt text construction
+  object or 'ellmer' Chat. This may sometimes affect the prompt text
+  construction
 
 ## Value
 

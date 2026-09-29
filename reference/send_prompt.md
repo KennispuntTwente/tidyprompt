@@ -76,13 +76,15 @@ send_prompt(
   the chat history means that only the first and last message from the
   user, the last message from the assistant, all messages from the
   system, and all tool results are kept in a 'clean' chat history. This
-  clean chat history is used when requesting a new chat completion. Rows
-  marked as non-replayable are excluded from new requests regardless of
-  this setting, so the returned transcript may contain more rows than
-  the model actually sees on a retry or follow-up call. (i.e., if a LLM
-  repeatedly fails to provide a correct response, only its last failed
-  response will included in the context window). This may increase the
-  LLM performance on the next interaction
+  clean chat history is used when requesting a new chat completion. With
+  'ellmer', native tool requests, results and associated turn content
+  are preserved together, including in the returned
+  `chat_history_clean`. Rows marked as non-replayable are excluded from
+  new requests regardless of this setting, so the returned transcript
+  may contain more rows than the model actually sees on a retry or
+  follow-up call. (i.e., if a LLM repeatedly fails to provide a correct
+  response, only its last failed response will included in the context
+  window). This may increase the LLM performance on the next interaction
 
 - verbose:
 

@@ -97,7 +97,9 @@ returned by <code><a href="send_prompt.html">send_prompt()</a></code> with <code
 <div class="section">
 <h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>llm_provider</code></dt>
-<dd><p>A <a href="llm_provider-class.html">llm_provider</a> object</p></dd>
+<dd><p>A <a href="llm_provider-class.html">llm_provider</a> object or an 'ellmer' Chat.
+A raw Chat is cloned and its existing turns cleared, as in <code><a href="send_prompt.html">send_prompt()</a></code>.
+Supply <code>chat_history</code> to resume a conversation; the caller's Chat is unchanged.</p></dd>
 
 
 <dt><code>chat_history</code></dt>
