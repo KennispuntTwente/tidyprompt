@@ -1804,6 +1804,25 @@ llm_provider_ellmer <- function(
       error = function(e) NULL
     )
 
+    # Transcript rows also contain citations, tools and thinking. They are not
+    # interchangeable with the final assistant answer.
+    citations <- list()
+    if (length(native_turns)) {
+      last_props <- ellmer_object_props(utils::tail(native_turns, 1)[[1]])
+      last_contents <- last_props$contents %||% list()
+      citations <- Filter(function(x) {
+        any(grepl("ContentCitation", class(x)))
+      }, last_contents)
+      if (!use_structured && identical(last_props$role, "assistant")) {
+        text_contents <- Filter(function(x) {
+          any(grepl("ContentText", class(x)))
+        }, last_contents)
+        assistant_text <- paste(vapply(text_contents, function(x) {
+          as.character(ellmer_object_props(x)$text %||% "")
+        }, character(1)), collapse = "")
+      }
+    }
+
     prompt_turn_index <- length(prior_turns) + 1L
     if (length(native_turns) >= prompt_turn_index && nrow(chat_history) > 0) {
       prompt_turn <- native_turns[[prompt_turn_index]]
@@ -1844,6 +1863,8 @@ llm_provider_ellmer <- function(
 
     list(
       completed = completed,
+      response = assistant_text,
+      citations = citations,
       http = list(request = NULL, response = NULL),
       ellmer_chat = ch,
       native_structured_result = native_structured_result

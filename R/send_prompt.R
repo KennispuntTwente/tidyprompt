@@ -179,6 +179,7 @@ send_prompt <- function(
   # Object which keeps ellmer chat object, turns, structured output;
   #   when using an ellmer LLM provider:
   ellmer_chat <- NULL
+  citations <- NULL
 
   ## 2 Chat history, send_chat, handler_fns
 
@@ -269,9 +270,10 @@ send_prompt <- function(
 
     if (!is.null(response$ellmer_chat)) {
       ellmer_chat <<- response$ellmer_chat
+      citations <<- response$citations
     }
 
-    utils::tail(chat_history$content, 1)
+    response$response %||% utils::tail(chat_history$content, 1)
   }
 
   ## 3 Retrieve initial response
@@ -482,6 +484,7 @@ send_prompt <- function(
 
     return_list$http <- http
     return_list$ellmer_chat <- ellmer_chat
+    if (!is.null(citations)) return_list$citations <- citations
 
     return(return_list)
   }

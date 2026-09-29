@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* Ellmer replies now use the complete final assistant text rather than the
+last transcript row. Citations no longer replace the answer and are available
+in `$citations` when `return_mode = "full"`.
+
 * Built-in OpenAI-compatible and Ollama request failures now signal
 `tidyprompt_request_error` with the original condition in `parent`, plus
 `status_code` and `request_id` fields when available. This preserves HTTP
