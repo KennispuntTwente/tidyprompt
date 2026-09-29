@@ -53,10 +53,6 @@ docs_types_only <- function(docs) {
   strip_nulls(out)
 }
 
-expect_docs_types_equal <- function(a, b) {
-  testthat::expect_equal(docs_types_only(a), docs_types_only(b))
-}
-
 # Extract per-argument JSON Schemas from an ellmer ToolDef
 ellmer_tool_prop_schemas <- function(tooldef, strict = TRUE) {
   props <- tryCatch(tooldef@arguments@properties, error = function(e) NULL)

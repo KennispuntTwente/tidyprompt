@@ -305,8 +305,7 @@ docs <- tools_get_docs(temperature_in_location)
 docs$description <- "Get the temperature in a location"
 docs$arguments$unit$description <- "Unit in which to return the temperature"
 docs$arguments$location$description <- "Location for which to return the temperature"
-docs$
-return$description <- "The temperature in the specified location and unit"
+docs$return$description <- "The temperature in the specified location and unit"
 
 "What is the weather in Enschede?" |>
   answer_using_tools(temperature_in_location) |>
