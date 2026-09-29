@@ -28,7 +28,10 @@
 #' @param max_interactions Maximum number of interactions allowed with the
 #' LLM provider. Default is 10. If the maximum number of interactions is reached
 #' without a successful response, 'NULL' is returned as the response (see return
-#' value). The first interaction is the initial chat completion
+#' value). The first interaction is the initial chat completion.
+#' This controls the outer extraction, validation and feedback loop; it does not
+#' count individual model requests within provider tool loops. Use `max_requests`
+#' to also bound those requests.
 #' @param clean_chat_history If the chat history should be cleaned after each
 #' interaction. Cleaning the chat history means that only the
 #' first and last message from the user, the last message from the assistant,
@@ -47,6 +50,14 @@
 #' 'stream' parameter (which indicates there is support for streaming). Note
 #' that when 'verbose' is set to FALSE, the 'stream' setting will be ignored
 #' @param return_mode One of 'full' or 'only_response'. See return value
+#' @param max_requests Optional positive whole number of model requests allowed
+#' during this evaluation, equivalent to applying [limit_requests()] to `prompt`.
+#' The default, `NULL`, adds no request limit and preserves any limit already
+#' attached to the prompt. If both are supplied, the smaller limit applies.
+#' Counts the initial request, tool follow-ups and feedback requests, excluding
+#' streaming chunks and transport-level retries. Attempting another request
+#' after the limit raises a `tidyprompt_request_limit` error. See [limit_requests()]
+#' for provider requirements and counting details.
 #' @return \itemize{
 #'  \item If return mode 'only_response', the function will return only the LLM response
 #' after extraction and validation functions have been applied (NULL is returned
@@ -109,12 +120,16 @@ send_prompt <- function(
   clean_chat_history = FALSE,
   verbose = NULL,
   stream = NULL,
-  return_mode = c("only_response", "full")
+  return_mode = c("only_response", "full"),
+  max_requests = NULL
 ) {
   ## 1 Validate arguments
 
   # Basic validation
   prompt <- tidyprompt(prompt)
+  if (!is.null(max_requests)) {
+    prompt <- limit_requests(prompt, max_requests)
+  }
   return_mode <- match.arg(return_mode)
   llm_provider <- as_send_prompt_llm_provider(llm_provider, verbose, stream)
   stopifnot(

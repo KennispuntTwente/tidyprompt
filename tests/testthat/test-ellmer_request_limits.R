@@ -7,12 +7,15 @@ test_that("request limits span feedback rounds and reset between evaluations", {
       if (structured) prompt <- answer_as_json(prompt, type = "ellmer",
         schema = ellmer::type_object(x = ellmer::type_number()))
       prompt <- prompt_wrap(prompt, validation_fn = function(...) llm_feedback("Again"))
-      prompt <- limit_requests(prompt, 1)
-      for (i in 1:2) {
-        err <- tryCatch(send_prompt(prompt, ch, stream = stream, verbose = FALSE), tidyprompt_request_limit = identity)
-        expect_s3_class(err, "tidyprompt_request_limit")
-        expect_equal(err$requests, 1L)
-        expect_length(err$ellmer_chat$get_turns(), 2L)
+      for (use_argument in c(FALSE, TRUE)) {
+        bounded <- if (use_argument) prompt else limit_requests(tidyprompt(prompt), 1)
+        for (i in 1:2) {
+          err <- tryCatch(send_prompt(bounded, ch, stream = stream, verbose = FALSE,
+            max_requests = if (use_argument) 1 else NULL), tidyprompt_request_limit = identity)
+          expect_s3_class(err, "tidyprompt_request_limit")
+          expect_equal(err$requests, 1L)
+          expect_length(err$ellmer_chat$get_turns(), 2L)
+        }
       }
     }
   }
@@ -33,10 +36,17 @@ test_that("request limits stop ellmer's internal tool loop", {
   }, .package = "ellmer")
   ch <- ellmer::chat_openai(model = "gpt-4.1-mini", credentials = function() "test-only", echo = "none")
   ch$register_tool(ellmer::tool(function() "Data", name = "lookup", description = "Lookup"))
-  err <- tryCatch(send_prompt(limit_requests("Question", 1), ch,
-    stream = FALSE, verbose = FALSE), tidyprompt_request_limit = identity)
-  expect_s3_class(err, "tidyprompt_request_limit")
-  expect_equal(requests, 1L)
+  for (limits in list(c(1, NA), c(NA, 1), c(1, 2), c(2, 1))) {
+    prompt <- if (is.na(limits[1])) "Question" else limit_requests("Question", limits[1])
+    before <- requests
+    err <- tryCatch(send_prompt(prompt, ch, stream = FALSE, verbose = FALSE,
+      max_requests = if (is.na(limits[2])) NULL else limits[2]),
+      tidyprompt_request_limit = identity)
+    expect_s3_class(err, "tidyprompt_request_limit")
+    expect_equal(err$requests, 1L)
+    expect_equal(err$max_requests, 1)
+    expect_equal(requests - before, 1L)
+  }
 })
 
 test_that("returned native chats do not retain an exhausted evaluation limit", {
@@ -47,8 +57,8 @@ test_that("returned native chats do not retain an exhausted evaluation limit", {
   first <- send_prompt(limit_requests("Question", 1), ch,
     stream = FALSE, verbose = FALSE, return_mode = "full")
   expect_equal(callbacks, 1L)
-  second <- send_prompt(limit_requests("Another question", 1), first$ellmer_chat,
-    stream = FALSE, verbose = FALSE, return_mode = "full")
+  second <- send_prompt("Another question", first$ellmer_chat,
+    stream = FALSE, verbose = FALSE, return_mode = "full", max_requests = 1)
   expect_equal(callbacks, 2L)
   expect_equal(second$response, "The answer is 42.")
   prompt <- limit_requests(prompt_wrap("Question",

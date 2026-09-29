@@ -11,7 +11,8 @@ send_prompt(
   clean_chat_history = FALSE,
   verbose = NULL,
   stream = NULL,
-  return_mode = c("only_response", "full")
+  return_mode = c("only_response", "full"),
+  max_requests = NULL
 )
 }
 \arguments{
@@ -35,7 +36,10 @@ functions which can set parameters in the llm_provider object
 \item{max_interactions}{Maximum number of interactions allowed with the
 LLM provider. Default is 10. If the maximum number of interactions is reached
 without a successful response, 'NULL' is returned as the response (see return
-value). The first interaction is the initial chat completion}
+value). The first interaction is the initial chat completion.
+This controls the outer extraction, validation and feedback loop; it does not
+count individual model requests within provider tool loops. Use \code{max_requests}
+to also bound those requests.}
 
 \item{clean_chat_history}{If the chat history should be cleaned after each
 interaction. Cleaning the chat history means that only the
@@ -58,6 +62,15 @@ This setting will only be used if the LLM provider already has a
 that when 'verbose' is set to FALSE, the 'stream' setting will be ignored}
 
 \item{return_mode}{One of 'full' or 'only_response'. See return value}
+
+\item{max_requests}{Optional positive whole number of model requests allowed
+during this evaluation, equivalent to applying \code{\link[=limit_requests]{limit_requests()}} to \code{prompt}.
+The default, \code{NULL}, adds no request limit and preserves any limit already
+attached to the prompt. If both are supplied, the smaller limit applies.
+Counts the initial request, tool follow-ups and feedback requests, excluding
+streaming chunks and transport-level retries. Attempting another request
+after the limit raises a \code{tidyprompt_request_limit} error. See \code{\link[=limit_requests]{limit_requests()}}
+for provider requirements and counting details.}
 }
 \value{
 \itemize{

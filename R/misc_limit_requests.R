@@ -6,6 +6,12 @@
 #' within a model request do not count as additional model requests.
 #'
 #' @details
+#' Alternatively, supply `max_requests` directly to [send_prompt()]. Both use
+#' the same request counter mechanism. If both limits are supplied, the smaller
+#' limit applies. `send_prompt(max_interactions = ...)` separately limits the
+#' outer extraction, validation and feedback loop, which does not count requests
+#' within provider tool loops.
+#'
 #' 'ellmer' providers require 'ellmer' 0.5.0 request hooks to count requests in
 #' native tool loops. Blocking structured extraction is counted explicitly
 #' because that path does not run the hooks in 'ellmer' 0.5.0.

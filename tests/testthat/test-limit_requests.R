@@ -80,8 +80,55 @@ test_that("regular native tool loops count follow-up model requests", {
       state$requests <- 0L
       expect_equal(send_prompt(limit_requests(prompt, 3), provider, verbose = FALSE), "ok")
       expect_equal(state$requests, 3L)
+      state$requests <- 0L
+      expect_error(send_prompt(prompt, provider, verbose = FALSE, max_requests = 2),
+        class = "tidyprompt_request_limit")
+      expect_equal(state$requests, 2L)
+      state$requests <- 0L
+      expect_equal(send_prompt(prompt, provider, verbose = FALSE, max_requests = 3), "ok")
+      expect_equal(state$requests, 3L)
     }
   }
+})
+
+test_that("send_prompt request limits reset and leave reusable prompts unchanged", {
+  state <- local_request_limit_transport()
+  provider <- request_limit_provider("openai", FALSE)
+  prompt <- prompt_wrap("Question", validation_fn = function(...) llm_feedback("Again"))
+  original_wraps <- get_prompt_wraps(prompt)
+  for (i in 1:2) {
+    before <- state$requests
+    err <- tryCatch(send_prompt(prompt, provider, max_requests = 2),
+      tidyprompt_request_limit = identity)
+    expect_s3_class(err, "tidyprompt_request_limit")
+    expect_equal(err$requests, 2L)
+    expect_equal(err$max_requests, 2)
+    expect_equal(state$requests - before, 2L)
+    expect_identical(get_prompt_wraps(prompt), original_wraps)
+  }
+  expect_equal(send_prompt("Question", provider, max_requests = 1), "ok")
+  # Existing positional arguments retain their meaning with no request cap.
+  result <- send_prompt("Question", provider, 10, FALSE, FALSE, FALSE, "full")
+  expect_equal(result$response, "ok")
+})
+
+test_that("send_prompt and prompt request limits keep the smaller cap", {
+  state <- local_request_limit_transport()
+  provider <- request_limit_provider("openai", FALSE)
+  for (limits in list(c(1, 3), c(3, 1), c(2, 2))) {
+    prompt <- limit_requests(prompt_wrap("Question",
+      validation_fn = function(...) llm_feedback("Again")), limits[1])
+    before <- state$requests
+    err <- tryCatch(send_prompt(prompt, provider, max_requests = limits[2]),
+      tidyprompt_request_limit = identity)
+    expect_s3_class(err, "tidyprompt_request_limit")
+    expect_equal(err$max_requests, min(limits))
+    expect_equal(state$requests - before, min(limits))
+  }
+  before <- state$requests
+  expect_error(send_prompt(prompt, provider, max_requests = NULL),
+    class = "tidyprompt_request_limit")
+  expect_equal(state$requests - before, 2L)
 })
 
 test_that("custom completions are limited even without the shared transport", {
@@ -137,9 +184,15 @@ test_that("the Gemini provider keeps request guards out of its API payload", {
 })
 
 test_that("request limits validate their input and native hook support", {
+  state <- local_request_limit_transport()
+  regular_provider <- request_limit_provider("openai", FALSE)
   for (value in list(0, -1, 1.5, NA_real_, Inf, numeric(), c(1, 2), "1")) {
     expect_error(limit_requests("Question", value), "positive whole number")
+    expect_error(send_prompt("Question", regular_provider, max_requests = value),
+      "positive whole number")
   }
+  expect_equal(state$requests, 0L)
   provider <- llm_provider_ellmer(fake_ellmer_chat(), parameters = list(stream = FALSE), verbose = FALSE)
   expect_error(send_prompt(limit_requests("Question", 1), provider), "0.5.0 request hooks")
+  expect_error(send_prompt("Question", provider, max_requests = 1), "0.5.0 request hooks")
 })

@@ -1,8 +1,11 @@
 # tidyprompt (development version)
 
-* `limit_requests()` bounds model requests across initial responses, tool
-  follow-ups and feedback rounds for regular tidyprompt providers and 'ellmer'.
-  The counter resets for each `send_prompt()` evaluation.
+* `limit_requests()` and `send_prompt(max_requests = ...)` bound model requests
+  across initial responses, tool follow-ups and feedback rounds for regular
+  tidyprompt providers and 'ellmer'.
+  The counter resets for each `send_prompt()` evaluation. If both limits are
+  supplied, the smaller applies; `max_interactions` separately controls the
+  outer evaluation loop.
 
 * 'ellmer' compatability fixes & improvements:
 

@@ -113,8 +113,11 @@ blocking structured fallback cannot be cancelled with a stream controller.
 ## Request limits and observability
 
 `max_interactions` limits tidyprompt's outer evaluation loop. Use
+`send_prompt(prompt, chat, max_requests = 5)` or
 `limit_requests(prompt, max_requests = 5)` to bound individual model requests
 across tool calls and feedback for regular tidyprompt providers and 'ellmer'.
+If both limits are supplied, the smaller applies. The `max_requests` argument
+defaults to `NULL`, which leaves any limit attached to the prompt in effect.
 With an 'ellmer' provider, this requires 'ellmer' 0.5.0 and counts the blocking
 structured path explicitly, because that method bypasses its request hooks.
 The limit stops before the next model request and raises
