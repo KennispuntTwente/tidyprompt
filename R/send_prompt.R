@@ -174,10 +174,13 @@ send_prompt <- function(
   }
   # Request limits belong to this evaluation, including when its returned native
   # chat is reused later. Remove only the callbacks installed by the limit wrap.
-  on.exit({
-    cleanup <- llm_provider$parameters$.request_limit_cleanup
-    if (is.function(cleanup)) cleanup()
-  }, add = TRUE)
+  on.exit(
+    {
+      cleanup <- llm_provider$parameters$.request_limit_cleanup
+      if (is.function(cleanup)) cleanup()
+    },
+    add = TRUE
+  )
 
   # Apply parameter_fn's to the llm_provider
   for (prompt_wrap in get_prompt_wraps(prompt)) {
@@ -265,24 +268,33 @@ send_prompt <- function(
 
     if (clean_chat_history) {
       cleaned_chat_history <- clean_chat_history(
-        chat_history, preserve_native = identical(llm_provider$api_type, "ellmer")
+        chat_history,
+        preserve_native = identical(llm_provider$api_type, "ellmer")
       )
       response <- llm_provider$complete_chat(
         list(chat_history = cleaned_chat_history)
       )
-      chat_history <<- if (isTRUE(response$history_replaced)) response$completed else merge_completed_chat_history(
-        chat_history,
-        response$completed,
-        attr(cleaned_chat_history, "source_rows") %||%
-          as.integer(rownames(cleaned_chat_history))
-      )
+      chat_history <<- if (isTRUE(response$history_replaced)) {
+        response$completed
+      } else {
+        merge_completed_chat_history(
+          chat_history,
+          response$completed,
+          attr(cleaned_chat_history, "source_rows") %||%
+            as.integer(rownames(cleaned_chat_history))
+        )
+      }
     } else {
       response <- llm_provider$complete_chat(list(chat_history = chat_history))
-      chat_history <<- if (isTRUE(response$history_replaced)) response$completed else merge_completed_chat_history(
-        chat_history,
-        response$completed,
-        seq_len(nrow(chat_history))
-      )
+      chat_history <<- if (isTRUE(response$history_replaced)) {
+        response$completed
+      } else {
+        merge_completed_chat_history(
+          chat_history,
+          response$completed,
+          seq_len(nrow(chat_history))
+        )
+      }
     }
 
     for (http_response in response$http$response) {
@@ -508,7 +520,9 @@ send_prompt <- function(
 
     return_list$http <- http
     return_list$ellmer_chat <- ellmer_chat
-    if (!is.null(citations)) return_list$citations <- citations
+    if (!is.null(citations)) {
+      return_list$citations <- citations
+    }
 
     return(return_list)
   }
@@ -557,7 +571,10 @@ create_chat_df <- function(
 #' @noRd
 #' @keywords internal
 clean_chat_history <- function(chat_history, preserve_native = FALSE) {
-  filtered <- chat_history_to_send(chat_history, preserve_native = preserve_native)
+  filtered <- chat_history_to_send(
+    chat_history,
+    preserve_native = preserve_native
+  )
   # source_rows maps positions in `filtered` back to the original
   # chat_history rows (accounting for hidden / tool_call filtering).
   original_source_rows <- attr(filtered, "source_rows") %||%
@@ -582,7 +599,9 @@ clean_chat_history <- function(chat_history, preserve_native = FALSE) {
   )
   # Native protocol content is kept as a unit; dropping an individual request
   # or reasoning block can invalidate its following tool result.
-  if (preserve_native) keep_rows <- c(keep_rows, which(chat_history_native_rows(filtered)))
+  if (preserve_native) {
+    keep_rows <- c(keep_rows, which(chat_history_native_rows(filtered)))
+  }
 
   keep_rows <- sort(unique(keep_rows))
 

@@ -306,8 +306,11 @@ ellmer_tool_to_tidyprompt <- function(tooldef) {
   formals(wrapper) <- .ellmer_tool_formals(tooldef)
   body(wrapper) <- quote({
     tool <- attr(sys.function(), "ellmer_tool", exact = TRUE)
-    args <- lapply(as.list(match.call(expand.dots = TRUE))[-1], eval,
-      envir = parent.frame())
+    args <- lapply(
+      as.list(match.call(expand.dots = TRUE))[-1],
+      eval,
+      envir = parent.frame()
+    )
     do.call(tool, args)
   })
   # Do NOT change environment(wrapper); just attach the ToolDef
@@ -443,18 +446,27 @@ is_native_tool_content <- function(x) {
 
 normalize_tidyprompt_tool_result <- function(result, native = TRUE) {
   rich <- is_native_tool_content(result) ||
-    (is.list(result) && length(result) > 0L &&
+    (is.list(result) &&
+      length(result) > 0L &&
       all(vapply(result, is_native_tool_content, logical(1))))
   pending <- inherits(result, "promise")
   if (rich || pending) {
     if (!native) {
-      stop("Rich content and asynchronous tool results require native ellmer execution.")
+      stop(
+        "Rich content and asynchronous tool results require native ellmer execution."
+      )
     }
     return(result)
   }
-  if (is.null(result)) return(if (native) NULL else "")
-  if (inherits(result, "json")) return(result)
-  if (is.character(result)) return(paste(result, collapse = "\n"))
+  if (is.null(result)) {
+    return(if (native) NULL else "")
+  }
+  if (inherits(result, "json")) {
+    return(result)
+  }
+  if (is.character(result)) {
+    return(paste(result, collapse = "\n"))
+  }
   # Serialize collections once, before ellmer's result contract is applied.
   # Named lists become objects; data frames become arrays of row objects.
   jsonlite::toJSON(result, auto_unbox = TRUE, dataframe = "rows", null = "null")
@@ -475,23 +487,40 @@ invoke_tidyprompt_tool <- function(tool, arguments) {
   native <- attr(tool, "ellmer_tool", exact = TRUE)
   if (is.null(native)) {
     # Ordinary R tools retain the historical simplified JSON arguments.
-    arguments <- jsonlite::fromJSON(jsonlite::toJSON(arguments, auto_unbox = TRUE))
+    arguments <- jsonlite::fromJSON(jsonlite::toJSON(
+      arguments,
+      auto_unbox = TRUE
+    ))
     return(do.call(tool, arguments))
   }
   if (isTRUE(native@convert)) {
     extra <- setdiff(names(arguments), names(native@arguments@properties))
-    if (length(extra)) stop("Unused tool arguments: ", paste(extra, collapse = ", "))
+    if (length(extra)) {
+      stop("Unused tool arguments: ", paste(extra, collapse = ", "))
+    }
     # Ellmer has no exported argument-coercion API. Isolate this capability
     # check and test it across our supported versions rather than approximating
     # its factors, data frames, missing values and optional argument semantics.
-    convert <- get0("convert_from_type", envir = asNamespace("ellmer"), inherits = FALSE)
-    if (!is.function(convert)) stop("This ellmer version requires native tool execution.")
+    convert <- get0(
+      "convert_from_type",
+      envir = asNamespace("ellmer"),
+      inherits = FALSE
+    )
+    if (!is.function(convert)) {
+      stop("This ellmer version requires native tool execution.")
+    }
     arguments <- convert(arguments, native@arguments)
     arguments <- Filter(Negate(is.null), arguments)
   }
-  tryCatch(do.call(native, arguments), ellmer_error_tool_context_unavailable = function(e) {
-    rlang::abort("Tools using `ellmer::tool_context()` require an ellmer-backed provider.", parent = e)
-  })
+  tryCatch(
+    do.call(native, arguments),
+    ellmer_error_tool_context_unavailable = function(e) {
+      rlang::abort(
+        "Tools using `ellmer::tool_context()` require an ellmer-backed provider.",
+        parent = e
+      )
+    }
+  )
 }
 
 # ---- Public: normalize a tool for a given target ---------------------------

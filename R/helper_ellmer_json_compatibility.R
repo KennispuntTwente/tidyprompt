@@ -8,7 +8,9 @@ ellmer_available <- function() {
 # not expose that argument. Use a consistent view before and after a request.
 ellmer_chat_turns <- function(chat) {
   getter <- chat$get_turns
-  if (!is.function(getter)) return(list())
+  if (!is.function(getter)) {
+    return(list())
+  }
   if ("include_system_prompt" %in% names(formals(getter))) {
     getter(include_system_prompt = TRUE)
   } else {
@@ -20,8 +22,24 @@ ellmer_chat_turns <- function(chat) {
 
 is_json_schema_list <- function(x) {
   is.list(x) &&
-    (any(c("$schema", "$ref", "$defs", "definitions", "type", "properties",
-      "items", "enum", "const", "anyOf", "oneOf", "allOf", "not") %in% names(x)) ||
+    (any(
+      c(
+        "$schema",
+        "$ref",
+        "$defs",
+        "definitions",
+        "type",
+        "properties",
+        "items",
+        "enum",
+        "const",
+        "anyOf",
+        "oneOf",
+        "allOf",
+        "not"
+      ) %in%
+        names(x)
+    ) ||
       # Top-level "name/schema/strict" wrapper we sometimes build:
       identical(sort(names(x)), sort(c("name", "schema", "strict"))) ||
       # Loose heuristic for object schemas:
@@ -94,7 +112,11 @@ is_ellmer_chat <- function(x) {
 }
 
 ellmer_chat_clone <- function(chat) {
-  if ("deep" %in% names(formals(chat$clone))) chat$clone(deep = TRUE) else chat$clone()
+  if ("deep" %in% names(formals(chat$clone))) {
+    chat$clone(deep = TRUE)
+  } else {
+    chat$clone()
+  }
 }
 
 ellmer_chat_clone_reset <- function(
@@ -169,12 +191,26 @@ ellmer_type_ignore_compat <- function(description = NULL, required = FALSE) {
 # --- JSON Schema -> ellmer::type_* -----------------------------------------
 
 schema_json <- function(schema) {
-  arrays <- c("required", "enum", "anyOf", "oneOf", "allOf", "prefixItems", "examples")
+  arrays <- c(
+    "required",
+    "enum",
+    "anyOf",
+    "oneOf",
+    "allOf",
+    "prefixItems",
+    "examples"
+  )
   prepare <- function(x) {
-    if (!is.list(x)) return(x)
+    if (!is.list(x)) {
+      return(x)
+    }
     for (nm in names(x)) {
-      if (nm %in% c("properties", "patternProperties", "$defs", "definitions") &&
-          is.list(x[[nm]]) && !length(x[[nm]])) {
+      if (
+        nm %in%
+          c("properties", "patternProperties", "$defs", "definitions") &&
+          is.list(x[[nm]]) &&
+          !length(x[[nm]])
+      ) {
         names(x[[nm]]) <- character()
       } else if (nm %in% arrays && is.atomic(x[[nm]])) {
         x[[nm]] <- as.list(x[[nm]])
@@ -186,12 +222,24 @@ schema_json <- function(schema) {
     }
     x
   }
-  as.character(jsonlite::toJSON(prepare(schema), auto_unbox = TRUE, null = "null"))
+  as.character(jsonlite::toJSON(
+    prepare(schema),
+    auto_unbox = TRUE,
+    null = "null"
+  ))
 }
 
 schema_requires_native_json <- function(schema) {
-  supported <- c("type", "description", "properties", "required", "items",
-    "enum", "additionalProperties", "x-tidyprompt-ignore")
+  supported <- c(
+    "type",
+    "description",
+    "properties",
+    "required",
+    "items",
+    "enum",
+    "additionalProperties",
+    "x-tidyprompt-ignore"
+  )
   length(setdiff(names(schema), supported)) > 0L ||
     length(schema$type) > 1L ||
     (!is.null(schema$enum) && !is.character(schema$enum)) ||
@@ -307,7 +355,11 @@ json_schema_to_ellmer_type <- function(
     if (addl_flag) {
       # Open objects are no longer part of type_object()'s supported API.
       # Preserve them explicitly as raw JSON Schema rather than closing them.
-      schema$properties <- lapply(ellmer_fields, ellmer_type_to_json_schema, strict = strict)
+      schema$properties <- lapply(
+        ellmer_fields,
+        ellmer_type_to_json_schema,
+        strict = strict
+      )
       schema$additionalProperties <- TRUE
       result <- ellmer::type_from_schema(text = schema_json(schema))
       S7::prop(result, "required") <- required
@@ -472,8 +524,11 @@ normalize_schema_dual <- function(schema, strict = FALSE) {
 
   if (is_json_schema_list(schema)) {
     # JSON Schema supplied; convert forward for ellmer
-    ellmer_t <- if (ellmer_available())
-      json_schema_to_ellmer_type(schema, required = TRUE, strict = strict) else NULL
+    ellmer_t <- if (ellmer_available()) {
+      json_schema_to_ellmer_type(schema, required = TRUE, strict = strict)
+    } else {
+      NULL
+    }
     return(list(json_schema = schema, ellmer_type = ellmer_t))
   }
 

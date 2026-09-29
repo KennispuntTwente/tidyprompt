@@ -208,7 +208,8 @@ NULL
 
       chat_history <- chat_history(input$chat_history)
       chat_history_request <- chat_history_to_send(
-        chat_history, preserve_native = identical(self$api_type, "ellmer")
+        chat_history,
+        preserve_native = identical(self$api_type, "ellmer")
       )
       if (self$verbose) {
         message(
@@ -240,7 +241,9 @@ NULL
 
       environment(private$complete_chat_function) <- environment()
       response <- complete_chat_with_request_limit(
-        self, private$complete_chat_function, chat_history_request
+        self,
+        private$complete_chat_function,
+        chat_history_request
       )
 
       # If this is an ellmer provider, sync the chat object
@@ -256,8 +259,10 @@ NULL
         self$parameters$.native_structured_result <- response$native_structured_result
       }
 
-      if (!isTRUE(response$history_replaced) &&
-          nrow(chat_history_request) < nrow(chat_history)) {
+      if (
+        !isTRUE(response$history_replaced) &&
+          nrow(chat_history_request) < nrow(chat_history)
+      ) {
         source_rows <- attr(chat_history_request, "source_rows") %||%
           seq_len(nrow(chat_history_request))
 

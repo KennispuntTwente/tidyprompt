@@ -514,5 +514,8 @@ test_that("answer_as_json reports schema conversion failures before a request", 
     .package = "tidyprompt"
   )
 
-  expect_error(answer_as_json("Create a persona", schema, type = "ellmer"), "nope")
+  expect_error(
+    answer_as_json("Create a persona", schema, type = "ellmer"),
+    "nope"
+  )
 })

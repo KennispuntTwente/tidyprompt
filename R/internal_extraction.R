@@ -137,7 +137,11 @@ extraction_fn_json <- function(llm_response, simplify = TRUE) {
   parsed_jsons <- lapply(blocks, function(json_candidate) {
     tryCatch(
       {
-        jsonlite::fromJSON(json_candidate, simplifyVector = simplify, simplifyDataFrame = FALSE)
+        jsonlite::fromJSON(
+          json_candidate,
+          simplifyVector = simplify,
+          simplifyDataFrame = FALSE
+        )
       },
       error = function(e) NULL
     )

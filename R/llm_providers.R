@@ -1388,9 +1388,14 @@ llm_provider_ellmer <- function(
           }
         }
         if (nrow(history) == rows_before) {
-          history <- append_native_history(history, role, "",
-            native_turn_id = turn_id, native_turn_role = role,
-            native_contents = contents)
+          history <- append_native_history(
+            history,
+            role,
+            "",
+            native_turn_id = turn_id,
+            native_turn_role = role,
+            native_contents = contents
+          )
         }
         added <- seq.int(rows_before + 1L, nrow(history))
         history$native_turn[added] <- rep(list(turn), length(added))
@@ -1565,9 +1570,18 @@ llm_provider_ellmer <- function(
           }
 
           grouped_contents <- Filter(Negate(is.null), grouped_contents)
-          original_turn <- if ("native_turn" %in% names(hist)) hist$native_turn[[i]] else NULL
-          if (!is.null(original_turn) &&
-              identical(ellmer_object_props(original_turn)$contents, grouped_contents)) {
+          original_turn <- if ("native_turn" %in% names(hist)) {
+            hist$native_turn[[i]]
+          } else {
+            NULL
+          }
+          if (
+            !is.null(original_turn) &&
+              identical(
+                ellmer_object_props(original_turn)$contents,
+                grouped_contents
+              )
+          ) {
             prior_turns[[length(prior_turns) + 1L]] <- original_turn
             i <- j
             next
@@ -1706,21 +1720,34 @@ llm_provider_ellmer <- function(
     native_structured_result <- NULL
     structured_stream <- if (use_structured && isTRUE(params$stream)) {
       ellmer_structured_stream(ch, structured_type)
-    } else NULL
+    } else {
+      NULL
+    }
     controller <- params$stream_controller
     rich_stream <- isTRUE(params$stream_content)
-    stream_formals <- if (is.function(ch$stream)) names(formals(ch$stream)) else character()
-    if (!is.null(controller) &&
-        (!isTRUE(params$stream) || !"controller" %in% stream_formals ||
-          (use_structured && is.null(structured_stream)))) {
+    stream_formals <- if (is.function(ch$stream)) {
+      names(formals(ch$stream))
+    } else {
+      character()
+    }
+    if (
+      !is.null(controller) &&
+        (!isTRUE(params$stream) ||
+          !"controller" %in% stream_formals ||
+          (use_structured && is.null(structured_stream)))
+    ) {
       stop("`stream_controller` requires a supported ellmer streaming request.")
     }
     if (rich_stream && isTRUE(params$stream) && !"stream" %in% stream_formals) {
-      stop("`stream_content` requires an ellmer version with rich content streaming.")
+      stop(
+        "`stream_content` requires an ellmer version with rich content streaming."
+      )
     }
 
     if (use_structured && is.null(structured_stream)) {
-      if (is.function(params$.request_guard)) params$.request_guard()
+      if (is.function(params$.request_guard)) {
+        params$.request_guard()
+      }
       if (!is.null(multimodal_args)) {
         reply_struct <- do.call(
           ch$chat_structured,
@@ -1742,9 +1769,15 @@ llm_provider_ellmer <- function(
       assistant_text <- NULL
 
       stream_args <- multimodal_args %||% list(prompt_for_model)
-      if (!is.null(structured_stream)) stream_args$type <- structured_type
-      if (rich_stream) stream_args$stream <- "content"
-      if (!is.null(controller)) stream_args$controller <- controller
+      if (!is.null(structured_stream)) {
+        stream_args$type <- structured_type
+      }
+      if (rich_stream) {
+        stream_args$stream <- "content"
+      }
+      if (!is.null(controller)) {
+        stream_args$controller <- controller
+      }
       stream <- tryCatch(
         do.call(ch$stream, stream_args),
         error = function(e) {
@@ -1762,7 +1795,10 @@ llm_provider_ellmer <- function(
         reply_any <- tryCatch(
           if (!is.null(structured_stream)) {
             native_structured_result <- do.call(ch$chat_structured, stream_args)
-            as.character(jsonlite::toJSON(native_structured_result, auto_unbox = TRUE))
+            as.character(jsonlite::toJSON(
+              native_structured_result,
+              auto_unbox = TRUE
+            ))
           } else if (use_multimodal) {
             do.call(ch$chat, multimodal_args)
           } else {
@@ -1780,72 +1816,111 @@ llm_provider_ellmer <- function(
         partial_response_env <- new.env()
         assign("partial_response", "", envir = partial_response_env)
 
-        tryCatch(coro::loop(
-          for (chunk in stream) {
-            native_content <- if (is_native_tool_content(chunk)) chunk else NULL
-            if (is.null(native_content) && (length(chunk) == 0L || all(is.na(chunk)))) {
-              next
-            }
+        tryCatch(
+          coro::loop(
+            for (chunk in stream) {
+              native_content <- if (is_native_tool_content(chunk)) {
+                chunk
+              } else {
+                NULL
+              }
+              if (
+                is.null(native_content) &&
+                  (length(chunk) == 0L || all(is.na(chunk)))
+              ) {
+                next
+              }
 
-            chunk_str <- if (!is.null(native_content)) {
-              if (S7::S7_inherits(chunk, ellmer::ContentText)) chunk@text else ""
-            } else paste0(as.character(chunk), collapse = "")
-            if (!nzchar(chunk_str) && is.null(native_content)) {
-              next
-            }
-
-            current_response <- get(
-              "partial_response",
-              envir = partial_response_env
-            )
-            updated_response <- paste0(current_response, chunk_str)
-            assign(
-              "partial_response",
-              updated_response,
-              envir = partial_response_env
-            )
-
-            # If a callback is provided, use it; otherwise, mirror HTTP providers
-            # by cat()ing chunks when verbose = TRUE.
-            if (is.function(stream_cb)) {
-              latest_message <- chat_history[nrow(chat_history), , drop = FALSE]
-
-              meta <- list(
-                llm_provider = self,
-                chat_history = chat_history,
-                latest_message = latest_message,
-                partial_response = updated_response,
-                chunk = chunk_str,
-                content = native_content,
-                content_type = if (!is.null(native_content)) class(native_content)[1L] else NULL,
-                api_type = "ellmer",
-                endpoint = "chat",
-                verbose = self$verbose
-              )
-
-              tryCatch(
-                stream_cb(chunk_str, meta),
-                error = function(e) {
-                  warning(
-                    "stream_callback error (streaming continues): ",
-                    conditionMessage(e),
-                    call. = FALSE
-                  )
+              chunk_str <- if (!is.null(native_content)) {
+                if (S7::S7_inherits(chunk, ellmer::ContentText)) {
+                  chunk@text
+                } else {
+                  ""
                 }
+              } else {
+                paste0(as.character(chunk), collapse = "")
+              }
+              if (!nzchar(chunk_str) && is.null(native_content)) {
+                next
+              }
+
+              current_response <- get(
+                "partial_response",
+                envir = partial_response_env
               )
-            } else if (isTRUE(self$verbose)) {
-              cat(chunk_str)
+              updated_response <- paste0(current_response, chunk_str)
+              assign(
+                "partial_response",
+                updated_response,
+                envir = partial_response_env
+              )
+
+              # If a callback is provided, use it; otherwise, mirror HTTP providers
+              # by cat()ing chunks when verbose = TRUE.
+              if (is.function(stream_cb)) {
+                latest_message <- chat_history[
+                  nrow(chat_history),
+                  ,
+                  drop = FALSE
+                ]
+
+                meta <- list(
+                  llm_provider = self,
+                  chat_history = chat_history,
+                  latest_message = latest_message,
+                  partial_response = updated_response,
+                  chunk = chunk_str,
+                  content = native_content,
+                  content_type = if (!is.null(native_content)) {
+                    class(native_content)[1L]
+                  } else {
+                    NULL
+                  },
+                  api_type = "ellmer",
+                  endpoint = "chat",
+                  verbose = self$verbose
+                )
+
+                tryCatch(
+                  stream_cb(chunk_str, meta),
+                  error = function(e) {
+                    warning(
+                      "stream_callback error (streaming continues): ",
+                      conditionMessage(e),
+                      call. = FALSE
+                    )
+                  }
+                )
+              } else if (isTRUE(self$verbose)) {
+                cat(chunk_str)
+              }
             }
+          ),
+          error = function(e) {
+            if (inherits(e, "tidyprompt_request_limit")) {
+              stop(e)
+            }
+            ellmer_stream_abort(
+              ch,
+              partial_response_env$partial_response,
+              parent = e
+            )
+          },
+          interrupt = function(e) {
+            ellmer_stream_abort(
+              ch,
+              partial_response_env$partial_response,
+              parent = e
+            )
           }
-        ), error = function(e) {
-          if (inherits(e, "tidyprompt_request_limit")) stop(e)
-          ellmer_stream_abort(ch, partial_response_env$partial_response, parent = e)
-        }, interrupt = function(e) {
-          ellmer_stream_abort(ch, partial_response_env$partial_response, parent = e)
-        })
+        )
 
         if (!is.null(controller) && isTRUE(controller$cancelled)) {
-          ellmer_stream_abort(ch, partial_response_env$partial_response, cancelled = TRUE)
+          ellmer_stream_abort(
+            ch,
+            partial_response_env$partial_response,
+            cancelled = TRUE
+          )
         }
 
         # After streaming, use accumulated partial_response as assistant text
@@ -1856,7 +1931,10 @@ llm_provider_ellmer <- function(
         assistant_text <- sub("\n$", "", assistant_text)
         if (!is.null(structured_stream)) {
           native_structured_result <- structured_stream$extract()
-          assistant_text <- as.character(jsonlite::toJSON(native_structured_result, auto_unbox = TRUE))
+          assistant_text <- as.character(jsonlite::toJSON(
+            native_structured_result,
+            auto_unbox = TRUE
+          ))
         }
       }
     } else {
@@ -1883,23 +1961,41 @@ llm_provider_ellmer <- function(
     # Transcript rows also contain citations, tools and thinking. They are not
     # interchangeable with the final assistant answer.
     history_replaced <- length(before_turns) > 0L &&
-      !identical(utils::head(native_turns, length(before_turns)), before_turns) &&
+      !identical(
+        utils::head(native_turns, length(before_turns)),
+        before_turns
+      ) &&
       inherits(ch, "Chat")
     citations <- list()
-    if (length(native_turns) > length(before_turns) ||
-        (history_replaced && length(native_turns))) {
+    if (
+      length(native_turns) > length(before_turns) ||
+        (history_replaced && length(native_turns))
+    ) {
       last_props <- ellmer_object_props(utils::tail(native_turns, 1)[[1]])
       last_contents <- last_props$contents %||% list()
-      citations <- Filter(function(x) {
-        any(grepl("ContentCitation", class(x)))
-      }, last_contents)
+      citations <- Filter(
+        function(x) {
+          any(grepl("ContentCitation", class(x)))
+        },
+        last_contents
+      )
       if (!use_structured && identical(last_props$role, "assistant")) {
-        text_contents <- Filter(function(x) {
-          any(grepl("ContentText", class(x)))
-        }, last_contents)
-        assistant_text <- paste(vapply(text_contents, function(x) {
-          as.character(ellmer_object_props(x)$text %||% "")
-        }, character(1)), collapse = "")
+        text_contents <- Filter(
+          function(x) {
+            any(grepl("ContentText", class(x)))
+          },
+          last_contents
+        )
+        assistant_text <- paste(
+          vapply(
+            text_contents,
+            function(x) {
+              as.character(ellmer_object_props(x)$text %||% "")
+            },
+            character(1)
+          ),
+          collapse = ""
+        )
       }
     }
 

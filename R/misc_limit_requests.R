@@ -32,43 +32,67 @@
 #' @export
 #' @seealso [send_prompt()], [llm_provider_ellmer()]
 limit_requests <- function(prompt, max_requests) {
-  if (!is.numeric(max_requests) || length(max_requests) != 1L ||
-      !is.finite(max_requests) || max_requests < 1 || max_requests != floor(max_requests)) {
+  if (
+    !is.numeric(max_requests) ||
+      length(max_requests) != 1L ||
+      !is.finite(max_requests) ||
+      max_requests < 1 ||
+      max_requests != floor(max_requests)
+  ) {
     stop("`max_requests` must be a positive whole number.")
   }
   force(max_requests)
-  prompt_wrap(prompt, parameter_fn = function(llm_provider) {
-    working <- NULL
-    if (identical(llm_provider$api_type, "ellmer")) {
-      working <- llm_provider$get_chat()
-      if (!is.function(working$on_request_start)) {
-        stop("`limit_requests()` requires 'ellmer' 0.5.0 request hooks for 'ellmer' providers.")
+  prompt_wrap(
+    prompt,
+    parameter_fn = function(llm_provider) {
+      working <- NULL
+      if (identical(llm_provider$api_type, "ellmer")) {
+        working <- llm_provider$get_chat()
+        if (!is.function(working$on_request_start)) {
+          stop(
+            "`limit_requests()` requires 'ellmer' 0.5.0 request hooks for 'ellmer' providers."
+          )
+        }
       }
-    }
-    requests <- 0L
-    guard <- function(turns = NULL) {
-      if (requests >= max_requests) {
-        rlang::abort("Model request limit reached.", class = "tidyprompt_request_limit",
-          llm_provider = llm_provider,
-          ellmer_chat = working, max_requests = max_requests, requests = requests)
+      requests <- 0L
+      guard <- function(turns = NULL) {
+        if (requests >= max_requests) {
+          rlang::abort(
+            "Model request limit reached.",
+            class = "tidyprompt_request_limit",
+            llm_provider = llm_provider,
+            ellmer_chat = working,
+            max_requests = max_requests,
+            requests = requests
+          )
+        }
+        requests <<- requests + 1L
+        invisible(NULL)
       }
-      requests <<- requests + 1L
-      invisible(NULL)
-    }
-    remove_hook <- if (!is.null(working)) working$on_request_start(guard) else NULL
-    previous <- llm_provider$parameters$.request_guard
-    previous_cleanup <- llm_provider$parameters$.request_limit_cleanup
-    list(
-      .request_guard = function() {
-        if (is.function(previous)) previous()
-        guard()
-      },
-      .request_limit_cleanup = function() {
-        if (is.function(remove_hook)) remove_hook()
-        if (is.function(previous_cleanup)) previous_cleanup()
+      remove_hook <- if (!is.null(working)) {
+        working$on_request_start(guard)
+      } else {
+        NULL
       }
-    )
-  }, name = "limit_requests")
+      previous <- llm_provider$parameters$.request_guard
+      previous_cleanup <- llm_provider$parameters$.request_limit_cleanup
+      list(
+        .request_guard = function() {
+          if (is.function(previous)) {
+            previous()
+          }
+          guard()
+        },
+        .request_limit_cleanup = function() {
+          if (is.function(remove_hook)) {
+            remove_hook()
+          }
+          if (is.function(previous_cleanup)) previous_cleanup()
+        }
+      )
+    },
+    name = "limit_requests"
+  )
 }
 
 # Count custom completion functions even if they do not use our HTTP helper.
@@ -88,8 +112,11 @@ complete_chat_with_request_limit <- function(llm_provider, complete, history) {
     }
     guard()
   }
-  on.exit({
-    llm_provider$parameters$.request_guard <- guard
-  }, add = TRUE)
+  on.exit(
+    {
+      llm_provider$parameters$.request_guard <- guard
+    },
+    add = TRUE
+  )
   complete(history)
 }

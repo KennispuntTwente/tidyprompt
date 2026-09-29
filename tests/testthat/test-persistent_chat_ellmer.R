@@ -127,6 +127,9 @@ test_that("persistent_chat replays native tool results on follow-up turns", {
     "ContentToolResult",
     class(prior_turns[[3]]@contents[[1]])
   )))
-  expect_true(any(grepl("ContentToolRequest", class(prior_turns[[2]]@contents[[1]]))))
+  expect_true(any(grepl(
+    "ContentToolRequest",
+    class(prior_turns[[2]]@contents[[1]])
+  )))
   expect_equal(prior_turns[[4]]@contents[[1]]@text, "The result is 42.")
 })

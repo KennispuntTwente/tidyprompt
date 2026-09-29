@@ -81,7 +81,9 @@ chat_history_to_send <- function(chat_history, preserve_native = FALSE) {
 }
 
 chat_history_native_rows <- function(history) {
-  if (!"native_contents" %in% names(history)) return(rep(FALSE, nrow(history)))
+  if (!"native_contents" %in% names(history)) {
+    return(rep(FALSE, nrow(history)))
+  }
   vapply(history$native_contents, function(x) length(x) > 0L, logical(1))
 }
 
@@ -98,7 +100,9 @@ request_llm_provider <- function(
   request <- normalize_openai_request(request, api_type)
 
   guard <- llm_provider$parameters$.request_guard
-  if (is.function(guard)) guard()
+  if (is.function(guard)) {
+    guard()
+  }
 
   if (!is.null(stream) && stream) {
     req_result <- req_llm_stream(
@@ -143,11 +147,21 @@ req_llm_handle_error <- function(e) {
   )
   request_id <- NULL
   for (header in c(
-    "x-request-id", "request-id", "x-ms-request-id",
-    "apim-request-id", "x-amzn-requestid"
+    "x-request-id",
+    "request-id",
+    "x-ms-request-id",
+    "apim-request-id",
+    "x-amzn-requestid"
   )) {
-    value <- tryCatch(httr2::resp_header(resp, header), error = function(err) NULL)
-    if (is.character(value) && length(value) == 1L && !is.na(value) && nzchar(value)) {
+    value <- tryCatch(httr2::resp_header(resp, header), error = function(err) {
+      NULL
+    })
+    if (
+      is.character(value) &&
+        length(value) == 1L &&
+        !is.na(value) &&
+        nzchar(value)
+    ) {
       request_id <- value
       break
     }
@@ -155,20 +169,27 @@ req_llm_handle_error <- function(e) {
 
   # Show only a provider's explicit error message, not the entire JSON body.
   # Metadata/body parsing must never replace the original request failure.
-  provider_message <- tryCatch({
-    body <- httr2::resp_body_json(resp, simplifyVector = FALSE)
-    value <- NULL
-    if (is.list(body)) {
-      value <- if (is.list(body$error)) body$error$message else body$error
-      if (is.null(value)) value <- body$message
-    }
-    if (is.character(value) && length(value) == 1L &&
-        !is.na(value) && nzchar(value)) {
-      substr(value, 1L, 4000L)
-    } else {
-      NULL
-    }
-  }, error = function(err) NULL)
+  provider_message <- tryCatch(
+    {
+      body <- httr2::resp_body_json(resp, simplifyVector = FALSE)
+      value <- NULL
+      if (is.list(body)) {
+        value <- if (is.list(body$error)) body$error$message else body$error
+        if (is.null(value)) value <- body$message
+      }
+      if (
+        is.character(value) &&
+          length(value) == 1L &&
+          !is.na(value) &&
+          nzchar(value)
+      ) {
+        substr(value, 1L, 4000L)
+      } else {
+        NULL
+      }
+    },
+    error = function(err) NULL
+  )
 
   message <- "LLM request failed."
   if (!is.null(provider_message)) {

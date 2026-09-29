@@ -242,11 +242,13 @@ answer_using_tools <- function(
           tool_openai[["function"]]$description <- docs$description
         }
         native <- attr(tool, "ellmer_tool", exact = TRUE)
-        tool_openai[["function"]]$parameters <- schema_for_request(if (is.null(native)) {
-          tools_docs_to_r_json_schema(docs)
-        } else {
-          ellmer_type_to_json_schema(native@arguments)
-        })
+        tool_openai[["function"]]$parameters <- schema_for_request(
+          if (is.null(native)) {
+            tools_docs_to_r_json_schema(docs)
+          } else {
+            ellmer_type_to_json_schema(native@arguments)
+          }
+        )
         # Strict mode would force optional arguments to be required on OpenAI.
         tool_openai[["function"]]$strict <- is.null(native)
 
@@ -274,9 +276,12 @@ answer_using_tools <- function(
           # convert tidyprompt tool -> ellmer ToolDef
           ell_tool <- tryCatch(
             tidyprompt_tool_to_ellmer(tp_tools[[nm]], name = nm),
-            error = function(e) rlang::abort(
-              paste0("Could not convert tool '", nm, "' for ellmer."), parent = e
-            )
+            error = function(e) {
+              rlang::abort(
+                paste0("Could not convert tool '", nm, "' for ellmer."),
+                parent = e
+              )
+            }
           )
           if (!is.null(ell_tool)) ellmer_tools[[nm]] <- ell_tool
         }
@@ -404,7 +409,10 @@ answer_using_tools <- function(
           result <- glue::glue("Error: tool '{tool_name}' not registered")
         } else {
           result <- tryCatch(
-            normalize_tidyprompt_tool_result(invoke_tidyprompt_tool(tool, arguments), native = FALSE),
+            normalize_tidyprompt_tool_result(
+              invoke_tidyprompt_tool(tool, arguments),
+              native = FALSE
+            ),
             error = function(e) glue::glue("Error: {e$message}")
           )
         }
@@ -484,8 +492,13 @@ answer_using_tools <- function(
       tool_llm_text <- if (is.null(native)) {
         tools_docs_to_text(docs, with_arguments = TRUE)
       } else {
-        paste0(docs$name, ": ", docs$description, "\nArgument JSON Schema:\n",
-          schema_json(ellmer_type_to_json_schema(native@arguments)))
+        paste0(
+          docs$name,
+          ": ",
+          docs$description,
+          "\nArgument JSON Schema:\n",
+          schema_json(ellmer_type_to_json_schema(native@arguments))
+        )
       }
       new_prompt <- glue::glue("{new_prompt}\n\n{tool_llm_text}", .trim = FALSE)
     }
@@ -519,7 +532,10 @@ answer_using_tools <- function(
 
         result <- tryCatch(
           {
-            normalize_tidyprompt_tool_result(invoke_tidyprompt_tool(tool_function, arguments), native = FALSE)
+            normalize_tidyprompt_tool_result(
+              invoke_tidyprompt_tool(tool_function, arguments),
+              native = FALSE
+            )
           },
           error = function(e) {
             glue::glue("Error in {e$message}")
@@ -827,14 +843,20 @@ answer_using_tools <- function(
   args <- NULL
   try(
     {
-      args <- jsonlite::fromJSON(tool_call[["function"]]$arguments, simplifyVector = simplify)
+      args <- jsonlite::fromJSON(
+        tool_call[["function"]]$arguments,
+        simplifyVector = simplify
+      )
     },
     silent = TRUE
   )
   if (is.null(args)) {
     try(
       {
-        args <- jsonlite::fromJSON(tool_call[["function"]]$args, simplifyVector = simplify)
+        args <- jsonlite::fromJSON(
+          tool_call[["function"]]$args,
+          simplifyVector = simplify
+        )
       },
       silent = TRUE
     )

@@ -8,7 +8,9 @@ testthat::test_that("ellmer structured output uses native result without round-t
   fake_chat <- fake_ellmer_chat()
   provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
 
-  schema <- ellmer::type_from_schema('{"type":"object","properties":{"result":{"type":"string"}},"required":["result"],"additionalProperties":true}')
+  schema <- ellmer::type_from_schema(
+    '{"type":"object","properties":{"result":{"type":"string"}},"required":["result"],"additionalProperties":true}'
+  )
 
   result <- "Return a result" |>
     answer_as_json(schema = schema, type = "ellmer") |>
@@ -25,7 +27,9 @@ testthat::test_that("native_structured_result is cleared after use", {
   fake_chat <- fake_ellmer_chat()
   provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
 
-  schema <- ellmer::type_from_schema('{"type":"object","properties":{"result":{"type":"string"}},"required":["result"],"additionalProperties":true}')
+  schema <- ellmer::type_from_schema(
+    '{"type":"object","properties":{"result":{"type":"string"}},"required":["result"],"additionalProperties":true}'
+  )
 
   # send_prompt clones the provider, so the original should be unaffected
   result <- "Test" |>
@@ -42,7 +46,9 @@ testthat::test_that("ellmer warns when structured output and tools are both requ
   fake_chat <- fake_ellmer_chat()
   provider <- llm_provider_ellmer(fake_chat, verbose = FALSE)
 
-  schema <- ellmer::type_from_schema('{"type":"object","properties":{"result":{"type":"string"}},"required":["result"],"additionalProperties":true}')
+  schema <- ellmer::type_from_schema(
+    '{"type":"object","properties":{"result":{"type":"string"}},"required":["result"],"additionalProperties":true}'
+  )
   dummy_tool <- ellmer::tool(
     function() "ok",
     "A dummy tool"
