@@ -52,10 +52,14 @@ NULL
 
       llm_provider <- as_llm_provider(llm_provider)
       if (!inherits(llm_provider, "LlmProvider")) {
-        stop("The 'llm_provider' argument must be a 'LlmProvider' or an ellmer Chat")
+        stop(
+          "The 'llm_provider' argument must be a 'LlmProvider' or an ellmer Chat"
+        )
       }
       if (isTRUE(llm_provider$parameters$.reset_ellmer_chat)) {
-        llm_provider$ellmer_chat <- ellmer_chat_clone_reset(llm_provider$ellmer_chat)
+        llm_provider$ellmer_chat <- ellmer_chat_clone_reset(
+          llm_provider$ellmer_chat
+        )
         llm_provider$parameters$.reset_ellmer_chat <- NULL
       }
 

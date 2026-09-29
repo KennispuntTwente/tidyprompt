@@ -35,7 +35,11 @@ test_that("verification receives all rows and nested fields independent of print
   )
   response$nested[[100]] <- list(value = "problem-in-last-row")
   expected <- llm_verify_serialize(response)
-  withr::local_options(list(max.print = 5L, tibble.print_max = 2L, pillar.width = 10L))
+  withr::local_options(list(
+    max.print = 5L,
+    tibble.print_max = 2L,
+    pillar.width = 10L
+  ))
   fixture <- composition_provider(c("answer", "FINISH[TRUE]"))
   prompt <- prompt_wrap("Question", extraction_fn = function(x) response) |>
     llm_verify()
@@ -52,7 +56,8 @@ test_that("verification serialization preserves complete structured R values", {
     matrix(seq_len(200L), nrow = 100L),
     list(number = pi, special = c(NA_real_, NaN, Inf)),
     data.frame(day = as.Date("2026-09-29"), group = factor("a")),
-    c("first", "last"), NULL
+    c("first", "last"),
+    NULL
   )
   for (value in values) {
     expect_identical(eval(parse(text = llm_verify_serialize(value))), value)

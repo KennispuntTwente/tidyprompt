@@ -11,14 +11,25 @@ ellmer_structured_stream_helpers <- function(ns = asNamespace("ellmer")) {
   )
   helpers <- lapply(names(arguments), get0, envir = ns, inherits = FALSE)
   names(helpers) <- names(arguments)
-  compatible <- vapply(names(arguments), function(name) {
-    fn <- helpers[[name]]
-    if (!is.function(fn)) return(FALSE)
-    signature <- formals(fn)
-    required <- names(signature)[vapply(signature, identical, logical(1), quote(expr = ))]
-    all(arguments[[name]] %in% names(signature)) &&
-      length(setdiff(required, c(arguments[[name]], "..."))) == 0L
-  }, logical(1))
+  compatible <- vapply(
+    names(arguments),
+    function(name) {
+      fn <- helpers[[name]]
+      if (!is.function(fn)) {
+        return(FALSE)
+      }
+      signature <- formals(fn)
+      required <- names(signature)[vapply(
+        signature,
+        identical,
+        logical(1),
+        quote(expr = )
+      )]
+      all(arguments[[name]] %in% names(signature)) &&
+        length(setdiff(required, c(arguments[[name]], "..."))) == 0L
+    },
+    logical(1)
+  )
   if (all(compatible)) helpers else NULL
 }
 
@@ -38,24 +49,43 @@ ellmer_structured_stream <- function(chat, type) {
   }
   # Only capability preparation can fall back. Once a stream has started,
   # extraction failures must propagate without issuing another model request.
-  tryCatch({
-    provider <- chat$get_provider()
-    needs_wrapper <- helpers$type_needs_wrapper(type = type, provider = provider)
-    if (!is.logical(needs_wrapper) || length(needs_wrapper) != 1L || is.na(needs_wrapper)) {
-      return(NULL)
-    }
-    wrapped <- helpers$wrap_type_if_needed(type = type, needs_wrapper = needs_wrapper)
-    uses_tools <- helpers$uses_tool_structured_output(
-      provider = provider, model = chat$get_model_object(), type = wrapped
-    )
-    if (!identical(uses_tools, FALSE)) return(NULL)
-    list(extract = function() {
-      helpers$extract_data(
-        turn = chat$last_turn(), type = wrapped,
-        convert = TRUE, needs_wrapper = needs_wrapper
+  tryCatch(
+    {
+      provider <- chat$get_provider()
+      needs_wrapper <- helpers$type_needs_wrapper(
+        type = type,
+        provider = provider
       )
-    })
-  }, error = function(e) NULL)
+      if (
+        !is.logical(needs_wrapper) ||
+          length(needs_wrapper) != 1L ||
+          is.na(needs_wrapper)
+      ) {
+        return(NULL)
+      }
+      wrapped <- helpers$wrap_type_if_needed(
+        type = type,
+        needs_wrapper = needs_wrapper
+      )
+      uses_tools <- helpers$uses_tool_structured_output(
+        provider = provider,
+        model = chat$get_model_object(),
+        type = wrapped
+      )
+      if (!identical(uses_tools, FALSE)) {
+        return(NULL)
+      }
+      list(extract = function() {
+        helpers$extract_data(
+          turn = chat$last_turn(),
+          type = wrapped,
+          convert = TRUE,
+          needs_wrapper = needs_wrapper
+        )
+      })
+    },
+    error = function(e) NULL
+  )
 }
 
 ellmer_stream_abort <- function(

@@ -294,33 +294,48 @@ answer_as_dataframe_to_df <- function(rows, row_schema) {
   # silently expanding one JSON object into several rows. Decide column shape
   # across all rows first, including empty and singleton array/object cells.
   columns <- unique(unlist(lapply(rows, names), use.names = FALSE))
-  list_columns <- vapply(columns, function(column) {
-    schema <- row_schema$properties[[column]]
-    types <- unlist(schema$type, use.names = FALSE)
-    any(types %in% c("array", "object")) ||
-      any(vapply(rows, function(row) {
-        value <- row[[column]]
-        is.list(value) || (!is.null(value) && length(value) != 1L)
-      }, logical(1))) ||
-      !any(types %in% c("string", "number", "integer", "boolean"))
-  }, logical(1))
+  list_columns <- vapply(
+    columns,
+    function(column) {
+      schema <- row_schema$properties[[column]]
+      types <- unlist(schema$type, use.names = FALSE)
+      any(types %in% c("array", "object")) ||
+        any(vapply(
+          rows,
+          function(row) {
+            value <- row[[column]]
+            is.list(value) || (!is.null(value) && length(value) != 1L)
+          },
+          logical(1)
+        )) ||
+        !any(types %in% c("string", "number", "integer", "boolean"))
+    },
+    logical(1)
+  )
 
-  tryCatch({
-    frames <- lapply(rows, function(row) {
-      for (column in columns) {
-        value <- row[[column]]
-        row[column] <- if (list_columns[[column]]) {
-          list(list(value))
-        } else {
-          list(value %||% answer_as_dataframe_missing_column(
-            row_schema$properties[[column]], 1L
-          ))
+  tryCatch(
+    {
+      frames <- lapply(rows, function(row) {
+        for (column in columns) {
+          value <- row[[column]]
+          row[column] <- if (list_columns[[column]]) {
+            list(list(value))
+          } else {
+            list(
+              value %||%
+                answer_as_dataframe_missing_column(
+                  row_schema$properties[[column]],
+                  1L
+                )
+            )
+          }
         }
-      }
-      dplyr::as_tibble(row, .rows = 1L)
-    })
-    dplyr::bind_rows(frames)
-  }, error = function(e) NULL)
+        dplyr::as_tibble(row, .rows = 1L)
+      })
+      dplyr::bind_rows(frames)
+    },
+    error = function(e) NULL
+  )
 }
 
 answer_as_dataframe_complete_columns <- function(df, row_schema) {

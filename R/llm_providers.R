@@ -1658,7 +1658,11 @@ llm_provider_ellmer <- function(
 
     # Both blocking and streaming extraction suppress the entire tool registry,
     # including tools registered directly on the caller's Chat.
-    registered_tools <- if (is.function(ch$get_tools)) ch$get_tools() else prompt_tools
+    registered_tools <- if (is.function(ch$get_tools)) {
+      ch$get_tools()
+    } else {
+      prompt_tools
+    }
     if (use_structured && length(registered_tools) > 0L) {
       cli::cli_alert_warning(
         paste0(

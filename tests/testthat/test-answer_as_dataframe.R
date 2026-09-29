@@ -5,14 +5,19 @@ test_that("nested JSON cells preserve row cardinality across schema backends", {
     citations = FALSE
   )
   chat <- ellmer::chat_openai(
-    model = "gpt-4.1-mini", credentials = function() "test-only", echo = "none"
+    model = "gpt-4.1-mini",
+    credentials = function() "test-only",
+    echo = "none"
   )
   row <- list(
     type = "object",
     properties = list(
       name = list(type = "string"),
       tags = list(type = "array", items = list(type = "string")),
-      details = list(type = "object", properties = list(active = list(type = "boolean")))
+      details = list(
+        type = "object",
+        properties = list(active = list(type = "boolean"))
+      )
     ),
     required = list("name", "tags", "details")
   )
@@ -20,14 +25,24 @@ test_that("nested JSON cells preserve row cardinality across schema backends", {
   native <- ellmer::type_object(
     name = ellmer::type_string(),
     tags = ellmer::type_array(ellmer::type_string()),
-    details = ellmer::type_object(active = ellmer::type_boolean(required = FALSE))
+    details = ellmer::type_object(
+      active = ellmer::type_boolean(required = FALSE)
+    )
   )
-  for (schema in list(row, constrained, ellmer::type_from_schema(text = schema_json(constrained)), native)) {
+  for (schema in list(
+    row,
+    constrained,
+    ellmer::type_from_schema(text = schema_json(constrained)),
+    native
+  )) {
     for (backend in c("ellmer", "text-based")) {
       for (stream in c(FALSE, TRUE)) {
         result <- send_prompt(
-          answer_as_dataframe("People", schema, type = backend), chat,
-          stream = stream, verbose = FALSE, max_interactions = 1
+          answer_as_dataframe("People", schema, type = backend),
+          chat,
+          stream = stream,
+          verbose = FALSE,
+          max_interactions = 1
         )
         expect_s3_class(result, "data.frame")
         expect_equal(nrow(result), 2L)
@@ -40,11 +55,17 @@ test_that("nested JSON cells preserve row cardinality across schema backends", {
 })
 
 test_that("nested columns retain missing, empty and singleton cells", {
-  row <- list(properties = list(
-    tags = list(type = c("array", "null"), items = list(type = "string")),
-    age = list(type = c("integer", "null"))
-  ))
-  rows <- list(list(tags = list("a"), age = 1L), list(tags = list()), list(tags = NULL))
+  row <- list(
+    properties = list(
+      tags = list(type = c("array", "null"), items = list(type = "string")),
+      age = list(type = c("integer", "null"))
+    )
+  )
+  rows <- list(
+    list(tags = list("a"), age = 1L),
+    list(tags = list()),
+    list(tags = NULL)
+  )
   result <- answer_as_dataframe_extract(list(rows = rows), row)
   expect_equal(nrow(result), 3L)
   expect_identical(result$tags, list(list("a"), list(), NULL))
@@ -53,21 +74,34 @@ test_that("nested columns retain missing, empty and singleton cells", {
   expect_equal(nrow(empty), 0L)
   expect_named(empty, c("tags", "age"))
   expect_type(empty$tags, "list")
-  expect_equal(nrow(answer_as_dataframe_to_df(list(list(), list()), list())), 2L)
+  expect_equal(
+    nrow(answer_as_dataframe_to_df(list(list(), list()), list())),
+    2L
+  )
 })
 
 test_that("dataframe extraction checks final cardinality and schema row limits", {
   row <- list(type = "object", properties = list(name = list(type = "string")))
-  local_mocked_bindings(answer_as_dataframe_to_df = function(...) data.frame(name = letters[1:3]))
+  local_mocked_bindings(answer_as_dataframe_to_df = function(...) {
+    data.frame(name = letters[1:3])
+  })
   expect_s3_class(
-    answer_as_dataframe_extract(list(rows = list(list(name = "Alice"), list(name = "Bob"))), row),
+    answer_as_dataframe_extract(
+      list(rows = list(list(name = "Alice"), list(name = "Bob"))),
+      row
+    ),
     "llm_feedback"
   )
   # Bypass JSON validation to verify the post-conversion bounds independently.
-  local_mocked_bindings(answer_as_dataframe_json_wrap = function(...) list(
-    extraction_fn = function(...) list(rows = data.frame(name = letters[1:3]))
-  ))
-  prompt <- answer_as_dataframe("People", list(type = "array", items = row, maxItems = 2L))
+  local_mocked_bindings(answer_as_dataframe_json_wrap = function(...) {
+    list(
+      extraction_fn = function(...) list(rows = data.frame(name = letters[1:3]))
+    )
+  })
+  prompt <- answer_as_dataframe(
+    "People",
+    list(type = "array", items = row, maxItems = 2L)
+  )
   feedback <- prompt$get_prompt_wraps()[[1]]$extraction_fn(NULL, NULL, NULL)
   expect_s3_class(feedback, "llm_feedback")
   expect_match(as.character(feedback), "at most 2")

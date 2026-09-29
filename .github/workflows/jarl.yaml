@@ -12,7 +12,7 @@ jobs:
     name: jarl-check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: etiennebacher/setup-jarl@v0.1.0
+      - uses: actions/checkout@v7
+      - uses: etiennebacher/setup-jarl@v0.1.1
         with:
-          src: "./R"
+          src: "."

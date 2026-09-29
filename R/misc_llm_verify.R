@@ -166,8 +166,17 @@ llm_verify_serialize <- function(response) {
   }
   # dput() represents the full value independently of print methods, max.print,
   # tibble dimensions and pillar options. Preserve types, attributes and NA.
-  paste(utils::capture.output(dput(
-    response,
-    control = c("keepNA", "keepInteger", "niceNames", "showAttributes", "digits17")
-  )), collapse = "\n")
+  paste(
+    utils::capture.output(dput(
+      response,
+      control = c(
+        "keepNA",
+        "keepInteger",
+        "niceNames",
+        "showAttributes",
+        "digits17"
+      )
+    )),
+    collapse = "\n"
+  )
 }
