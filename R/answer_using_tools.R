@@ -1720,7 +1720,7 @@ tools_docs_to_r_json_schema <- function(
   }
 
   if (all_required) {
-    required_args <- names(properties)
+    required_args <- names(properties) %||% character()
   }
 
   list(
