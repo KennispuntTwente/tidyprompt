@@ -37,3 +37,25 @@ test_that("native citations do not replace answers in either request mode", {
     expect_true(any(grepl("ContentCitation", result$chat_history$content)))
   }
 })
+
+test_that("system turns do not offset native user metadata", {
+  local_ellmer_response(citations = FALSE)
+  for (system_in_history in c(TRUE, FALSE)) {
+    ch <- ellmer::chat_openai(model = "gpt-4.1-mini",
+      system_prompt = if (!system_in_history) "Be helpful" else NULL,
+      credentials = function() "test-only", echo = "none")
+    provider <- llm_provider_ellmer(ch, parameters = list(stream = FALSE), verbose = FALSE)
+    history <- data.frame(role = "user", content = "Question")
+    if (system_in_history) history <- rbind(
+      data.frame(role = "system", content = "Be helpful"), history)
+    first <- provider$complete_chat(history)
+    user <- which(first$completed$role == "user")
+    expect_equal(first$completed$native_turn_role[user], "user")
+    expect_equal(first$completed$native_contents[[user]][[1]]@text, "Question")
+    second <- provider$complete_chat(add_msg_to_chat_history(first$completed, "Follow-up"))
+    turns <- second$ellmer_chat$get_turns()
+    expect_equal(turns[[1]]@role, "user")
+    expect_equal(turns[[1]]@text, "Question")
+    expect_equal(second$ellmer_chat$get_system_prompt(), "Be helpful")
+  }
+})

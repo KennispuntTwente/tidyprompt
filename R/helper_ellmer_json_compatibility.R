@@ -4,6 +4,18 @@ ellmer_available <- function() {
   requireNamespace("ellmer", quietly = TRUE)
 }
 
+# Real Chats omit the system turn by default; lightweight custom adapters may
+# not expose that argument. Use a consistent view before and after a request.
+ellmer_chat_turns <- function(chat) {
+  getter <- chat$get_turns
+  if (!is.function(getter)) return(list())
+  if ("include_system_prompt" %in% names(formals(getter))) {
+    getter(include_system_prompt = TRUE)
+  } else {
+    getter()
+  }
+}
+
 # --- Detectors --------------------------------------------------------------
 
 is_json_schema_list <- function(x) {

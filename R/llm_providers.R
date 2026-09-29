@@ -1664,6 +1664,7 @@ llm_provider_ellmer <- function(
     }
 
     ch <- ch$set_turns(turns_to_send)
+    before_turns <- ellmer_chat_turns(ch)
 
     # Store the native structured result (if any) so downstream extraction
     # can use it directly without lossy JSON round-tripping.
@@ -1798,8 +1799,7 @@ llm_provider_ellmer <- function(
 
     native_turns <- tryCatch(
       {
-        gt <- ch$get_turns
-        if (is.function(gt)) gt() else NULL
+        ellmer_chat_turns(ch)
       },
       error = function(e) NULL
     )
@@ -1807,7 +1807,7 @@ llm_provider_ellmer <- function(
     # Transcript rows also contain citations, tools and thinking. They are not
     # interchangeable with the final assistant answer.
     citations <- list()
-    if (length(native_turns)) {
+    if (length(native_turns) > length(before_turns)) {
       last_props <- ellmer_object_props(utils::tail(native_turns, 1)[[1]])
       last_contents <- last_props$contents %||% list()
       citations <- Filter(function(x) {
@@ -1823,7 +1823,7 @@ llm_provider_ellmer <- function(
       }
     }
 
-    prompt_turn_index <- length(prior_turns) + 1L
+    prompt_turn_index <- length(before_turns) + 1L
     if (length(native_turns) >= prompt_turn_index && nrow(chat_history) > 0) {
       prompt_turn <- native_turns[[prompt_turn_index]]
       prompt_props <- ellmer_object_props(prompt_turn)
@@ -1837,7 +1837,7 @@ llm_provider_ellmer <- function(
       )
     }
 
-    first_new_turn <- length(prior_turns) + 2L
+    first_new_turn <- length(before_turns) + 2L
     if (length(native_turns) >= first_new_turn) {
       native_rows <- native_turns_to_history(
         native_turns[

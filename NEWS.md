@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* Ellmer history indexing now handles both tidyprompt system rows and system
+prompts configured on the native chat without assigning assistant content to
+user messages.
+
 * Ellmer replies now use the complete final assistant text rather than the
 last transcript row. Citations no longer replace the answer and are available
 in `$citations` when `return_mode = "full"`.
