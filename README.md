@@ -229,7 +229,7 @@ to create an LLM provider from an ‘ellmer’ chat object. Provider and model
 configuration remains with ellmer. The adapter supports native tools, structured
 output, content attachments, and streaming; availability depends on the ellmer
 version and provider. See [Working with ellmer](vignettes/ellmer_interoperability.Rmd)
-for the capability matrix, request limits, callbacks and recovery behavior.
+for request limits, callbacks and recovery behavior.
 
 Furthermore, `answer_as_json()` and `answer_using_tools()` support
 ‘ellmer’ definitions for structured output and tools. When using an

@@ -16,18 +16,6 @@ Pin the model when creating the chat if reproducibility matters; provider
 defaults can change. The adapter preserves native turns, content, usage, cost
 and citations in the full result.
 
-| Capability | Support |
-|---|---|
-| Direct Chat input, native tools and structured output | ellmer >= 0.3.0 |
-| Built-in tools and ignored tool arguments | ellmer >= 0.4.0 |
-| Native history, thinking, usage and content preservation | Preserved when the installed ellmer exposes them |
-| Generic attachments | `add_content()`; content classes and provider support vary |
-| Structured streaming | ellmer 0.5.0 with native provider support; blocking fallback otherwise |
-| Rich stream events and cancellation | ellmer 0.5.0 |
-| Request hooks and `limit_requests()` with an 'ellmer' provider | 'ellmer' 0.5.0 |
-| Context-aware tools | Native ellmer execution only |
-| Native async, parallel and batch evaluation | Not exposed by `send_prompt()` |
-
 ## Callbacks and chat ownership
 
 Each `send_prompt()` evaluation deep-clones its native chat. Callback registries,
