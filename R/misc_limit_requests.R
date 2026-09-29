@@ -88,6 +88,8 @@ complete_chat_with_request_limit <- function(llm_provider, complete, history) {
     }
     guard()
   }
-  on.exit(llm_provider$parameters$.request_guard <- guard, add = TRUE)
+  on.exit({
+    llm_provider$parameters$.request_guard <- guard
+  }, add = TRUE)
   complete(history)
 }

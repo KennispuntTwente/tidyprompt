@@ -687,7 +687,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
             dplyr::bind_rows(
               data.frame(
                 role = "assistant",
-                content = glue::glue(
+                content = glue::trim(
                   ">> step 1: Identify the mathematical operation in the prompt,
           which is a simple addition problem.
 
@@ -741,7 +741,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
             dplyr::bind_rows(
               data.frame(
                 role = "assistant",
-                content = glue::glue(
+                content = glue::trim(
                   ">> step 1: Identify the mathematical operation in the prompt,
           which is a simple addition problem.
 
@@ -775,7 +775,7 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
             dplyr::bind_rows(
               data.frame(
                 role = "assistant",
-                content = glue::glue(
+                content = glue::trim(
                   "I'll use the provided function to get the current temperature in Enschede.
 
           FUNCTION[temperature_in_location](\"Enschede\", \"Celcius\")"

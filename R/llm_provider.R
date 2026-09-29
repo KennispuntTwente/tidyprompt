@@ -233,9 +233,7 @@ NULL
       if (self$verbose) {
         message(
           crayon::bold(
-            glue::glue(
-              "--- Receiving response from LLM provider: ---"
-            )
+            "--- Receiving response from LLM provider: ---"
           )
         )
       }
