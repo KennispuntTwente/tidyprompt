@@ -1,5 +1,8 @@
 # tidyprompt (development version)
 
+* Ellmer streams can expose rich content events and accept a stream controller.
+  Cancellation and iteration errors retain recoverable partial chat state.
+
 * Native structured output can now stream with ellmer 0.5.0, retaining native R
   coercion and falling back for providers that require tool-based extraction.
 

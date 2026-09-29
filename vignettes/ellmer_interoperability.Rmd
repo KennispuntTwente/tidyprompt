@@ -78,3 +78,34 @@ through the usual `stream_callback(chunk, meta)`. Final extraction keeps ellmer'
 R coercion, including data frames and factors. Providers/models that use
 tool-based structured output, older ellmer versions, and custom adapters without
 the required capabilities use blocking `chat_structured()` instead.
+
+## Stream events and recovery
+
+Set provider parameter `stream_content = TRUE` to receive native events in
+`meta$content`. The first callback argument remains a string: non-text events
+such as citations, thinking and tool results receive `""` and do not enter the
+accumulated answer. Inspect `meta$content_type` to render these separately.
+
+```{r}
+controller <- ellmer::stream_controller()
+provider <- llm_provider_ellmer(chat, parameters = list(
+  stream = TRUE, stream_content = TRUE, stream_controller = controller
+))
+provider$stream_callback <- function(chunk, meta) {
+  cat(chunk)
+  # Call controller$cancel() to stop after the next chunk boundary.
+}
+result <- tryCatch(
+  send_prompt("Explain the report", provider),
+  tidyprompt_stream_error = function(e) {
+    # Also catches tidyprompt_stream_cancelled, a subclass.
+    list(partial = e$partial_response, chat = e$ellmer_chat, turn = e$partial_turn)
+  }
+)
+```
+
+Cancellation and iteration failures stop validation and feedback requests.
+The condition exposes the working chat and ellmer's partial turn; partial text
+is never treated as a successful answer. Iteration failures do not trigger a
+second model request. Controllers require a streaming-capable path; the
+blocking structured fallback cannot be cancelled with a stream controller.

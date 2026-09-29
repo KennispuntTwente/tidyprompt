@@ -107,9 +107,14 @@ skip_if_no_ellmer_turn_classes <- function() {
         annotations = if (citations) list(annotation) else list())))),
     usage = list(input_tokens = 10, output_tokens = 5))
   testthat::local_mocked_bindings(chat_perform = function(mode, ...) {
+    controller <- list(...)$controller
     if (mode == "stream") {
       coro::generator(function() {
-        for (x in text) coro::yield(list(type = "response.output_text.delta", delta = x))
+        for (x in text) {
+          if (!is.null(controller) && controller$cancelled) return(invisible(NULL))
+          coro::yield(list(type = "response.output_text.delta", delta = x))
+        }
+        if (!is.null(controller) && controller$cancelled) return(invisible(NULL))
         if (citations) coro::yield(list(type = "response.output_text.annotation.added",
           annotation = annotation))
         coro::yield(list(type = "response.completed", response = result))

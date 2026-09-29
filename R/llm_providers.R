@@ -894,6 +894,14 @@ llm_provider_fake <- function(verbose = getOption("tidyprompt.verbose", TRUE)) {
 #' `answer_as_json()` sets this parameter to obtain structured output
 #' (it is not recommended to set this parameter manually, but it is possible).
 #'
+#' 3) With ellmer 0.5.0, `stream_content = TRUE` adds native Content objects to
+#' callback metadata (`meta$content` and `meta$content_type`). Non-text events
+#' have an empty string chunk and do not change `meta$partial_response`.
+#' `stream_controller` accepts an `ellmer::stream_controller()` for cancellation.
+#' Cancellation raises `tidyprompt_stream_cancelled`; iteration failures raise
+#' `tidyprompt_stream_error`. Both carry `ellmer_chat`, `partial_turn` and
+#' `partial_response` for recovery and stop the evaluation without retrying.
+#'
 #' @param chat An `ellmer::chat()` object (e.g., `ellmer::chat_openai()`)
 #' @param parameters A named list of parameters. See 'details' for supported parameters
 #' @param verbose A logical indicating whether the interaction with the [llm_provider-class]
@@ -942,6 +950,8 @@ llm_provider_ellmer <- function(
     ellmer_known_params <- c(
       "model",
       "stream",
+      "stream_content",
+      "stream_controller",
       ".ellmer_tools",
       ".ellmer_structured_type",
       ".add_image_parts",
@@ -1697,6 +1707,17 @@ llm_provider_ellmer <- function(
     structured_stream <- if (use_structured && isTRUE(params$stream)) {
       ellmer_structured_stream(ch, structured_type)
     } else NULL
+    controller <- params$stream_controller
+    rich_stream <- isTRUE(params$stream_content)
+    stream_formals <- if (is.function(ch$stream)) names(formals(ch$stream)) else character()
+    if (!is.null(controller) &&
+        (!isTRUE(params$stream) || !"controller" %in% stream_formals ||
+          (use_structured && is.null(structured_stream)))) {
+      stop("`stream_controller` requires a supported ellmer streaming request.")
+    }
+    if (rich_stream && isTRUE(params$stream) && !"stream" %in% stream_formals) {
+      stop("`stream_content` requires an ellmer version with rich content streaming.")
+    }
 
     if (use_structured && is.null(structured_stream)) {
       if (!is.null(multimodal_args)) {
@@ -1721,6 +1742,8 @@ llm_provider_ellmer <- function(
 
       stream_args <- multimodal_args %||% list(prompt_for_model)
       if (!is.null(structured_stream)) stream_args$type <- structured_type
+      if (rich_stream) stream_args$stream <- "content"
+      if (!is.null(controller)) stream_args$controller <- controller
       stream <- tryCatch(
         do.call(ch$stream, stream_args),
         error = function(e) {
@@ -1730,6 +1753,9 @@ llm_provider_ellmer <- function(
       )
 
       if (is.null(stream) && !is.null(stream_error)) {
+        if (inherits(ch, "Chat") || !is.null(controller) || rich_stream) {
+          ellmer_stream_abort(ch, "", parent = stream_error)
+        }
         # Streaming failed to initialise; fall back to non-streaming chat.
         # (Multimodal paths already did this; now also try for plain text.)
         reply_any <- tryCatch(
@@ -1753,14 +1779,17 @@ llm_provider_ellmer <- function(
         partial_response_env <- new.env()
         assign("partial_response", "", envir = partial_response_env)
 
-        coro::loop(
+        tryCatch(coro::loop(
           for (chunk in stream) {
-            if (length(chunk) == 0L || all(is.na(chunk))) {
+            native_content <- if (is_native_tool_content(chunk)) chunk else NULL
+            if (is.null(native_content) && (length(chunk) == 0L || all(is.na(chunk)))) {
               next
             }
 
-            chunk_str <- paste0(as.character(chunk), collapse = "")
-            if (!nzchar(chunk_str)) {
+            chunk_str <- if (!is.null(native_content)) {
+              if (S7::S7_inherits(chunk, ellmer::ContentText)) chunk@text else ""
+            } else paste0(as.character(chunk), collapse = "")
+            if (!nzchar(chunk_str) && is.null(native_content)) {
               next
             }
 
@@ -1786,6 +1815,8 @@ llm_provider_ellmer <- function(
                 latest_message = latest_message,
                 partial_response = updated_response,
                 chunk = chunk_str,
+                content = native_content,
+                content_type = if (!is.null(native_content)) class(native_content)[1L] else NULL,
                 api_type = "ellmer",
                 endpoint = "chat",
                 verbose = self$verbose
@@ -1805,7 +1836,15 @@ llm_provider_ellmer <- function(
               cat(chunk_str)
             }
           }
-        )
+        ), error = function(e) {
+          ellmer_stream_abort(ch, partial_response_env$partial_response, parent = e)
+        }, interrupt = function(e) {
+          ellmer_stream_abort(ch, partial_response_env$partial_response, parent = e)
+        })
+
+        if (!is.null(controller) && isTRUE(controller$cancelled)) {
+          ellmer_stream_abort(ch, partial_response_env$partial_response, cancelled = TRUE)
+        }
 
         # After streaming, use accumulated partial_response as assistant text
         assistant_text <- get("partial_response", envir = partial_response_env)

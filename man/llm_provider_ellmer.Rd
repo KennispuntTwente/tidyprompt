@@ -58,6 +58,13 @@ this parameter is used to specify a structured output format. This should be a '
 structured type (e.g., \code{ellmer::type_object}; see https://ellmer.tidyverse.org/articles/structured-data.html).
 \code{answer_as_json()} sets this parameter to obtain structured output
 (it is not recommended to set this parameter manually, but it is possible).
+\item With ellmer 0.5.0, \code{stream_content = TRUE} adds native Content objects to
+callback metadata (\code{meta$content} and \code{meta$content_type}). Non-text events
+have an empty string chunk and do not change \code{meta$partial_response}.
+\code{stream_controller} accepts an \code{ellmer::stream_controller()} for cancellation.
+Cancellation raises \code{tidyprompt_stream_cancelled}; iteration failures raise
+\code{tidyprompt_stream_error}. Both carry \code{ellmer_chat}, \code{partial_turn} and
+\code{partial_response} for recovery and stop the evaluation without retrying.
 }
 }
 \examples{

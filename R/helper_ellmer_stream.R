@@ -15,3 +15,11 @@ ellmer_structured_stream <- function(chat, type) {
   list(extract = function() helpers[[4]](chat$last_turn(), wrapped,
     convert = TRUE, needs_wrapper = needs_wrapper))
 }
+
+ellmer_stream_abort <- function(chat, partial_response, parent = NULL, cancelled = FALSE) {
+  turns <- ellmer_chat_turns(chat)
+  rlang::abort(if (cancelled) "Ellmer stream cancelled." else "Ellmer stream failed; partial state is available on this condition.",
+    class = if (cancelled) c("tidyprompt_stream_cancelled", "tidyprompt_stream_error") else "tidyprompt_stream_error",
+    parent = parent, ellmer_chat = chat, partial_response = partial_response,
+    partial_turn = if (length(turns)) utils::tail(turns, 1L)[[1L]] else NULL)
+}
