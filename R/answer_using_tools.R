@@ -17,6 +17,7 @@
 #' definitions are converted as needed and can work with both 'ellmer' and
 #' regular LLM providers. Provider-specific 'ellmer' built-in tools
 #' (i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
+#' Tools using `ellmer::tool_context()` also require an ellmer-backed provider.
 #'
 #' @details
 #' Note that conversion between 'tidyprompt' and 'ellmer' tool definitions
@@ -240,10 +241,14 @@ answer_using_tools <- function(
         if (!is.null(docs$description)) {
           tool_openai[["function"]]$description <- docs$description
         }
-        tool_openai[["function"]]$parameters <- tools_docs_to_r_json_schema(
-          docs
-        )
-        tool_openai[["function"]]$strict <- TRUE
+        native <- attr(tool, "ellmer_tool", exact = TRUE)
+        tool_openai[["function"]]$parameters <- if (is.null(native)) {
+          tools_docs_to_r_json_schema(docs)
+        } else {
+          ellmer_type_to_json_schema(native@arguments)
+        }
+        # Strict mode would force optional arguments to be required on OpenAI.
+        tool_openai[["function"]]$strict <- is.null(native)
 
         tools_openai[[length(tools_openai) + 1]] <- tool_openai
       }
@@ -369,7 +374,7 @@ answer_using_tools <- function(
         tool <- tp_tools[[tool_name]]
 
         # Parse arguments robustly
-        arguments <- .parse_arguments(tool_call, t)
+        arguments <- .parse_arguments(tool_call, t, simplify = FALSE)
 
         # Record the call in chat history
         pretty_args <- tryCatch(
@@ -399,7 +404,7 @@ answer_using_tools <- function(
           result <- glue::glue("Error: tool '{tool_name}' not registered")
         } else {
           result <- tryCatch(
-            do.call(tool, arguments),
+            invoke_tidyprompt_tool(tool, arguments),
             error = function(e) glue::glue("Error: {e$message}")
           )
         }
@@ -481,7 +486,13 @@ answer_using_tools <- function(
       tool <- tp_tools[[tool_name]]
       docs <- tools_get_docs(tool, tool_name)
 
-      tool_llm_text <- tools_docs_to_text(docs, with_arguments = TRUE)
+      native <- attr(tool, "ellmer_tool", exact = TRUE)
+      tool_llm_text <- if (is.null(native)) {
+        tools_docs_to_text(docs, with_arguments = TRUE)
+      } else {
+        paste0(docs$name, ": ", docs$description, "\nArgument JSON Schema:\n",
+          schema_json(ellmer_type_to_json_schema(native@arguments)))
+      }
       new_prompt <- glue::glue("{new_prompt}\n\n{tool_llm_text}", .trim = FALSE)
     }
 
@@ -501,7 +512,7 @@ answer_using_tools <- function(
       return(llm_response)
     }
 
-    jsons <- extraction_fn_json(llm_response)
+    jsons <- extraction_fn_json(llm_response, simplify = FALSE)
 
     fn_results <- lapply(jsons, function(json) {
       if (is.null(json[["function"]])) {
@@ -514,7 +525,7 @@ answer_using_tools <- function(
 
         result <- tryCatch(
           {
-            do.call(tool_function, arguments)
+            invoke_tidyprompt_tool(tool_function, arguments)
           },
           error = function(e) {
             glue::glue("Error in {e$message}")
@@ -803,7 +814,7 @@ answer_using_tools <- function(
   list()
 }
 
-.parse_arguments <- function(tool_call, t) {
+.parse_arguments <- function(tool_call, t, simplify = TRUE) {
   if (t == "ollama") {
     args_raw <- NULL
     fn <- tool_call[["function"]]
@@ -829,14 +840,14 @@ answer_using_tools <- function(
   args <- NULL
   try(
     {
-      args <- jsonlite::fromJSON(tool_call[["function"]]$arguments)
+      args <- jsonlite::fromJSON(tool_call[["function"]]$arguments, simplifyVector = simplify)
     },
     silent = TRUE
   )
   if (is.null(args)) {
     try(
       {
-        args <- jsonlite::fromJSON(tool_call[["function"]]$args)
+        args <- jsonlite::fromJSON(tool_call[["function"]]$args, simplifyVector = simplify)
       },
       silent = TRUE
     )

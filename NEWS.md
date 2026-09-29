@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* Ellmer tools retain nested argument schemas and input conversion semantics
+when used with other providers. Context-aware tools explicitly require the
+native ellmer path, and direct converted-tool calls evaluate R arguments normally.
+
 * Zero-argument R tools register correctly with ellmer. Failed native tool
 conversions now identify the tool and preserve the original error.
 

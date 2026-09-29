@@ -58,6 +58,7 @@ Model Context Protocol (MCP) tools from MCP servers, as returned from
 definitions are converted as needed and can work with both 'ellmer' and
 regular LLM providers. Provider-specific 'ellmer' built-in tools
 (i.e., 'ToolBuiltIn' objects) only work with 'ellmer'-backed providers.
+Tools using \code{ellmer::tool_context()} also require an ellmer-backed provider.
 }
 \details{
 Note that conversion between 'tidyprompt' and 'ellmer' tool definitions

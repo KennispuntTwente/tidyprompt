@@ -306,8 +306,9 @@ ellmer_tool_to_tidyprompt <- function(tooldef) {
   formals(wrapper) <- .ellmer_tool_formals(tooldef)
   body(wrapper) <- quote({
     tool <- attr(sys.function(), "ellmer_tool", exact = TRUE)
-    args <- as.list(match.call(expand.dots = TRUE))[-1]
-    do.call(tool, args, quote = TRUE)
+    args <- lapply(as.list(match.call(expand.dots = TRUE))[-1], eval,
+      envir = parent.frame())
+    do.call(tool, args)
   })
   # Do NOT change environment(wrapper); just attach the ToolDef
   attr(wrapper, "ellmer_tool") <- tooldef
@@ -421,6 +422,10 @@ tidyprompt_tool_to_ellmer <- function(
   strict = TRUE
 ) {
   stopifnot(is.function(fun))
+  original <- attr(fun, "ellmer_tool", exact = TRUE)
+  if (!is.null(original)) {
+    return(if (is.null(name)) original else rename_ellmer_tool(original, name))
+  }
   docs <- tools_get_docs(fun, name = name %||% NULL)
   tidyprompt_docs_to_ellmer_tool(
     fun,
@@ -430,6 +435,29 @@ tidyprompt_tool_to_ellmer <- function(
     annotations = annotations,
     strict = strict
   )
+}
+
+invoke_tidyprompt_tool <- function(tool, arguments) {
+  native <- attr(tool, "ellmer_tool", exact = TRUE)
+  if (is.null(native)) {
+    # Ordinary R tools retain the historical simplified JSON arguments.
+    arguments <- jsonlite::fromJSON(jsonlite::toJSON(arguments, auto_unbox = TRUE))
+    return(do.call(tool, arguments))
+  }
+  if (isTRUE(native@convert)) {
+    extra <- setdiff(names(arguments), names(native@arguments@properties))
+    if (length(extra)) stop("Unused tool arguments: ", paste(extra, collapse = ", "))
+    # Ellmer has no exported argument-coercion API. Isolate this capability
+    # check and test it across our supported versions rather than approximating
+    # its factors, data frames, missing values and optional argument semantics.
+    convert <- get0("convert_from_type", envir = asNamespace("ellmer"), inherits = FALSE)
+    if (!is.function(convert)) stop("This ellmer version requires native tool execution.")
+    arguments <- convert(arguments, native@arguments)
+    arguments <- Filter(Negate(is.null), arguments)
+  }
+  tryCatch(do.call(native, arguments), ellmer_error_tool_context_unavailable = function(e) {
+    rlang::abort("Tools using `ellmer::tool_context()` require an ellmer-backed provider.", parent = e)
+  })
 }
 
 # ---- Public: normalize a tool for a given target ---------------------------

@@ -15,6 +15,30 @@ test_that("renaming preserves ignored formals and does not mutate the original",
   expect_equal(params$.ellmer_tools[[1]]@name, "alias")
 })
 
+test_that("nonnative tools preserve nested schemas and ellmer argument coercion", {
+  skip_if_not_installed("ellmer")
+  td <- ellmer::tool(function(rows) rows, name = "rows", description = "Rows",
+    arguments = list(rows = ellmer::type_array(ellmer::type_object(x = ellmer::type_number()))))
+  prompt <- answer_using_tools("x", tools = td, type = "openai")
+  params <- prompt$get_prompt_wraps()[[1]]$parameter_fn(list(api_type = "openai"))
+  expect_equal(params$tools[[1]]$`function`$parameters$properties$rows$items$properties$x$type, "number")
+  expect_identical(tidyprompt_tool_to_ellmer(ellmer_tool_to_tidyprompt(td)), td)
+
+  for (convert in c(TRUE, FALSE)) {
+    td <- ellmer::tool(function(values) class(values), name = "classes", description = "Classes",
+      arguments = list(values = ellmer::type_array(ellmer::type_enum(c("red", "blue")))), convert = convert)
+    prompt <- answer_using_tools("x", tools = td, type = "text-based")
+    result <- prompt$get_prompt_wraps()[[1]]$extraction_fn(
+      '{"function":"classes","arguments":{"values":["red","blue"]}}', list(api_type = "fake"))
+    expect_match(result$text, if (convert) "result: factor" else "result: list", fixed = TRUE)
+  }
+  td <- ellmer::tool(function(x) x + 1, name = "add", description = "Add",
+    arguments = list(x = ellmer::type_number()))
+  fn <- ellmer_tool_to_tidyprompt(td)
+  value <- 5
+  expect_equal(fn(value), 6)
+})
+
 test_that("zero-argument functions register and failed conversions are explicit", {
   skip_if_not_installed("ellmer")
   fn <- tools_add_docs(function() "yes", list(name = "noargs", description = "No args",
@@ -28,4 +52,12 @@ test_that("zero-argument functions register and failed conversions are explicit"
   prompt <- answer_using_tools("x", tools = list(broken = fn), type = "ellmer")
   expect_error(prompt$get_prompt_wraps()[[1]]$parameter_fn(list(api_type = "ellmer")),
     "Could not convert tool 'broken'.*|Invalid argument schema")
+})
+
+test_that("context-aware tools explain their native-provider requirement", {
+  skip_if_not_installed("ellmer", "0.5.0")
+  td <- ellmer::tool(function() ellmer::tool_context()$request@id,
+    name = "context", description = "Context")
+  expect_error(invoke_tidyprompt_tool(ellmer_tool_to_tidyprompt(td), list()),
+    "require an ellmer-backed provider", fixed = TRUE)
 })

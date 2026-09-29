@@ -94,7 +94,7 @@ extraction_fn_finish <- function(llm_response, lenience = TRUE) {
 #'
 #' @noRd
 #' @keywords internal
-extraction_fn_json <- function(llm_response) {
+extraction_fn_json <- function(llm_response, simplify = TRUE) {
   positions <- gregexpr("[{}]", llm_response)[[1]]
   matches <- regmatches(llm_response, gregexpr("[{}]", llm_response))[[1]]
 
@@ -137,7 +137,7 @@ extraction_fn_json <- function(llm_response) {
   parsed_jsons <- lapply(blocks, function(json_candidate) {
     tryCatch(
       {
-        jsonlite::fromJSON(json_candidate, simplifyDataFrame = FALSE)
+        jsonlite::fromJSON(json_candidate, simplifyVector = simplify, simplifyDataFrame = FALSE)
       },
       error = function(e) NULL
     )
