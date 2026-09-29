@@ -1,24 +1,5 @@
 # tidyprompt (development version)
 
-* Raw 'ellmer' Chats are now accepted by `llm_verify()`,
-  `persistent_chat-class$new()` and prompt rendering, consistently with
-  `send_prompt()`. Verifiers and persistent chats use isolated Chat clones.
-
-* Native structured-output diagnostics now also detect tools registered directly
-  on an 'ellmer' Chat, including when streaming. The interoperability vignette
-  shows how to use tools before structured extraction in separate evaluations.
-
-* `llm_verify()` now sends complete structured answers using deterministic R
-  serialization, including every tibble row and nested value. It no longer
-  silently substitutes a truncated console preview for the answer.
-
-* Returned `chat_history_clean` now preserves native 'ellmer' tool requests
-  together with their results, so cleaned conversations can be resumed safely.
-
-* `answer_as_dataframe()` keeps nested arrays and objects in list columns for
-  raw JSON schemas and `ellmer::type_from_schema()`, preventing silent row
-  expansion. Final row counts are checked against the input and schema limits.
-
 * `limit_requests()` and `send_prompt(max_requests = ...)` bound model requests
   across initial responses, tool follow-ups and feedback rounds for both regular
   and 'ellmer' providers.
@@ -28,10 +9,10 @@
 
 * Prompt composition and nested evaluation fixes:
 
-  * `llm_verify()` isolates the verifier from answer-specific wraps, schemas and
-    handlers. Verification and rejection summaries share the outer request budget
-    without removing its request-limit hooks. Rejection summaries now use the
-    available chat history.
+  * `llm_verify()` reviews complete answers and isolates the verifier from
+    answer-specific wraps, schemas and handlers. Verification and rejection
+    summaries share the outer request budget without removing its request-limit
+    hooks. Rejection summaries now use the available chat history.
   * Multiple native 'ellmer' tool wraps accumulate tools and reject conflicting
     names. Multiple native structured-output wraps fail before requesting a reply.
   * Native schema validation handles list columns and nested data-frame columns.
@@ -40,6 +21,9 @@
     `max_interactions = 1`, and respects feedback from checks after a break.
 
 * 'ellmer' compatability fixes & improvements:
+
+  * Chat inputs: `llm_verify()`, `persistent_chat-class$new()` and prompt
+    rendering now accept raw Chats, as `send_prompt()` does.
 
   * Streaming: structured output now streams with 'ellmer' 0.5.0 when the
     provider supports it, with blocking extraction as a fallback. Streams expose
@@ -54,16 +38,19 @@
     and includes `$citations` when `return_mode = "full"`. It preserves native
     tool and reasoning turns and usage metadata, respects history compaction,
     assigns messages to the correct roles, and isolates callbacks between
-    evaluations.
+    evaluations. Returned cleaned history also preserves tool requests and
+    results together for safe replay.
 
   * Schemas: conversion now preserves JSON Schema constraints and singleton
     arrays without deprecated schema calls. Validation retains R classes and
-    correctly handles optional fields and empty objects.
+    correctly handles optional fields and empty objects. `answer_as_dataframe()`
+    preserves nested cells without expanding rows and checks final row counts.
 
   * Tools: renaming 'ellmer' tools or converting them for other providers now
     preserves argument schemas and defaults. Tools with no arguments register
     correctly, list and data-frame results serialize as JSON, and native content
     results stay intact. Conversion errors identify the affected tool.
+    Structured-output diagnostics also cover tools registered on the Chat.
 
   * Documentation: new interoperability vignette explains how to configure
     callbacks, limit requests, stream responses and use tools before structured
