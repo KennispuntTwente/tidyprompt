@@ -59,3 +59,37 @@ test_that("system turns do not offset native user metadata", {
     expect_equal(second$ellmer_chat$get_system_prompt(), "Be helpful")
   }
 })
+
+test_that("replay retains native assistant metadata and reasoning signatures", {
+  local_ellmer_response(citations = FALSE)
+  ch <- ellmer::chat_openai(model = "gpt-4.1-mini",
+    credentials = function() "test-only", echo = "none")
+  provider <- llm_provider_ellmer(ch, parameters = list(stream = FALSE), verbose = FALSE)
+  first <- provider$complete_chat("Question")
+  answer <- which(first$completed$role == "assistant")
+  original <- first$completed$native_turn[[answer]]
+  expect_equal(unname(original@tokens), c(10, 5, 0))
+  second <- provider$complete_chat(add_msg_to_chat_history(first$completed, "Follow-up"))
+  expect_identical(second$ellmer_chat$get_turns()[[2]], original)
+
+  request <- ellmer::ContentToolRequest(id = "call-1", name = "tool", arguments = list())
+  thought <- ellmer::ContentThinking("", extra = list(signature = "opaque-signature"))
+  fake <- fake_ellmer_chat()
+  fake$chat <- function(...) {
+    fake$turns <- c(fake$turns, list(
+      ellmer::UserTurn("Question"),
+      ellmer::AssistantTurn(list(thought, request), tokens = c(10, 5, 0), cost = 0.5),
+      ellmer::UserTurn(list(ellmer::ContentToolResult(value = "42", request = request))),
+      ellmer::AssistantTurn("42")))
+    "42"
+  }
+  p <- llm_provider_ellmer(fake, parameters = list(stream = FALSE), verbose = FALSE)
+  first <- p$complete_chat("Question")
+  cleaned <- clean_chat_history(first$completed, preserve_native = TRUE)
+  expect_equal(nrow(cleaned), nrow(first$completed))
+  p$complete_chat(add_msg_to_chat_history(cleaned, "Follow-up"))
+  replay <- fake$set_turns_calls[[2]]
+  expect_identical(replay[[2]]@contents, list(thought, request))
+  expect_equal(replay[[2]]@cost, 0.5)
+  expect_equal(replay[[3]]@contents[[1]]@request@id, request@id)
+})

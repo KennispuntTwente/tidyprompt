@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* Ellmer follow-up requests preserve complete native turns, including tool
+request/result pairs, reasoning blocks, usage metadata and partial-turn classes.
+Native protocol content is retained when cleaning an ellmer conversation.
+
 * Ellmer history indexing now handles both tidyprompt system rows and system
 prompts configured on the native chat without assigning assistant content to
 user messages.

@@ -49,7 +49,7 @@ normalize_chat_history_metadata <- function(chat_history) {
   chat_history
 }
 
-chat_history_to_send <- function(chat_history) {
+chat_history_to_send <- function(chat_history, preserve_native = FALSE) {
   stopifnot(is.data.frame(chat_history))
 
   keep_rows <- rep(TRUE, nrow(chat_history))
@@ -66,6 +66,10 @@ chat_history_to_send <- function(chat_history) {
     keep_rows <- keep_rows & !tool_call_rows
   }
 
+  if (preserve_native) {
+    keep_rows <- keep_rows | chat_history_native_rows(chat_history)
+  }
+
   source_rows <- which(keep_rows)
   chat_history <- chat_history[keep_rows, , drop = FALSE]
   if ("hidden_from_llm" %in% names(chat_history)) {
@@ -74,6 +78,11 @@ chat_history_to_send <- function(chat_history) {
 
   attr(chat_history, "source_rows") <- source_rows
   chat_history
+}
+
+chat_history_native_rows <- function(history) {
+  if (!"native_contents" %in% names(history)) return(rep(FALSE, nrow(history)))
+  vapply(history$native_contents, function(x) length(x) > 0L, logical(1))
 }
 
 request_llm_provider <- function(

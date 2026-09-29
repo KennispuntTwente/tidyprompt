@@ -207,7 +207,9 @@ NULL
       )
 
       chat_history <- chat_history(input$chat_history)
-      chat_history_request <- chat_history_to_send(chat_history)
+      chat_history_request <- chat_history_to_send(
+        chat_history, preserve_native = identical(self$api_type, "ellmer")
+      )
       if (self$verbose) {
         message(
           crayon::bold(

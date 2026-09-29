@@ -242,7 +242,9 @@ send_prompt <- function(
     }
 
     if (clean_chat_history) {
-      cleaned_chat_history <- clean_chat_history(chat_history)
+      cleaned_chat_history <- clean_chat_history(
+        chat_history, preserve_native = identical(llm_provider$api_type, "ellmer")
+      )
       response <- llm_provider$complete_chat(
         list(chat_history = cleaned_chat_history)
       )
@@ -532,8 +534,8 @@ create_chat_df <- function(
 #'
 #' @noRd
 #' @keywords internal
-clean_chat_history <- function(chat_history) {
-  filtered <- chat_history_to_send(chat_history)
+clean_chat_history <- function(chat_history, preserve_native = FALSE) {
+  filtered <- chat_history_to_send(chat_history, preserve_native = preserve_native)
   # source_rows maps positions in `filtered` back to the original
   # chat_history rows (accounting for hidden / tool_call filtering).
   original_source_rows <- attr(filtered, "source_rows") %||%
@@ -556,6 +558,9 @@ clean_chat_history <- function(chat_history) {
     utils::tail(assistant_rows, 1),
     tool_result_rows
   )
+  # Native protocol content is kept as a unit; dropping an individual request
+  # or reasoning block can invalidate its following tool result.
+  if (preserve_native) keep_rows <- c(keep_rows, which(chat_history_native_rows(filtered)))
 
   keep_rows <- sort(unique(keep_rows))
 
