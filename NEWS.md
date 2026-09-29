@@ -1,72 +1,41 @@
 # tidyprompt (development version)
 
 * `limit_requests()` and `send_prompt(max_requests = ...)` bound model requests
-  across initial responses, tool follow-ups and feedback rounds for regular
-  tidyprompt providers and 'ellmer'.
+  across initial responses, tool follow-ups and feedback rounds for both regular
+  and 'ellmer' providers.
   The counter resets for each `send_prompt()` evaluation. If both limits are
   supplied, the smaller applies; `max_interactions` separately controls the
   outer evaluation loop.
 
 * 'ellmer' compatability fixes & improvements:
 
-  * Cross-provider schemas preserve singleton `required` and `enum` arrays during
-    HTTP serialization instead of unboxing them into invalid scalar keywords.
+  * Streaming: structured output now streams with 'ellmer' 0.5.0 when the
+    provider supports it, with blocking extraction as a fallback. Streams expose
+    rich content events, support cancellation and retain partial results after
+    errors.
 
-  * Native schema validation preserves empty objects and absent optional fields
-    from 'ellmer' instead of incorrectly treating them as arrays or explicit nulls.
+  * Attachments: use `add_content()` to attach native 'ellmer' content, including
+    documents and file references. It requires an 'ellmer' provider and retains
+    attachments across feedback turns.
 
-  * The 'ellmer' interoperability vignette now documents supported capabilities,
-    a tools-then-extraction workflow, and async/batch boundaries.
+  * Answers and history: `send_prompt()` now returns complete assistant replies
+    and includes `$citations` when `return_mode = "full"`. It preserves native
+    tool and reasoning turns and usage metadata, respects history compaction,
+    assigns messages to the correct roles, and isolates callbacks between
+    evaluations.
 
-  * 'ellmer' streams can expose rich content events and accept a stream controller.
-    Cancellation and iteration errors retain recoverable partial chat state.
+  * Schemas: conversion now preserves JSON Schema constraints and singleton
+    arrays without deprecated schema calls. Validation retains R classes and
+    correctly handles optional fields and empty objects.
 
-  * Native structured output can now stream with 'ellmer' 0.5.0, retaining native R
-    coercion and falling back for providers that require tool-based extraction.
+  * Tools: renaming 'ellmer' tools or converting them for other providers now
+    preserves argument schemas and defaults. Tools with no arguments register
+    correctly, list and data-frame results serialize as JSON, and native content
+    results stay intact. Conversion errors identify the affected tool.
 
-  * `add_content()` attaches native 'ellmer' content, including documents and file
-    references, to prompts and preserves it across feedback turns.
-
-  * CI now pins 'ellmer' 0.5.0 alongside the minimum version and checks 'ellmer'
-    regressions with lifecycle deprecations treated as errors.
-
-  * Schema conversion no longer calls the deprecated `.additional_properties`
-    argument in 'ellmer'. Open-object schemas are preserved using `type_from_schema()`.
-
-  * 'ellmer' chats now deep-clone callback registries for each evaluation. The new
-    interoperability vignette explains how to bind hooks to the working chat.
-
-  * Tool results now serialize lists and data frames as JSON, preserving nested
-    data and satisfying the 'ellmer' result contract. Native content results are retained.
-
-  * 'ellmer' tools retain nested argument schemas and input conversion semantics
-    when used with other providers. Context-aware tools explicitly require the
-    native 'ellmer' path, and direct converted-tool calls evaluate R arguments normally.
-
-  * Zero-argument R tools register correctly with 'ellmer'. Failed native tool
-    conversions now identify the tool and preserve the original error.
-
-  * Renaming 'ellmer' tools preserves ignored arguments, conversion settings and
-    annotations without reconstructing their definitions.
-
-  * Rich JSON schemas retain their constraints through 'ellmer' conversion.
-    Native structured results are validated without changing their R classes;
-    unsupported schemas no longer silently lose enforcement.
-
-  * History compacted by 'ellmer' request callbacks is now reflected in returned
-    transcripts and subsequent requests instead of restoring removed messages.
-
-  * 'ellmer' follow-up requests preserve complete native turns, including tool
-    request/result pairs, reasoning blocks, usage metadata and partial-turn classes.
-    Native protocol content is retained when cleaning an 'ellmer' conversation.
-
-  * 'ellmer' history indexing now handles both tidyprompt system rows and system
-    prompts configured on the native chat without assigning assistant content to
-    user messages.
-
-  * 'ellmer' replies now use the complete final assistant text rather than the
-    last transcript row. Citations no longer replace the answer and are available
-    in `$citations` when `return_mode = "full"`.
+  * Documentation: new interoperability vignette explains how to configure
+    callbacks, limit requests, stream responses and use tools before structured
+    extraction.
 
 * Built-in OpenAI-compatible and Ollama request failures now signal
 `tidyprompt_request_error` with the original condition in `parent`, plus
