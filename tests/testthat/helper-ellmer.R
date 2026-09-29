@@ -126,4 +126,3 @@ skip_if_no_ellmer_turn_classes <- function() {
     }
   }, .package = "ellmer", .env = .local_envir)
 }
- 
