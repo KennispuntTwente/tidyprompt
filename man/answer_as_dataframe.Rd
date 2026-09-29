@@ -73,6 +73,8 @@ normalizes it to a row-oriented structured-output schema before delegating to
 \code{\link[=answer_as_json]{answer_as_json()}}.
 Array constraints in the supplied schema are retained. Explicit row limits
 further restrict those constraints; contradictory limits raise an error.
+Each row object becomes exactly one data-frame row. Nested arrays and objects
+are retained as list columns when converting JSON-shaped results.
 }
 \examples{
 # `answer_as_dataframe()` accepts multiple schema shapes.

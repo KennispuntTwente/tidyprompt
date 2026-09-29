@@ -1,5 +1,9 @@
 # tidyprompt (development version)
 
+* `answer_as_dataframe()` keeps nested arrays and objects in list columns for
+  raw JSON schemas and `ellmer::type_from_schema()`, preventing silent row
+  expansion. Final row counts are checked against the input and schema limits.
+
 * `limit_requests()` and `send_prompt(max_requests = ...)` bound model requests
   across initial responses, tool follow-ups and feedback rounds for both regular
   and 'ellmer' providers.

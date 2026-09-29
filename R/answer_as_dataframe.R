@@ -32,6 +32,8 @@
 #' [answer_as_json()].
 #' Array constraints in the supplied schema are retained. Explicit row limits
 #' further restrict those constraints; contradictory limits raise an error.
+#' Each row object becomes exactly one data-frame row. Nested arrays and objects
+#' are retained as list columns when converting JSON-shaped results.
 #'
 #' @param prompt A single string or a [tidyprompt()] object
 #' @param schema A JSON schema list or an 'ellmer' type definition describing a
@@ -109,8 +111,8 @@ answer_as_dataframe <- function(
       answer_as_dataframe_extract(
         structured,
         row_schema = row_schema,
-        min_rows = min_rows,
-        max_rows = max_rows
+        min_rows = minimum,
+        max_rows = maximum
       )
     },
     validation_fn = json_wrap$validation_fn,
@@ -223,6 +225,13 @@ answer_as_dataframe_extract <- function(
     ))
   }
 
+  expected_rows <- if (is.data.frame(rows)) nrow(rows) else length(rows)
+  if (nrow(df) != expected_rows) {
+    return(llm_feedback(
+      "Each object in the `rows` array must produce exactly one data-frame row."
+    ))
+  }
+
   observed_names <- names(df)
   required_cols <- row_schema$required %||% character()
   missing_required <- setdiff(required_cols, observed_names)
@@ -281,10 +290,37 @@ answer_as_dataframe_to_df <- function(rows, row_schema) {
     return(NULL)
   }
 
-  tryCatch(
-    dplyr::bind_rows(rows),
-    error = function(e) NULL
-  )
+  # bind_rows() treats nested vectors as columns and can recycle scalar cells,
+  # silently expanding one JSON object into several rows. Decide column shape
+  # across all rows first, including empty and singleton array/object cells.
+  columns <- unique(unlist(lapply(rows, names), use.names = FALSE))
+  list_columns <- vapply(columns, function(column) {
+    schema <- row_schema$properties[[column]]
+    types <- unlist(schema$type, use.names = FALSE)
+    any(types %in% c("array", "object")) ||
+      any(vapply(rows, function(row) {
+        value <- row[[column]]
+        is.list(value) || (!is.null(value) && length(value) != 1L)
+      }, logical(1))) ||
+      !any(types %in% c("string", "number", "integer", "boolean"))
+  }, logical(1))
+
+  tryCatch({
+    frames <- lapply(rows, function(row) {
+      for (column in columns) {
+        value <- row[[column]]
+        row[column] <- if (list_columns[[column]]) {
+          list(list(value))
+        } else {
+          list(value %||% answer_as_dataframe_missing_column(
+            row_schema$properties[[column]], 1L
+          ))
+        }
+      }
+      dplyr::as_tibble(row, .rows = 1L)
+    })
+    dplyr::bind_rows(frames)
+  }, error = function(e) NULL)
 }
 
 answer_as_dataframe_complete_columns <- function(df, row_schema) {
@@ -314,12 +350,12 @@ answer_as_dataframe_empty_df <- function(row_schema) {
   }
 
   out <- out[names(props)]
-  data.frame(out, check.names = FALSE)
+  dplyr::as_tibble(out, .rows = 0L)
 }
 
 answer_as_dataframe_missing_column <- function(column_schema, n_rows) {
-  column_type <- column_schema$type %||% NULL
-  if (!is.null(column_schema$enum)) {
+  column_type <- setdiff(unlist(column_schema$type), "null")
+  if (length(column_type) == 0L && is.character(column_schema$enum)) {
     column_type <- "string"
   }
 
